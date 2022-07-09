@@ -76,7 +76,7 @@ async def write_thread(tunnel):
 
 
 def main():
-    tunnel = MyClient("/dev/ttyACM0", 1000000)
+    tunnel = MyClient("/dev/serial0", 1000000)
     tunnel.start()
     time.sleep(1.5)
 
@@ -94,7 +94,7 @@ def main():
     # except SessionFinishedException:
     #     ask_exit_and_wait(loop, tasks)
     #     print("SessionFinishedException raised. Exiting")
-    except asyncio.exceptions.CancelledError:
+    except asyncio.CancelledError:
         pass
     finally:
         for sig in (signal.SIGINT, signal.SIGTERM):

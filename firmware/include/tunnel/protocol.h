@@ -5,6 +5,8 @@
 
 
 #define DEBUG_SERIAL Serial
+#define DEBUG_BAUD 57600
+// #define USE_DOUBLE_PRECISION
 
 
 void REPORT_ERROR(const char* report, ...);
@@ -28,17 +30,28 @@ typedef union int32_union
     unsigned char byte[sizeof(int32_t)];
 } int32_union_t;
 
-typedef union double_union
+#ifdef USE_DOUBLE_PRECISION
+typedef union float_union
 {
     double floating_point;
     unsigned char byte[sizeof(double)];
-} double_union_t;
-
+} float_union_t;
+#else
+typedef union float_union
+{
+    float floating_point;
+    unsigned char byte[sizeof(float)];
+} float_union_t;
+#endif
 
 uint32_t to_uint32(char* buffer);
 uint16_t to_uint16(char* buffer);
 int32_t to_int32(char* buffer);
+#ifdef USE_DOUBLE_PRECISION
+double to_float(char* buffer);
+#else
 float to_float(char* buffer);
+#endif
 String to_string(char* buffer, int length);
 uint8_t from_checksum(char* buffer);
 String format_char(unsigned char c);
@@ -67,8 +80,7 @@ private:
         if (_current_index >= _stop_index) {
 #ifdef DEBUG_SERIAL
             REPORT_ERROR("Index exceeds buffer limits. %d >= %d", _current_index, _stop_index);
-#endif
-#ifndef DEBUG_SERIAL
+#else
             DEBUG_SERIAL.println(F("Index exceeds buffer limits"));
 #endif
             return false;
@@ -142,9 +154,17 @@ public:
         _current_index += sizeof(int32_t);
         return checkIndex();
     }
+#ifdef USE_DOUBLE_PRECISION
+    bool getFloat(double& result) {
+#else
     bool getFloat(float& result) {
+#endif
         result = to_float(_buffer + _current_index);
+#ifdef USE_DOUBLE_PRECISION
+        _current_index += sizeof(double);
+#else
         _current_index += sizeof(float);
+#endif
         return checkIndex();
     }
     bool getString(String& result) {

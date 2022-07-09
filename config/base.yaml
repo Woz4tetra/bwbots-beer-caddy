@@ -1,0 +1,11 @@
+log:
+  name: "home-delivery-bot"
+  directory: "logs"
+  level: 10
+#  level: 20
+  suffix: "%Y-%m-%d"
+  file_name: "{name}-{date:%Y-%m-%d}.log"
+  format: "%(levelname)s\t%(asctime)s\t[%(name)s, %(filename)s:%(lineno)d]\t%(message)s"
+
+tunnel:
+  address: /dev/serial0

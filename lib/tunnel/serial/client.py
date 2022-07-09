@@ -33,12 +33,13 @@ class TunnelSerialClient:
         Gracefully shutdown the serial device connection
     """
 
-    def __init__(self, address, baud):
+    def __init__(self, address, baud, max_packet_len=128, debug=False):
         """
         :param address: path to arduino device. ex: "/dev/ttyACM0"
         :param baud: communication rate. Must match value defined on the arduino
         """
-        self.protocol = TunnelProtocol()  # defines the tunnel protocol and parse packet behavior
+        self.debug = debug
+        self.protocol = TunnelProtocol(max_packet_len, debug)  # defines the tunnel protocol and parse packet behavior
 
         self.buffer = b''  # stores unparsed characters for the next round
 
@@ -75,6 +76,7 @@ class TunnelSerialClient:
 
         # if the device hasn't sent anything, don't do any parsing
         if self.device.in_waiting == 0:
+            await asyncio.sleep(0.0)
             return []
 
         # read all characters available on the buffer
@@ -85,6 +87,11 @@ class TunnelSerialClient:
         # as well as any characters that might be worth notifying the user about
         remaining_buffer, self.buffer, results = self.protocol.parse_buffer(self.buffer)
         self.parse_debug_buffer(remaining_buffer)  # Print any debug messages received
+
+        # no packets received. don't do any parsing
+        if len(results) == 0:
+            await asyncio.sleep(0.0)
+            return []
 
         # call handle_result on each result received from TunnelProtocol.parse_buffer
         # put the result of that method into received
@@ -202,7 +209,8 @@ class TunnelSerialClient:
         """Wrapper for device.write. Locks the device so multiple sources can't write at the same time"""
         with self.write_lock:
             self.device.write(packet)
-            # print("Writing:", packet)
+            if self.debug:
+                print("Writing:", packet)
 
     async def packet_callback(self, result):
         """Override this method in a subclass. This gets called when any new correctly parsed packet arrives."""

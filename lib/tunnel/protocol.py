@@ -44,10 +44,11 @@ class TunnelProtocol:
         stop byte. Every packet ends with this byte. Defined in util.PACKET_STOP
     """
 
-    def __init__(self, max_packet_len=128):
+    def __init__(self, max_packet_len=128, debug=False):
         """
         :param max_packet_len: Maximum allowable packet length. Set based on device with the smallest memory
         """
+        self.debug = debug
         self.max_packet_len = max_packet_len
         self.min_packet_len = 0  # the minimum packet length. Filled in later by calculation
         self.max_segment_len = max_packet_len  # the maximum packet length. Calculated later
@@ -274,7 +275,8 @@ class TunnelProtocol:
             # since the index immediately gets incremented at the beginning of the loop
             last_packet_index = index + 1  # include util.PACKET_STOP in last_packet_index
             packet = buffer[packet_start:last_packet_index]  # slice buffer according to start and stop
-            # print("Received packet:", packet)
+            if self.debug:
+                print("Received packet:", packet)
             result = self.parse_packet(packet)  # parse found packet into PacketResult
             if result.error_code != NO_ERROR:
                 self.dropped_packet_num += 1  # any error code that isn't util.NO_ERROR counts as a dropped packet

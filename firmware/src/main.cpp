@@ -6,6 +6,7 @@ void setup()
 {
     // Start serial tunnel client
     tunnel_begin();
+    DEBUG_SERIAL.begin(DEBUG_BAUD);
 }
 
 void packetCallback(PacketResult* result)

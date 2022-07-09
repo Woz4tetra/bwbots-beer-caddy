@@ -48,10 +48,16 @@ int32_t to_int32(char* buffer)
     return int32_union_data.integer;
 }
 
-double_union_t float_union_data;
+float_union_t float_union_data;
+#ifdef USE_DOUBLE_PRECISION
+double to_float(char* buffer)
+{
+    for (unsigned short i = 0; i < sizeof(double); i++) {
+#else
 float to_float(char* buffer)
 {
     for (unsigned short i = 0; i < sizeof(float); i++) {
+#endif
         float_union_data.byte[i] = buffer[i];
     }
     return float_union_data.floating_point;
@@ -174,8 +180,13 @@ int TunnelProtocol::makePacket(packet_type_t packet_type, char* write_buffer, co
             }
         }
         else if (*formats == 'f') {
+#ifdef USE_DOUBLE_PRECISION
             float_union_data.floating_point = (double)va_arg(args, double);
             for (unsigned short i = 0; i < sizeof(double); i++) {
+#else
+            float_union_data.floating_point = (float)va_arg(args, double);
+            for (unsigned short i = 0; i < sizeof(float); i++) {
+#endif
                 write_buffer[buffer_index++] = float_union_data.byte[i];
             }
         }
@@ -230,8 +241,7 @@ void TunnelProtocol::parsePacket(char* buffer, int start_index, int stop_index, 
     if (length < MIN_PACKET_LEN) {
 #ifdef DEBUG_SERIAL
         REPORT_ERROR("Packet is not the minimum length (%d): %s", MIN_PACKET_LEN, packetToString(buffer, start_index, stop_index).c_str());
-#endif
-#ifndef DEBUG_SERIAL
+#else
         Serial.println(F("Packet is not the minimum length"));
 #endif
         result->setErrorCode(PACKET_TOO_SHORT_ERROR);
@@ -241,8 +251,7 @@ void TunnelProtocol::parsePacket(char* buffer, int start_index, int stop_index, 
     if (buffer[_read_buffer_index] != PACKET_START_0) {
 #ifdef DEBUG_SERIAL
         REPORT_ERROR("Packet does not start with PACKET_START_0: %s", packetToString(buffer, start_index, stop_index).c_str());
-#endif
-#ifndef DEBUG_SERIAL
+#else
         Serial.print(F("Packet does not start with PACKET_START_0. "));
         Serial.print(_read_buffer_index);
         Serial.print(' ');
@@ -256,8 +265,7 @@ void TunnelProtocol::parsePacket(char* buffer, int start_index, int stop_index, 
     if (buffer[_read_buffer_index] != PACKET_START_1) {
 #ifdef DEBUG_SERIAL
         REPORT_ERROR("Packet does not start with PACKET_START_1: %s", packetToString(buffer, start_index, stop_index).c_str());
-#endif
-#ifndef DEBUG_SERIAL
+#else
         Serial.println(F("Packet does not start with PACKET_START_1"));
 #endif
         _read_packet_num++;
@@ -268,8 +276,7 @@ void TunnelProtocol::parsePacket(char* buffer, int start_index, int stop_index, 
     if (buffer[stop_index - 1] != PACKET_STOP) {
 #ifdef DEBUG_SERIAL
         REPORT_ERROR("Packet does not start with PACKET_STOP: %s", packetToString(buffer, start_index, stop_index).c_str());
-#endif
-#ifndef DEBUG_SERIAL
+#else
         Serial.println(F("Packet does not start with PACKET_STOP"));
 #endif
         _read_packet_num++;
@@ -291,8 +298,7 @@ void TunnelProtocol::parsePacket(char* buffer, int start_index, int stop_index, 
     if (calc_checksum != recv_checksum) {
 #ifdef DEBUG_SERIAL
         REPORT_ERROR("Checksum failed! recv %02x != calc %02x. %s", recv_checksum, calc_checksum, packetToString(buffer, start_index, stop_index).c_str());
-#endif
-#ifndef DEBUG_SERIAL
+#else
         Serial.println(F("Checksum failed!"));
 #endif
         _read_packet_num++;
@@ -313,8 +319,7 @@ void TunnelProtocol::parsePacket(char* buffer, int start_index, int stop_index, 
     if (!getNextSegment(buffer, stop_index, 4)) {
 #ifdef DEBUG_SERIAL
         REPORT_ERROR("Failed to find packet number segment! %s", packetToString(buffer, start_index, stop_index).c_str());
-#endif
-#ifndef DEBUG_SERIAL
+#else
         Serial.println(F("Failed to find packet number segment!"));
 #endif
         _read_packet_num++;
@@ -333,8 +338,7 @@ void TunnelProtocol::parsePacket(char* buffer, int start_index, int stop_index, 
         if (recv_packet_num != _read_packet_num) {
 #ifdef DEBUG_SERIAL
             REPORT_ERROR("Received packet num doesn't match local count. recv %d != local %d. %s", recv_packet_num, _read_packet_num, packetToString(buffer, start_index, stop_index).c_str());
-#endif
-#ifndef DEBUG_SERIAL
+#else
             Serial.println(F("Received packet num doesn't match local count"));
 #endif
             _read_packet_num = recv_packet_num;
@@ -349,8 +353,7 @@ void TunnelProtocol::parsePacket(char* buffer, int start_index, int stop_index, 
             packetToString(buffer, _current_segment_start, _current_segment_stop).c_str(),
             packetToString(buffer, start_index, stop_index).c_str()
         );
-#endif
-#ifndef DEBUG_SERIAL
+#else
         Serial.println(F("Failed to find category segment"));
 #endif
         _read_packet_num++;
@@ -366,8 +369,7 @@ void TunnelProtocol::parsePacket(char* buffer, int start_index, int stop_index, 
             packetToString(buffer, _current_segment_start, _current_segment_stop).c_str(),
             packetToString(buffer, start_index, stop_index).c_str()
         );
-#endif
-#ifndef DEBUG_SERIAL
+#else
         Serial.println(F("Category segment is empty"));
 #endif
         _read_packet_num++;
@@ -396,8 +398,7 @@ bool TunnelProtocol::getNextSegment(char* buffer, int stop_index, int length)
         if (length >= stop_index + length) {
 #ifdef DEBUG_SERIAL
             REPORT_ERROR("Parsed length %d exceeds buffer length! %d", length, _read_buffer_index + length);
-#endif
-#ifndef DEBUG_SERIAL
+#else
             Serial.println(F("Parsed length exceeds buffer length!"));
 #endif
             return false;

@@ -11,6 +11,9 @@ PacketResult* _result;
 void tunnel_begin()
 {
     PROTOCOL_SERIAL.begin(PROTOCOL_BAUD);
+#ifdef DEBUG_SERIAL
+    DEBUG_SERIAL.begin(DEBUG_BAUD);
+#endif
     _initialized = true;
     _protocol = new TunnelProtocol();
     _result = new PacketResult(TunnelProtocol::NULL_ERROR, 0);

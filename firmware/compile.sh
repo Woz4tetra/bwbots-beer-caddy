@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-echo "Running dodobot firmware compile script"
+echo "Running firmware compile script"
 
 platformio run
