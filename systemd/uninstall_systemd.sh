@@ -1,18 +1,24 @@
 #!/usr/bin/env bash
 
-echo "Running rover6 systemd service uninstall script"
+echo "Running home-delivery-bot systemd service uninstall script"
 
 BASE_DIR=$(realpath "$(dirname $0)")
 
 if [ "${BASE_INSTALL_DIR}" = "" ]; then
-  BASE_INSTALL_DIR=~/.local/rover6
+  BASE_INSTALL_DIR=/usr/local
 fi
 
-rm -r ~/.config/systemd/user/${SERVICE_NAME}
+
+SCRIPT_NAME=home-delivery-bot
+SERVICE_NAME=home-delivery-bot.service
+
+SERVICE_ROOT_DIR=/etc/systemd/system
+
+rm ${BASE_INSTALL_DIR}/bin/${SCRIPT_NAME}
+rm ${SERVICE_ROOT_DIR}/${SERVICE_NAME}
 
 echo "Disabling systemd services"
-systemctl --user daemon-reload
-systemctl --user stop ${SERVICE_NAME}
-loginctl enable-linger $USER
-systemctl --user disable ${SERVICE_NAME}
-echo "rover6 systemd service uninstallation complete"
+systemctl daemon-reload
+systemctl stop ${SERVICE_NAME}
+systemctl disable ${SERVICE_NAME}
+echo "home-delivery-bot systemd service uninstallation complete"
