@@ -1,14 +1,17 @@
 import os
 import asyncio
 import argparse
+import subprocess
 
 from lib.constants import *
+from lib.exceptions import *
 from lib.recursive_namespace import RecursiveNamespace
 from lib.logger_manager import LoggerManager
 from lib.session import Session
 from lib.config import Config
 
-from lib.tunnel_client import RobotTunnelClient
+from home_delivery_bot.tunnel_client import RobotTunnelClient
+from home_delivery_bot.gpio_manager import GpioManager
 
 
 class MySession(Session):
@@ -35,11 +38,14 @@ class MySession(Session):
         # wrapper for arduino interactions including Fuse stepper encoders
         self.tunnel = RobotTunnelClient(self.logger, self.config.tunnel.address)
 
+        self.gpio = GpioManager(self.logger, self.config.gpio)
+
         self.logger.info("Session initialized!")
 
     def start(self):
         """start relevant subsystems to fully initialize them"""
         self.tunnel.start()
+        self.gpio.start()
 
         self.logger.info("Session started!")
 
@@ -77,6 +83,12 @@ class MySession(Session):
         So this method isn't 100% necessary.
         """
         self.tunnel.stop()  # shuts down serial communication
+        self.gpio.stop()
+        if exception is not None:
+            self.logger.error(exception, exc_info=True)
+        if isinstance(exception, ShutdownException):
+            self.logger.warning("Shutdown function called. Shutting down everything.")
+            subprocess.call("sudo shutdown -h now", shell=True)
 
 
 async def update_tunnel(session: MySession):
@@ -97,6 +109,17 @@ async def ping_tunnel(session: MySession):
         await asyncio.sleep(0.5)
 
 
+async def update_gpio(session: MySession):
+    """
+    Task to call tunnel.update (arduino communications) in a loop
+    :param session: instance of MySession
+    """
+    gpio = session.gpio
+    while True:
+        await gpio.update()
+
+
+
 def main():
     """Where the show starts and stops"""
     parser = argparse.ArgumentParser(description="home-delivery-bot")
@@ -110,6 +133,7 @@ def main():
     # add relevant asyncio tasks to run
     session.add_task(update_tunnel(session))
     session.add_task(ping_tunnel(session))
+    session.add_task(update_gpio(session))
 
     session.run()  # blocks until all tasks finish or an exception is raised
 
