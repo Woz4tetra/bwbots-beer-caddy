@@ -71,6 +71,10 @@ bool Chassis::update()
     if (current_time - prev_enc_time < sample_rate) {
         return false;
     }
+    if (current_time < prev_enc_time) {
+        prev_enc_time = current_time;
+        return false;
+    }
 
     long new_left = left_encoder->read();
     long new_right = right_encoder->read();
