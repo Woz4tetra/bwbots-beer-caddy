@@ -39,3 +39,12 @@ class RobotTunnelClient(TunnelSerialClient):
     def write_ping(self):
         """Write a ping message. Called externally"""
         self.write("ping", self.get_time())
+
+    def set_motor_enable(self, state):
+        self.write_handshake("motor_enable", state, write_interval=1.0, timeout=10.0)
+
+    def set_left_motor_velocity(self, velocity):
+        self.write("l", velocity)
+
+    def set_right_motor_velocity(self, velocity):
+        self.write("r", velocity)

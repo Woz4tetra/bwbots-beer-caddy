@@ -49,19 +49,23 @@ int32_t to_int32(char* buffer)
 }
 
 float_union_t float_union_data;
-#ifdef USE_DOUBLE_PRECISION
-double to_float(char* buffer)
-{
-    for (unsigned short i = 0; i < sizeof(double); i++) {
-#else
 float to_float(char* buffer)
 {
     for (unsigned short i = 0; i < sizeof(float); i++) {
-#endif
         float_union_data.byte[i] = buffer[i];
     }
     return float_union_data.floating_point;
 }
+
+double_union_t double_union_data;
+double to_double(char* buffer)
+{
+    for (unsigned short i = 0; i < sizeof(double); i++) {
+        double_union_data.byte[i] = buffer[i];
+    }
+    return double_union_data.floating_point;
+}
+
 
 char STRING_CONVERT_ARRAY[16];
 
@@ -180,14 +184,15 @@ int TunnelProtocol::makePacket(packet_type_t packet_type, char* write_buffer, co
             }
         }
         else if (*formats == 'f') {
-#ifdef USE_DOUBLE_PRECISION
-            float_union_data.floating_point = (double)va_arg(args, double);
-            for (unsigned short i = 0; i < sizeof(double); i++) {
-#else
-            float_union_data.floating_point = (float)va_arg(args, double);
+            float_union_data.floating_point = (float)va_arg(args, double);  // va_arg promotes floats to doubles
             for (unsigned short i = 0; i < sizeof(float); i++) {
-#endif
                 write_buffer[buffer_index++] = float_union_data.byte[i];
+            }
+        }
+        else if (*formats == 'e') {
+            double_union_data.floating_point = (double)va_arg(args, double);
+            for (unsigned short i = 0; i < sizeof(double); i++) {
+                write_buffer[buffer_index++] = double_union_data.byte[i];
             }
         }
         else {

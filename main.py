@@ -12,6 +12,7 @@ from lib.config import Config
 
 from home_delivery_bot.tunnel_client import RobotTunnelClient
 from home_delivery_bot.gpio_manager import GpioManager
+from home_delivery_bot.commandline import RobotCLI
 
 
 class MySession(Session):
@@ -39,6 +40,7 @@ class MySession(Session):
         self.tunnel = RobotTunnelClient(self.logger, self.config.tunnel.address)
 
         self.gpio = GpioManager(self.logger, self.config.gpio)
+        self.cli = RobotCLI(self.tunnel)
 
         self.logger.info("Session initialized!")
 
@@ -119,7 +121,6 @@ async def update_gpio(session: MySession):
         await gpio.update()
 
 
-
 def main():
     """Where the show starts and stops"""
     parser = argparse.ArgumentParser(description="home-delivery-bot")
@@ -134,6 +135,7 @@ def main():
     session.add_task(update_tunnel(session))
     session.add_task(ping_tunnel(session))
     session.add_task(update_gpio(session))
+    session.add_task(session.cli.run())
 
     session.run()  # blocks until all tasks finish or an exception is raised
 
