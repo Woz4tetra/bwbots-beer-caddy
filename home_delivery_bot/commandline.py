@@ -80,5 +80,10 @@ class RobotCLI(aiocmd.PromptToolkitCmd):
         self.tunnel.set_left_motor_velocity(0.0)
         self.tunnel.set_right_motor_velocity(0.0)
 
+    def do_sensors(self):
+        self.logger.info("Left encoder: %0.4f ticks, %0.4f t/s" % (self.tunnel.encoder_states.left_ticks, self.tunnel.encoder_states.left_speed_ticks))
+        self.logger.info("Right encoder: %0.4f ticks, %0.4f t/s" % (self.tunnel.encoder_states.right_ticks, self.tunnel.encoder_states.right_speed_ticks))
+        self.logger.info("Imu: %0.4f X, %0.4f Y, %0.4f Z" % (self.tunnel.imu_states.x, self.tunnel.imu_states.y, self.tunnel.imu_states.z))
+
     def _on_close(self):
         raise SessionFinishedException

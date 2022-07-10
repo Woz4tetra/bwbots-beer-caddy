@@ -79,11 +79,6 @@ bool Chassis::update()
     long new_left = left_encoder->read();
     long new_right = right_encoder->read();
 
-    bool should_report = false;
-    if (new_left != left_enc_pos || new_right != right_enc_pos) {
-        should_report = true;
-    }
-
     uint32_t dt = current_time - prev_enc_time;
 
     left_enc_speed_raw = (double)(new_left - left_enc_pos) / dt * 1000.0;
@@ -96,5 +91,5 @@ bool Chassis::update()
 
     prev_enc_time = current_time;
 
-    return should_report;
+    return true;
 }

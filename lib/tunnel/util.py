@@ -71,8 +71,8 @@ def to_uint8_bytes(integer):
     return integer.to_bytes(1, 'big')
 
 
-def to_int32_bytes(integer):
-    return integer.to_bytes(4, 'big', signed=True)
+def to_int_bytes(integer, length=4, signed=True):
+    return integer.to_bytes(length, 'big', signed=signed)
 
 
 def to_double_bytes(floating_point):
@@ -83,8 +83,8 @@ def to_float_bytes(floating_point):
     return struct.pack('f', floating_point)
 
 
-def to_int(raw_bytes):
-    return int.from_bytes(raw_bytes, 'big')
+def to_int(raw_bytes, signed=True):
+    return int.from_bytes(raw_bytes, 'big', signed=signed)
 
 
 def to_double(raw_bytes):

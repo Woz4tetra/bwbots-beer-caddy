@@ -104,6 +104,12 @@ async def update_tunnel(session: MySession):
         await asyncio.sleep(0.005)
 
 
+async def config_controller(session: MySession):
+    tunnel = session.tunnel
+    config = session.config
+    await tunnel.set_balance_config(config.balance)
+
+
 async def ping_tunnel(session: MySession):
     tunnel = session.tunnel
     while True:
@@ -147,6 +153,7 @@ def main():
 
     # add relevant asyncio tasks to run
     session.add_task(update_tunnel(session))
+    session.add_task(config_controller(session))
     # session.add_task(ping_tunnel(session))
     session.add_task(update_gpio(session))
     if args.cli:

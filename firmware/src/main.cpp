@@ -85,23 +85,31 @@ void packetCallback(PacketResult* result)
         tunnel_writePacket("ping", "f", value);
     }
     else if (category.equals("motor_enable")) {
-        int32_t state;
-        if (!result->getInt(state)) { PROTOCOL_SERIAL.println(F("Failed motor_enable")); return; }
+        uint8_t state;
+        if (!result->getUInt8(state)) { PROTOCOL_SERIAL.println(F("Failed motor_enable")); return; }
         chassis.set_motor_enable((bool)state);
     }
     else if (category.equals("is_motor_enabled")) {
-        int32_t state = (int32_t)(chassis.get_motor_enable());
-        tunnel_writePacket("is_motor_enabled", "d", state);
+        uint8_t state = (uint8_t)(chassis.get_motor_enable());
+        tunnel_writePacket("is_motor_enabled", "j", state);
     }
     else if (category.equals("l")) {
         int32_t velocity;
-        if (!result->getInt(velocity)) { return; }
+        if (!result->getInt32(velocity)) { return; }
         chassis.set_left_motor(velocity);
     }
     else if (category.equals("r")) {
         int32_t velocity;
-        if (!result->getInt(velocity)) { return; }
+        if (!result->getInt32(velocity)) { return; }
         chassis.set_right_motor(velocity);
+    }
+    else if (category.equals("balance")) {
+        float setpoint;
+        if (!result->getFloat(setpoint))  { PROTOCOL_SERIAL.println(F("Failed to set setpoint")); return; }
+        balance_controller.set_angle_setpoint(setpoint);
+        tunnel_writePacket("balance", "f", 
+            balance_controller.get_angle_setpoint()
+        );
     }
 }
 
@@ -109,8 +117,10 @@ void loop()
 {
     packetCallback(tunnel_readPacket());
     if (chassis.update()) {
+        int32_t left = (int32_t)chassis.get_left_encoder();
+        int32_t right = (int32_t)chassis.get_right_encoder();
         tunnel_writePacket("enc", "ddff", 
-            chassis.get_left_encoder(), chassis.get_right_encoder(),
+            left, right,
             chassis.get_left_speed(), chassis.get_right_speed()
         );
     }

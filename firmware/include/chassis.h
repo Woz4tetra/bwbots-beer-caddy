@@ -50,7 +50,7 @@ private:
     Encoder* left_encoder;
     Encoder* right_encoder;
 
-    long prev_enc_time;
+    uint32_t prev_enc_time;
 
     bool motors_enabled;
     long left_enc_pos, right_enc_pos;

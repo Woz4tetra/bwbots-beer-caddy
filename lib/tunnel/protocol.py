@@ -79,7 +79,7 @@ class TunnelProtocol:
             PACKET_TIMEOUT_ERROR: "packet receive timed out",
         }
 
-        self.minimum_packet = self.make_packet("x")  # create the smallest packet
+        self.minimum_packet = self.make_packet("x", "")  # create the smallest packet
         self.write_packet_num = 0  # reset write_packet_num again
         self.min_packet_len = len(self.minimum_packet)  # determine minimum packet length from smallest packet
 
@@ -93,6 +93,7 @@ class TunnelProtocol:
         otherwise throw an error. Optionally, resend the packet at fixed intervals if a confirm packet isn't received
         :param category: str, category of packet. For packet routing on the receiving end. Must not contain:
             util.PACKET_SEP_STR (\t)
+        :param formats: str, how to parse each of the provided arguments. Refer to make_packet for keys.
         :param args: objects to interpret into a packet. Accepted types: int, str, bytes, float
         :param write_interval: how often to resend the created packet
         :param timeout: how to wait before throwing an error
@@ -108,33 +109,59 @@ class TunnelProtocol:
         the handshake packet.
         :param category: str, category of packet. For packet routing on the receiving end. Must not contain:
             util.PACKET_SEP_STR (\t)
+        :param formats: str, how to parse each of the provided arguments. Refer to make_packet for keys.
         :param packet_num: Packet number of the handshake packet
         :return: bytes
         """
         return self.make_packet(category, packet_num, packet_type=PACKET_TYPE_CONFIRMING)
 
-    def make_packet(self, category, *args, packet_type=PACKET_TYPE_NORMAL) -> bytes:
+    def make_packet(self, category: str, formats: str, *args, packet_type=PACKET_TYPE_NORMAL) -> bytes:
         """
         Create a normal packet using the provided arguments
         :param category: str, category of packet. For packet routing on the receiving end. Must not contain:
             util.PACKET_SEP_STR (\t)
+        :param formats: str, how to parse each of the provided arguments. Keys:
+            d - signed 32 bit int
+            u - unsigned 32 bit int
+            h - signed 8 bit int
+            j - unsigned 8 bit int
+            k - signed 16 bit int
+            l - unsigned 16 bit int
+            s - string
+            f - 32 bit float
+            e - 64 bit float (double)
         :param args: objects to interpret into a packet. Accepted types: int, str, bytes, float
         :param packet_type: util.PACKET_TYPE_NORMAL, util.PACKET_TYPE_HANDSHAKE, or util.PACKET_TYPE_CONFIRMING
         :return: bytes
         """
         packet = self.packet_header(category, packet_type)  # start packet with the protocol header
-        for arg in args:
+        if len(args) != len(formats):
+            raise ValueError("Number of provided arguments doesn't match number of format keys: %s (%s) != %s (%s)" % (str(args), len(args), formats, len(formats)))
+        for index, key in enumerate(formats):
+            arg = args[index]
             # Parse each argument into bytes and append them to the packet
-            if type(arg) == int:
-                packet += to_int32_bytes(arg)
-            elif type(arg) == bool:
-                packet += to_int32_bytes(int(arg))
+            if type(arg) == int or type(arg) == bool:
+                if key == "d":
+                    packet += to_int_bytes(arg, 4)
+                elif key == "u":
+                    packet += to_int_bytes(arg, 4, signed=False)
+                elif key == "h":
+                    packet += to_int_bytes(arg, 1)
+                elif key == "j":
+                    packet += to_int_bytes(arg, 1, signed=False)
+                elif key == "k":
+                    packet += to_int_bytes(arg, 2)
+                elif key == "l":
+                    packet += to_int_bytes(arg, 2, signed=False)
             elif type(arg) == float:
-                if self.use_double_precision:
-                    packet += to_double_bytes(arg)
-                else:
+                if key == "f":
                     packet += to_float_bytes(arg)
-            elif type(arg) == str or type(arg) == bytes:
+                elif key == "e":
+                    if self.use_double_precision:
+                        packet += to_double_bytes(arg)
+                    else:
+                        packet += to_float_bytes(arg)
+            elif type(arg) == str or type(arg) == bytes and key == "s":
                 # for strings and bytes, first determine the length of the string.
                 # insert that value as an integer represented by two bytes,
                 # then insert the data bytes
@@ -145,7 +172,7 @@ class TunnelProtocol:
                     arg = arg.encode()
                 packet += len_bytes + arg
             else:
-                warnings.warn("Invalid argument type: %s, %s" % (type(arg), arg))
+                warnings.warn("Invalid argument type: %s, %s. key: %s" % (type(arg), arg, repr(key)))
 
         packet = self.packet_footer(packet)  # append footer as well as insert length bytes into the beginning
         if len(packet) > self.max_packet_len:
@@ -165,7 +192,7 @@ class TunnelProtocol:
         if PACKET_SEP in category:
             raise TunnelProtocolException("Cannot have %s in the category: %s" % (PACKET_SEP, repr(category)))
         packet = to_uint8_bytes(packet_type)
-        packet += to_int32_bytes(self.write_packet_num)
+        packet += to_int_bytes(self.write_packet_num, 4, signed=False)
         packet += category + PACKET_SEP
         return packet
 
@@ -263,7 +290,7 @@ class TunnelProtocol:
                 break
             index += PACKET_LEN_LENGTH  # move index to after the length bytes. This is where length is calculated from
 
-            length = to_int(raw_length)  # interpret two length bytes as an integer
+            length = to_int(raw_length, signed=False)  # interpret two length bytes as an integer
             if index + length >= len(buffer):
                 # exit if the buffer is overrun, the packet is incomplete
                 break
@@ -327,7 +354,7 @@ class TunnelProtocol:
         if not self.get_next_segment(packet, PACKET_TYPE_LENGTH):
             warnings.warn("Failed to find packet number segment! %s" % (repr(full_packet)))
             return PacketResult(PACKET_TYPE_NOT_FOUND_ERROR, recv_time, self.read_packet_num)
-        packet_type = to_int(self.current_segment)  # parse packet type byte as an integer
+        packet_type = to_int(self.current_segment, signed=False)  # parse packet type byte as an integer
         if packet_type not in PACKET_TYPES:  # if not a valid packet type, signal a packet error
             warnings.warn("Failed to find valid packet type! %s. Found: %s" % (repr(full_packet), packet_type))
             return PacketResult(PACKET_TYPE_NOT_FOUND_ERROR, recv_time, self.read_packet_num)
@@ -336,7 +363,7 @@ class TunnelProtocol:
         if not self.get_next_segment(packet, PACKET_COUNT_LENGTH):
             warnings.warn("Failed to find packet number segment! %s" % (repr(full_packet)))
             return PacketResult(PACKET_COUNT_NOT_FOUND_ERROR, recv_time, self.read_packet_num)
-        self.recv_packet_num = to_int(self.current_segment)  # parse four type bytes as an integer
+        self.recv_packet_num = to_int(self.current_segment, signed=False)  # parse four type bytes as an integer
 
         # instantiate packet result we might return. If a non critical error occurs, we'll still return
         # a PacketResult with everything we found just with a "warning" error code

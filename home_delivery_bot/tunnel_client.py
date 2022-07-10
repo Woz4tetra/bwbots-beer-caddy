@@ -3,6 +3,7 @@ import asyncio
 import logging
 from lib.tunnel.serial.client import TunnelSerialClient
 from lib.tunnel.result import PacketResult
+from lib.recursive_namespace import RecursiveNamespace
 
 
 class RobotTunnelClient(TunnelSerialClient):
@@ -16,8 +17,19 @@ class RobotTunnelClient(TunnelSerialClient):
         """
         super().__init__(path, baud, debug=False)
         self.logger = logger
-        self.protocol.use_double_precision = False
+        self.protocol.use_double_precision = True
         self.start_time = time.monotonic()  # timer for ping
+        self.encoder_states = RecursiveNamespace(
+            left_ticks=0.0,
+            right_ticks=0.0,
+            left_speed_ticks=0.0,
+            right_speed_ticks=0.0,
+        )
+        self.imu_states = RecursiveNamespace(
+            x=0.0,
+            y=0.0,
+            z=0.0,
+        )
 
     async def packet_callback(self, result: PacketResult):
         """
@@ -31,6 +43,16 @@ class RobotTunnelClient(TunnelSerialClient):
             ping = current_time - sent_time
             self.logger.info("Ping: %0.5f (current: %0.5f, recv: %0.5f)" % (ping, current_time, sent_time))
             await asyncio.sleep(0.0)
+        elif result.category == "enc":
+            self.encoder_states.left_ticks = result.get_int()
+            self.encoder_states.right_ticks = result.get_int()
+            self.encoder_states.left_speed_ticks = result.get_float()
+            self.encoder_states.right_speed_ticks = result.get_float()
+        elif result.category == "imu":
+            self.imu_states.x = result.get_float()
+            self.imu_states.y = result.get_float()
+            self.imu_states.z = result.get_float()
+
 
     def get_time(self):
         """Get the time since __init__ was called"""
@@ -38,20 +60,25 @@ class RobotTunnelClient(TunnelSerialClient):
 
     def write_ping(self):
         """Write a ping message. Called externally"""
-        self.write("ping", self.get_time())
+        self.write("ping", "f", self.get_time())
 
     def set_motor_enable(self, state):
-        self.write_handshake("motor_enable", state, write_interval=1.0, timeout=10.0)
+        self.write_handshake("motor_enable", "j", state, write_interval=1.0, timeout=10.0)
 
     async def get_motor_enable(self):
-        result = await self.get("is_motor_enabled", timeout=2.0)
-        return bool(result.get_int())
+        result = await self.get("is_motor_enabled", "", timeout=2.0)
+        return bool(result.get_int(1, signed=False))
 
     def set_left_motor_velocity(self, velocity: int):
-        self.write("l", int(velocity))
+        self.write("l", "d", int(velocity))
 
     def set_right_motor_velocity(self, velocity: int):
-        self.write("r", int(velocity))
+        self.write("r", "d", int(velocity))
+    
+    async def set_balance_config(self, config: RecursiveNamespace):
+        result = await self.get("balance", "f", config.setpoint, timeout=2.0)
+        assert result.get_float() == config.setpoint
+        self.logger.info("Controller config set")
 
     def stop(self):
         self.set_motor_enable(False)

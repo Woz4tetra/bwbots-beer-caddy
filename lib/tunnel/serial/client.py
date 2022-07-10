@@ -203,37 +203,38 @@ class TunnelSerialClient:
             print("Device message:", message)
             index = next_index + 1
 
-    async def get(self, category: str, *args, timeout=None):
+    async def get(self, category: str, formats: str, *args, timeout=None):
         """
         Write a packet and return the values of the next return packet with the same category.
         Raises asyncio.TimeoutError if timeout is reached.
         If timeout is None, this method will block indefinitely until a packet is found.
         """
-        self.write(category, *args)
+        self.write_handshake(category, formats, *args)
         future_result = FuturePacketResult(category)
         self.pending_gets.append(future_result)
         await future_result.wait(timeout)
         self.pending_gets.remove(future_result)
         return future_result
 
-    def write(self, category: str, *args):
+    def write(self, category: str, formats: str, *args):
         """
         Write data to serial device as a TunnelProtocol packet
 
         :param category: str, category of packet. For packet routing on the receiving end. Must not contain:
             util.PACKET_SEP_STR (\t)
+        :param formats: str, how to parse each of the provided arguments. Refer to TunnelProtocol.make_packet for keys.
         :param args: objects to interpret into a packet. Accepted types: int, str, bytes, float
         :return: None
         """
-        self._write(self.protocol.make_packet(category, *args))
+        self._write(self.protocol.make_packet(category, formats, *args))
 
-    def write_handshake(self, category, *args, write_interval=0.0, timeout=1.0):
+    def write_handshake(self, category: str, formats: str, *args, write_interval=0.0, timeout=1.0):
         if write_interval > timeout:
             warnings.warn(
                 "write_interval (%0.4f) is greater than timeout (%0.4f). Packet will not be rewritten" % (
                     write_interval, timeout)
             )
-        handshake = self.protocol.make_handshake_packet(category, *args, write_interval=write_interval, timeout=timeout)
+        handshake = self.protocol.make_handshake_packet(category, formats, *args, write_interval=write_interval, timeout=timeout)
         packet = handshake.packet
         self.pending_handshakes.append(handshake)
         self._write(packet)

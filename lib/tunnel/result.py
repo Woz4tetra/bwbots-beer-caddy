@@ -68,15 +68,26 @@ class PacketResult:
         if self.current_index >= self.stop_index:
             raise RuntimeError("Index exceeds buffer limits. %d >= %d" % (self.current_index, self.stop_index))
     
-    def get_int(self) -> int:
-        """Parse the next 4 bytes in the packet as an integer. Return int value"""
-        next_index = self.current_index + 4
-        result = to_int(self.buffer[self.current_index: next_index])
+    def get_int(self, length=4, signed=True) -> int:
+        """Parse the next X bytes in the packet as an integer. Return int value. Default length is 4"""
+        next_index = self.current_index + length
+        result = to_int(self.buffer[self.current_index: next_index], signed)
         self.current_index = next_index
         self.check_index()
         return result
 
     def get_float(self) -> float:
+        """
+        Parse the next 4 bytes in the packet as an float.
+        Return float value
+        """
+        next_index = self.current_index + 4
+        result = to_float(self.buffer[self.current_index: next_index])
+        self.current_index = next_index
+        self.check_index()
+        return result
+
+    def get_double(self) -> float:
         """
         Parse the next 4 or 8 bytes in the packet as an float (depends on use_double_precision).
         Return float value
@@ -98,7 +109,7 @@ class PacketResult:
         """
         if length is None:
             next_index = self.current_index + 2
-            length = to_int(self.buffer[self.current_index: next_index])
+            length = to_int(self.buffer[self.current_index: next_index], signed=False)
 
         next_index = self.current_index + length
         result = self.buffer[self.current_index: next_index].decode()

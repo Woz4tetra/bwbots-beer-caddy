@@ -39,6 +39,15 @@ uint16_t to_uint16(char* buffer)
     return uint16_union_data.integer;
 }
 
+int16_union_t int16_union_data;
+int16_t to_int16(char* buffer)
+{
+    for (unsigned short i = 0; i < sizeof(int16_t); i++) {
+        int16_union_data.byte[sizeof(int16_t) - i - 1] = buffer[i];
+    }
+    return int16_union_data.integer;
+}
+
 int32_union_t int32_union_data;
 int32_t to_int32(char* buffer)
 {
@@ -147,16 +156,36 @@ int TunnelProtocol::makePacket(packet_type_t packet_type, char* write_buffer, co
 
     while (*formats != '\0')
     {
-        if (*formats == 'd') {
-            int32_union_data.integer = va_arg(args, int32_t);
+        if (*formats == 'd') {  // 32 bit signed
+            int32_union_data.integer = va_arg(args, int);
             for (unsigned short i = 0; i < sizeof(int32_t); i++) {
                 write_buffer[buffer_index++] = int32_union_data.byte[sizeof(int32_t) - i - 1];
             }
         }
-        else if (*formats == 'u') {
-            uint32_union_data.integer = va_arg(args, uint32_t);
+        else if (*formats == 'u') {  // 32 bit unsigned
+            uint32_union_data.integer = va_arg(args, int);
             for (unsigned short i = 0; i < sizeof(uint32_t); i++) {
                 write_buffer[buffer_index++] = uint32_union_data.byte[sizeof(uint32_t) - i - 1];
+            }
+        }
+        else if (*formats == 'h') {  // 8 bit signed
+            int8_t value = va_arg(args, int);
+            write_buffer[buffer_index++] = value;
+        }
+        else if (*formats == 'j') {  // 8 bit unsigned
+            uint8_t value = va_arg(args, int);
+            write_buffer[buffer_index++] = value;
+        }
+        else if (*formats == 'k') {  // 16 bit signed
+            int16_union_data.integer = va_arg(args, int);
+            for (unsigned short i = 0; i < sizeof(int16_t); i++) {
+                write_buffer[buffer_index++] = int16_union_data.byte[sizeof(int16_t) - i - 1];
+            }
+        }
+        else if (*formats == 'l') {  // 16 bit unsigned
+            uint16_union_data.integer = va_arg(args, int);
+            for (unsigned short i = 0; i < sizeof(uint16_t); i++) {
+                write_buffer[buffer_index++] = uint16_union_data.byte[sizeof(uint16_t) - i - 1];
             }
         }
         else if (*formats == 's') {

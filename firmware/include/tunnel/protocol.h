@@ -16,6 +16,12 @@ typedef union uint16_union
     unsigned char byte[sizeof(uint16_t)];
 } uint16_union_t;
 
+typedef union int16_union
+{
+    int16_t integer;
+    unsigned char byte[sizeof(int16_t)];
+} int16_union_t;
+
 typedef union uint32_union
 {
     uint32_t integer;
@@ -43,6 +49,7 @@ typedef union double_union
 
 
 uint32_t to_uint32(char* buffer);
+int16_t to_int16(char* buffer);
 uint16_t to_uint16(char* buffer);
 int32_t to_int32(char* buffer);
 float to_float(char* buffer);
@@ -144,9 +151,34 @@ public:
     int getStop() {
         return _stop_index;
     }
-    bool getInt(int32_t& result) {
+    bool getInt32(int32_t& result) {
         result = to_int32(_buffer + _current_index);
         _current_index += sizeof(int32_t);
+        return checkIndex();
+    }
+    bool getUInt32(uint32_t& result) {
+        result = to_uint32(_buffer + _current_index);
+        _current_index += sizeof(uint32_t);
+        return checkIndex();
+    }
+    bool getInt16(int16_t& result) {
+        result = to_int16(_buffer + _current_index);
+        _current_index += sizeof(int16_t);
+        return checkIndex();
+    }
+    bool getUInt16(uint16_t& result) {
+        result = to_uint16(_buffer + _current_index);
+        _current_index += sizeof(uint16_t);
+        return checkIndex();
+    }
+    bool getInt8(int8_t& result) {
+        result = (int8_t)_buffer[_current_index];
+        _current_index += sizeof(int8_t);
+        return checkIndex();
+    }
+    bool getUInt8(uint8_t& result) {
+        result = (uint8_t)_buffer[_current_index];
+        _current_index += sizeof(uint8_t);
         return checkIndex();
     }
     bool getFloat(float& result) {
