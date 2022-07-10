@@ -1,3 +1,4 @@
+import asyncio
 from .util import *
 
 
@@ -104,3 +105,49 @@ class PacketResult:
         self.current_index = next_index
         self.check_index()
         return result
+
+    def copy_from(self, other):
+        if isinstance(other, self.__class__):
+            raise AttributeError("Can't copy from a non-PacketResult object: %s" % repr(other))
+        self.error_code = other.error_code
+        self.recv_time = other.recv_time
+        self.category = other.category
+        self.buffer = other.buffer
+        self.start_index = other.start_index
+        self.stop_index = other.stop_index
+        self.current_index = other.current_index
+        self.packet_type = other.packet_type
+        self.packet_num = other.packet_num
+        self.use_double_precision = other.use_double_precision
+
+    def __hash__(self) -> int:
+        """Hash function for PacketResult. For comparing PacketResult objects for equality"""
+        return hash((self.category, self.packet_num))
+
+    def __eq__(self, other):
+        """Check if PacketResult are equivalent using the hash function"""
+        if isinstance(other, self.__class__):
+            return hash(other) == hash(self)
+        else:
+            return False
+
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}<category={self.category}, error_code={self.error_code}, recv_time={self.recv_time}, packet_num={self.packet_num}, packet_type={self.packet_type}>"
+
+    __repr__ = __str__
+
+
+class FuturePacketResult(PacketResult):
+    def __init__(self, category):
+        super().__init__(NULL_ERROR, 0, 0)
+        self.category = category
+        self.event = asyncio.Event()
+
+    async def wait(self, timeout=None):
+        if timeout is None:
+            await self.event.wait()
+        else:
+            await asyncio.wait_for(self.event.wait(), timeout)
+
+    def set_event(self):
+        self.event.set()

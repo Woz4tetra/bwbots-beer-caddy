@@ -5,7 +5,10 @@ import threading
 
 from lib.tunnel.util import *
 
-from ..protocol import TunnelProtocol, Handshake, PacketResult
+from ..result import PacketResult
+from ..result import FuturePacketResult
+from ..handshake import Handshake
+from ..protocol import TunnelProtocol
 
 
 class TunnelSerialClient:
@@ -50,6 +53,9 @@ class TunnelSerialClient:
 
         # when write_handshake is called, an object is stored here that keeps track of its status
         self.pending_handshakes = []
+
+        # when get is called, an object is stored here that keeps track of its status
+        self.pending_gets = []
 
         # a lock to prevent multiple sources from writing to the serial device at once
         self.write_lock = threading.Lock()
@@ -147,6 +153,14 @@ class TunnelSerialClient:
             warnings.warn("Received confirm handshake, but no handshakes are expecting it! %s. Pending: %s" % (
                 handshake, str(self.pending_handshakes)))
 
+        future_result = self.find_matching_future_result(result)
+        if future_result is not None:
+            # if this result matches a future, copy the data so it can be used externally
+            if self.debug:
+                print("Found a matching get request: %s" % future_result)
+            future_result.copy_from(result)
+            future_result.set_event()
+
         # run callback method (doesn't anything do anything out of the box)
         await self.packet_callback(result)
 
@@ -155,6 +169,12 @@ class TunnelSerialClient:
             for callback in self.callbacks[result.category]:
                 await callback(result)
         return result
+    
+    def find_matching_future_result(self, result: PacketResult):
+        for future_result in self.pending_gets:
+            if future_result.category == result.category:
+                return future_result
+        return None
 
     def check_handshakes(self):
         """Check if any handshakes expired or if any packets are due to be written again"""
@@ -182,6 +202,19 @@ class TunnelSerialClient:
             message = remaining_buffer[index: next_index]
             print("Device message:", message)
             index = next_index + 1
+
+    async def get(self, category: str, *args, timeout=None):
+        """
+        Write a packet and return the values of the next return packet with the same category.
+        Raises asyncio.TimeoutError if timeout is reached.
+        If timeout is None, this method will block indefinitely until a packet is found.
+        """
+        self.write(category, *args)
+        future_result = FuturePacketResult(category)
+        self.pending_gets.append(future_result)
+        await future_result.wait(timeout)
+        self.pending_gets.remove(future_result)
+        return future_result
 
     def write(self, category: str, *args):
         """

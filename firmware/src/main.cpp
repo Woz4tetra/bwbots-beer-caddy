@@ -46,8 +46,12 @@ void packetCallback(PacketResult* result)
     }
     else if (category.equals("motor_enable")) {
         int32_t state;
-        if (!result->getInt(state)) { return; }
+        if (!result->getInt(state)) { PROTOCOL_SERIAL.println(F("Failed motor_enable")); return; }
         chassis.set_motor_enable((bool)state);
+    }
+    else if (category.equals("is_motor_enabled")) {
+        int32_t state = (int32_t)(chassis.get_motor_enable());
+        tunnel_writePacket("is_motor_enabled", "d", state);
     }
     else if (category.equals("l")) {
         int32_t velocity;

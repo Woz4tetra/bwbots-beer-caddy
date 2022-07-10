@@ -115,7 +115,6 @@ PacketResult* tunnel_readPacket()
     }
     if (_result->getPacketType() == PACKET_TYPE_HANDSHAKE) {
         tunnel_writeConfirmingPacket(_result->getCategory().c_str(), "ud", _result->getPacketNum(), _result->getErrorCode());
-        return NULL;
     }
     return _result;
 }

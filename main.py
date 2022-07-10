@@ -40,7 +40,7 @@ class MySession(Session):
         self.tunnel = RobotTunnelClient(self.logger, self.config.tunnel.address)
 
         self.gpio = GpioManager(self.logger, self.config.gpio)
-        self.cli = RobotCLI(self.tunnel)
+        self.cli = RobotCLI(self.logger, self.tunnel)
 
         self.logger.info("Session initialized!")
 
@@ -121,21 +121,36 @@ async def update_gpio(session: MySession):
         await gpio.update()
 
 
+async def enable_motors(session: MySession):
+    state = True
+    self = session
+    self.logger.info("Motor enable to %s" % repr(state))
+    self.tunnel.set_motor_enable(state)
+    result_state = await self.tunnel.get_motor_enable()
+    if result_state != state:
+        self.logger.warning("Motor enable command failed! State did not change")
+
+
 def main():
     """Where the show starts and stops"""
     parser = argparse.ArgumentParser(description="home-delivery-bot")
 
+    parser.add_argument("--cli",
+                        action="store_true",
+                        help="If this flag is present, enable CLI")
     cmd_args = parser.parse_args()
 
     args = RecursiveNamespace()
+    args.cli = cmd_args.cli
 
     session = MySession(args)
 
     # add relevant asyncio tasks to run
     session.add_task(update_tunnel(session))
-    session.add_task(ping_tunnel(session))
+    # session.add_task(ping_tunnel(session))
     session.add_task(update_gpio(session))
-    session.add_task(session.cli.run())
+    if args.cli:
+        session.add_task(session.cli.run())
 
     session.run()  # blocks until all tasks finish or an exception is raised
 

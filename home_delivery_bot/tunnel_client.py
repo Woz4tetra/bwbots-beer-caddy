@@ -14,7 +14,7 @@ class RobotTunnelClient(TunnelSerialClient):
         :param path: path to arduino device. ex: "/dev/ttyACM0"
         :param baud: communication rate. Must match value defined on the arduino
         """
-        super().__init__(path, baud)
+        super().__init__(path, baud, debug=False)
         self.logger = logger
         self.protocol.use_double_precision = False
         self.start_time = time.monotonic()  # timer for ping
@@ -43,8 +43,18 @@ class RobotTunnelClient(TunnelSerialClient):
     def set_motor_enable(self, state):
         self.write_handshake("motor_enable", state, write_interval=1.0, timeout=10.0)
 
-    def set_left_motor_velocity(self, velocity):
-        self.write("l", velocity)
+    async def get_motor_enable(self):
+        result = await self.get("is_motor_enabled", timeout=2.0)
+        return bool(result.get_int())
 
-    def set_right_motor_velocity(self, velocity):
-        self.write("r", velocity)
+    def set_left_motor_velocity(self, velocity: int):
+        self.write("l", int(velocity))
+
+    def set_right_motor_velocity(self, velocity: int):
+        self.write("r", int(velocity))
+
+    def stop(self):
+        self.set_motor_enable(False)
+        self.set_left_motor_velocity(0)
+        self.set_right_motor_velocity(0)
+        super().stop()

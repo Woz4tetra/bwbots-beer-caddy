@@ -127,6 +127,8 @@ class TunnelProtocol:
             # Parse each argument into bytes and append them to the packet
             if type(arg) == int:
                 packet += to_int32_bytes(arg)
+            elif type(arg) == bool:
+                packet += to_int32_bytes(int(arg))
             elif type(arg) == float:
                 if self.use_double_precision:
                     packet += to_double_bytes(arg)
