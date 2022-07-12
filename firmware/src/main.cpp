@@ -27,7 +27,7 @@ Chassis chassis(
 const int BNO055_RST_PIN = 25;
 Adafruit_BNO055 bno(-1, BNO055_ADDRESS_A, &I2C_BUS_2);
 
-BalanceController balance_controller(&chassis, &bno);
+BalanceController balance_controller(&chassis, &bno, 2.65, 4.0, 0.05, 0.0);
 
 void setup_i2c()
 {
@@ -63,7 +63,7 @@ void setup()
     chassis.begin();
     setup_i2c();
     setup_bno();
-    balance_controller.begin();
+    balance_controller.reset();
 
     chassis.set_speed_smooth_left_k(0.9);
     chassis.set_speed_smooth_right_k(0.9);
@@ -104,11 +104,17 @@ void packetCallback(PacketResult* result)
         chassis.set_right_motor(velocity);
     }
     else if (category.equals("balance")) {
-        float setpoint;
-        if (!result->getFloat(setpoint))  { PROTOCOL_SERIAL.println(F("Failed to set setpoint")); return; }
+        double setpoint, kp, kd;
+        if (!result->getDouble(setpoint))  { PROTOCOL_SERIAL.println(F("Failed to set setpoint")); return; }
+        if (!result->getDouble(kp))  { PROTOCOL_SERIAL.println(F("Failed to set kp")); return; }
+        if (!result->getDouble(kd))  { PROTOCOL_SERIAL.println(F("Failed to set kd")); return; }
         balance_controller.set_angle_setpoint(setpoint);
-        tunnel_writePacket("balance", "f", 
-            balance_controller.get_angle_setpoint()
+        balance_controller.set_kp(kp);
+        balance_controller.set_kd(kd);
+        tunnel_writePacket("balance", "eee", 
+            balance_controller.get_angle_setpoint(),
+            balance_controller.get_kp(),
+            balance_controller.get_kd()
         );
     }
 }
