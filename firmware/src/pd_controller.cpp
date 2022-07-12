@@ -16,7 +16,7 @@ void PDController::reset()
 
 double PDController::update(double error)
 {
-    if (error < tolerance) {
+    if (abs(error) < tolerance) {
         return 0.0;
     }
     return kp * error + kd * (error - prev_error) / dt();

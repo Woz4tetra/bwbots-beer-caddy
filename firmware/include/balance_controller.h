@@ -13,9 +13,9 @@ public:
     void reset();
     bool update();
 
-    double get_imu_x()  { return orientationData.orientation.x * M_PI / 180.0; }
-    double get_imu_y()  { return orientationData.orientation.y * M_PI / 180.0; }
-    double get_imu_z()  { return orientationData.orientation.z * M_PI / 180.0; }
+    double get_imu_x()  { return (double)(orientationData.orientation.x) * M_PI / 180.0; }
+    double get_imu_y()  { return (double)(orientationData.orientation.y) * M_PI / 180.0; }
+    double get_imu_z()  { return (double)(orientationData.orientation.z) * M_PI / 180.0; }
 
     double get_angle_setpoint()  { return angle_setpoint; }
     void set_angle_setpoint(double setpoint)  { angle_setpoint = setpoint; }

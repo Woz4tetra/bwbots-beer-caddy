@@ -15,8 +15,8 @@ Chassis chassis(
     27,  // motorl_dr1
     28,  // motorl_dr2
     29,  // motorl_pwm
-    31,  // motorr_dr1
-    32,  // motorr_dr2
+    32,  // motorr_dr1
+    31,  // motorr_dr2
     30,  // motorr_pwm
     23,  // motorl_enca
     22,  // motorl_encb
@@ -91,7 +91,8 @@ void packetCallback(PacketResult* result)
     }
     else if (category.equals("is_motor_enabled")) {
         uint8_t state = (uint8_t)(chassis.get_motor_enable());
-        tunnel_writePacket("is_motor_enabled", "j", state);
+        tunnel_writePacket("is_motor_enabled", "b", state);
+        balance_controller.set_enable(false);
     }
     else if (category.equals("l")) {
         int32_t velocity;
@@ -117,6 +118,14 @@ void packetCallback(PacketResult* result)
             balance_controller.get_kd()
         );
     }
+    else if (category.equals("balen")) {
+        bool enable;
+        if (!result->getBool(enable))  { PROTOCOL_SERIAL.println(F("Failed to set enable")); return; }
+        balance_controller.set_enable(enable);
+        tunnel_writePacket("balen", "b", 
+            balance_controller.get_enable()
+        );
+    }
 }
 
 void loop()
@@ -128,6 +137,9 @@ void loop()
         tunnel_writePacket("enc", "ddff", 
             left, right,
             chassis.get_left_speed(), chassis.get_right_speed()
+        );
+        tunnel_writePacket("motors", "dd", 
+            chassis.get_left_command(), chassis.get_right_command()
         );
     }
     if (balance_controller.update()) {

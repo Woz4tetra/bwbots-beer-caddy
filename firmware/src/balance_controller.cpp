@@ -24,6 +24,7 @@ bool BalanceController::update()
     if (enabled)
     {
         double voltage = controller->update(get_imu_y() - angle_setpoint);
+
         chassis->set_left_motor((int)(VOLTS_TO_PWM * voltage));
         chassis->set_right_motor((int)(VOLTS_TO_PWM * voltage));
     }

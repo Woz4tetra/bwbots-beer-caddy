@@ -168,21 +168,21 @@ int TunnelProtocol::makePacket(packet_type_t packet_type, char* write_buffer, co
                 write_buffer[buffer_index++] = uint32_union_data.byte[sizeof(uint32_t) - i - 1];
             }
         }
-        else if (*formats == 'h') {  // 8 bit signed
+        else if (*formats == 'b') {  // 8 bit signed
             int8_t value = va_arg(args, int);
             write_buffer[buffer_index++] = value;
         }
-        else if (*formats == 'j') {  // 8 bit unsigned
+        else if (*formats == 'c') {  // 8 bit unsigned
             uint8_t value = va_arg(args, int);
             write_buffer[buffer_index++] = value;
         }
-        else if (*formats == 'k') {  // 16 bit signed
+        else if (*formats == 'h') {  // 16 bit signed
             int16_union_data.integer = va_arg(args, int);
             for (unsigned short i = 0; i < sizeof(int16_t); i++) {
                 write_buffer[buffer_index++] = int16_union_data.byte[sizeof(int16_t) - i - 1];
             }
         }
-        else if (*formats == 'l') {  // 16 bit unsigned
+        else if (*formats == 'g') {  // 16 bit unsigned
             uint16_union_data.integer = va_arg(args, int);
             for (unsigned short i = 0; i < sizeof(uint16_t); i++) {
                 write_buffer[buffer_index++] = uint16_union_data.byte[sizeof(uint16_t) - i - 1];

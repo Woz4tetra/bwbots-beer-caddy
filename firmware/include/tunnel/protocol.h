@@ -181,6 +181,11 @@ public:
         _current_index += sizeof(uint8_t);
         return checkIndex();
     }
+    bool getBool(bool& result) {
+        result = (bool)_buffer[_current_index];
+        _current_index += sizeof(uint8_t);
+        return checkIndex();
+    }
     bool getFloat(float& result) {
         result = to_float(_buffer + _current_index);
         _current_index += sizeof(float);

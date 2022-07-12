@@ -40,7 +40,7 @@ class MySession(Session):
         self.tunnel = RobotTunnelClient(self.logger, self.config.tunnel.address)
 
         self.gpio = GpioManager(self.logger, self.config.gpio)
-        self.cli = RobotCLI(self.logger, self.tunnel)
+        self.cli = RobotCLI(self)
 
         self.logger.info("Session initialized!")
 
@@ -57,6 +57,12 @@ class MySession(Session):
         self.overlay_config = Config.from_file(self.overlay_config_path)
         self.config.merge(self.base_config)
         self.config.merge(self.overlay_config)
+    
+    def set_config(self, key: str, value):
+        value = type(self.config.get_nested(key.split("/")))(value)
+        self.config.set_nested(key.split("/"), value)
+        self.overlay_config.set_nested(key.split("/"), value, create=True)
+        self.overlay_config.save()
 
     def _init_log(self):
         """Call the LoggerManager get_logger method to initialize logger. Only call once!"""

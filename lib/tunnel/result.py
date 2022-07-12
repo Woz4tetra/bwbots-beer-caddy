@@ -1,4 +1,6 @@
 import asyncio
+
+import warnings
 from .util import *
 
 
@@ -76,6 +78,14 @@ class PacketResult:
         self.check_index()
         return result
 
+    def get_bool(self) -> bool:
+        """Parse the next 1 byte in the packet as an integer. Convert the int to a bool value"""
+        next_index = self.current_index + 1
+        result = to_int(self.buffer[self.current_index: next_index], False)
+        self.current_index = next_index
+        self.check_index()
+        return result
+
     def get_float(self) -> float:
         """
         Parse the next 4 bytes in the packet as an float.
@@ -144,6 +154,12 @@ class PacketResult:
 
     def __str__(self) -> str:
         return f"{self.__class__.__name__}<category={self.category}, error_code={self.error_code}, recv_time={self.recv_time}, packet_num={self.packet_num}, packet_type={self.packet_type}>"
+
+    def __del__(self):
+        if self.current_index != self.start_index:
+            length = self.stop_index - 1
+            if self.current_index < length:
+                warnings.warn("Unparsed data left in packet result: %s. %s bytes left" % (str(self), length - self.current_index))
 
     __repr__ = __str__
 

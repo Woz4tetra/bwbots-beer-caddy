@@ -21,3 +21,6 @@ tunnel:
 
 balance:
   setpoint: 0.0  # degrees
+  kp: 1.0
+  kd: 0.0
+

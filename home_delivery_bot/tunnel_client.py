@@ -1,4 +1,5 @@
 import time
+import math
 import asyncio
 import logging
 from lib.tunnel.serial.client import TunnelSerialClient
@@ -30,6 +31,10 @@ class RobotTunnelClient(TunnelSerialClient):
             y=0.0,
             z=0.0,
         )
+        self.motors_states = RecursiveNamespace(
+            left=0,
+            right=0,
+        )
 
     async def packet_callback(self, result: PacketResult):
         """
@@ -52,7 +57,9 @@ class RobotTunnelClient(TunnelSerialClient):
             self.imu_states.x = result.get_float()
             self.imu_states.y = result.get_float()
             self.imu_states.z = result.get_float()
-
+        elif result.category == "motors":
+            self.motors_states.left = result.get_int()
+            self.motors_states.right = result.get_int()
 
     def get_time(self):
         """Get the time since __init__ was called"""
@@ -63,11 +70,11 @@ class RobotTunnelClient(TunnelSerialClient):
         self.write("ping", "f", self.get_time())
 
     def set_motor_enable(self, state):
-        self.write_handshake("motor_enable", "j", state, write_interval=1.0, timeout=10.0)
+        self.write_handshake("motor_enable", "b", state, write_interval=1.0, timeout=10.0)
 
     async def get_motor_enable(self):
         result = await self.get("is_motor_enabled", "", timeout=2.0)
-        return bool(result.get_int(1, signed=False))
+        return result.get_bool()
 
     def set_left_motor_velocity(self, velocity: int):
         self.write("l", "d", int(velocity))
@@ -76,9 +83,18 @@ class RobotTunnelClient(TunnelSerialClient):
         self.write("r", "d", int(velocity))
     
     async def set_balance_config(self, config: RecursiveNamespace):
-        result = await self.get("balance", "f", config.setpoint, timeout=2.0)
-        assert result.get_float() == config.setpoint
+        self.logger.info("Setting balance config: %s" % str(config))
+        setpoint = math.radians(config.setpoint)
+        result = await self.get("balance", "eee", setpoint, config.kp, config.kd, timeout=2.0)
+        assert result.get_double() == setpoint
+        assert result.get_double() == config.kp
+        assert result.get_double() == config.kd
         self.logger.info("Controller config set")
+
+    async def enable_balance(self, state: bool):
+        result = await self.get("balen", "b", state, timeout=2.0)
+        assert result.get_bool() == state
+        self.logger.info("Controller enable set to %s" % state)
 
     def stop(self):
         self.set_motor_enable(False)

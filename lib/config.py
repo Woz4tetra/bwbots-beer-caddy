@@ -24,13 +24,21 @@ class Config(RecursiveNamespace):
                 config_yaml = {}
         self = cls()
         self.update(config_yaml)
+        self.__path__ = path
         return self
 
-    def save(self, path):
+    def save(self, path=None):
         """
         Save all parameters contained in this config into a YAML file
-        :param path: absolute or relative path to new YAML file
+        :param path: absolute or relative path to new YAML file. If None, use the stored path.
         :return: None
         """
+        restore = False
+        if path is None:
+            path = self.__path__
+            del self.__path__
+            restore = True
         with open(path, 'w') as file:
             yaml.safe_dump(self.to_dict(), file)
+        if restore:
+            self.__path__ = path
