@@ -1,4 +1,7 @@
 # specific files/directories
+pcb/bw_beer_caddy/export
+pcb/bw_beer_caddy/bw_beer_caddy-backups
+fp-info-cache
 
 # MATLAB
 slprj/
@@ -7,6 +10,10 @@ slprj/
 # IDEs
 .idea/
 .vscode/
+
+# KiCAD
+*.bak
+*.kicad_prl
 
 .DS_Store
 

@@ -10,9 +10,9 @@ from lib.logger_manager import LoggerManager
 from lib.session import Session
 from lib.config import Config
 
-from home_delivery_bot.tunnel_client import RobotTunnelClient
-from home_delivery_bot.gpio_manager import GpioManager
-from home_delivery_bot.commandline import RobotCLI
+from beer_caddy.tunnel_client import RobotTunnelClient
+from beer_caddy.gpio_manager import GpioManager
+from beer_caddy.commandline import RobotCLI
 
 
 class MySession(Session):
