@@ -82,6 +82,9 @@ class RobotTunnelClient(TunnelSerialClient):
     def set_right_motor_velocity(self, velocity: int):
         self.write("r", "d", int(velocity))
     
+    def set_servo(self, servo_num, position):
+        self.write("s", "cg", int(servo_num), int(position))
+
     async def set_balance_config(self, config: RecursiveNamespace):
         self.logger.info("Setting balance config: %s" % str(config))
         setpoint = math.radians(config.setpoint)

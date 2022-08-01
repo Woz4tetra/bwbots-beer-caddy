@@ -7,7 +7,7 @@
   (paper "A4")
   (title_block
     (title "bw_beer_caddy")
-    (rev "0")
+    (rev "1")
     (company "BWBots")
   )
 
@@ -2846,7 +2846,7 @@
   (gr_text "Ben Warwick 2022" (at 127 47) (layer "B.SilkS") (tstamp e7398d45-670b-49f0-a8e8-8e852532cb68)
     (effects (font (size 1.5 1.5) (thickness 0.3)) (justify left mirror))
   )
-  (gr_text "bw_bcause Rev 00" (at 106 47) (layer "F.SilkS") (tstamp 33946da9-7ddd-48b5-9fe5-9e1a4c00c263)
+  (gr_text "bw_bcause Rev 01" (at 106 47) (layer "F.SilkS") (tstamp 33946da9-7ddd-48b5-9fe5-9e1a4c00c263)
     (effects (font (size 1.5 1.5) (thickness 0.3)) (justify left))
   )
 

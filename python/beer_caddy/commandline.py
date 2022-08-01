@@ -32,6 +32,9 @@ class RobotCLI(aiocmd.PromptToolkitCmd):
             self.logger.error("Timed out while getting motor enable state")
             return None
 
+    async def do_servo(self, position):
+        self.tunnel.set_servo(0, position)
+
     async def do_l(self, velocity):
         """Move left motor at velocity"""
         state = await self.is_motor_enabled()

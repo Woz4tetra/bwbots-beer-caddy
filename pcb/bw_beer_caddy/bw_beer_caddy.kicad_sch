@@ -6,7 +6,7 @@
 
   (title_block
     (title "bw_beer_caddy")
-    (rev "0")
+    (rev "1")
     (company "BWBots")
   )
 
@@ -2549,7 +2549,6 @@
       )
     )
   )
-
 
   (junction (at 285.75 130.81) (diameter 0) (color 0 0 0 0)
     (uuid 035ced39-0663-4ca6-a147-87e27bc7f6ed)

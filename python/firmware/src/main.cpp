@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <Adafruit_BNO055.h>
+#include <Adafruit_PWMServoDriver.h>
 
 #include "tunnel/serial.h"
 #include "chassis.h"
@@ -29,6 +30,13 @@ Adafruit_BNO055 bno(-1, BNO055_ADDRESS_A, &I2C_BUS_2);
 
 BalanceController balance_controller(&chassis, &bno, 2.65, 4.0, 0.05, 0.0);
 
+const int SERVOMIN = 150; // This is the 'minimum' pulse length count (out of 4096)
+const int SERVOMAX = 600; // This is the 'maximum' pulse length count (out of 4096)
+const int USMIN = 600; // This is the rounded 'minimum' microsecond length based on the minimum pulse of 150
+const int USMAX = 2400; // This is the rounded 'maximum' microsecond length based on the maximum pulse of 600
+const int SERVO_FREQ =50; // Analog servos run at ~50 Hz updates
+Adafruit_PWMServoDriver servos = Adafruit_PWMServoDriver();
+
 void setup_i2c()
 {
     I2C_BUS_1.begin();
@@ -52,6 +60,11 @@ void setup_bno()
     delay(100);
     bno.setExtCrystalUse(true);
     delay(100);
+
+    servos.begin();
+    servos.setPWMFreq(SERVO_FREQ);
+
+    delay(10);
 }
 
 void setup()
@@ -125,6 +138,15 @@ void packetCallback(PacketResult* result)
         tunnel_writePacket("balen", "b", 
             balance_controller.get_enable()
         );
+    }
+    else if (category.equals("s")) {
+        uint16_t pulselen;
+        uint8_t servonum;
+        if (!result->getUInt8(servonum)) { PROTOCOL_SERIAL.println(F("Failed to get servo number")); return; }
+        if (!result->getUInt16(pulselen)) { PROTOCOL_SERIAL.println(F("Failed to get servo pulse length")); return; }
+        if (0 <= servonum && servonum < 16) {
+            servos.setPWM(servonum, 0, pulselen);
+        }
     }
 }
 
