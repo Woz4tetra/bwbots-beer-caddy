@@ -5,6 +5,7 @@ REMOTE_KEY=$2
 RESTART=$3
 
 LOCAL_PATH=${PARENT_DIR}
+UPLOAD_PATH=$(dirname $LOCAL_PATH)
 DESTINATION_PATH=/home/pi
 
 if [ -z ${DESTINATION_NAME} ]; then
@@ -17,6 +18,6 @@ if [ -z ${REMOTE_KEY} ]; then
     exit
 fi
 
-rsync -avur --exclude-from=${LOCAL_PATH}/install/exclude.txt  -e "ssh -i ${REMOTE_KEY}"  ${LOCAL_PATH} pi@${DESTINATION_NAME}:${DESTINATION_PATH}
+rsync -avur --exclude-from=${LOCAL_PATH}/install/exclude.txt  -e "ssh -i ${REMOTE_KEY}"  ${UPLOAD_PATH} pi@${DESTINATION_NAME}:${DESTINATION_PATH}
 
 ${BASE_DIR}/restart.sh ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART}

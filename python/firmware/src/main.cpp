@@ -34,8 +34,8 @@ const int SERVOMIN = 150; // This is the 'minimum' pulse length count (out of 40
 const int SERVOMAX = 600; // This is the 'maximum' pulse length count (out of 4096)
 const int USMIN = 600; // This is the rounded 'minimum' microsecond length based on the minimum pulse of 150
 const int USMAX = 2400; // This is the rounded 'maximum' microsecond length based on the maximum pulse of 600
-const int SERVO_FREQ =50; // Analog servos run at ~50 Hz updates
-Adafruit_PWMServoDriver servos = Adafruit_PWMServoDriver();
+const int SERVO_FREQ = 50; // Analog servos run at ~50 Hz updates
+Adafruit_PWMServoDriver servos = Adafruit_PWMServoDriver(0x40, I2C_BUS_2);
 
 void setup_i2c()
 {
@@ -62,6 +62,7 @@ void setup_bno()
     delay(100);
 
     servos.begin();
+    servos.setOscillatorFrequency(27000000);
     servos.setPWMFreq(SERVO_FREQ);
 
     delay(10);
