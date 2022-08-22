@@ -21,6 +21,8 @@ slprj/
 # KiCAD
 *.bak
 *.kicad_prl
+_autosave-*.kicad*
+*.kicad_sch-bak
 
 .DS_Store
 
