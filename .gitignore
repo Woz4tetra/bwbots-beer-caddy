@@ -3,6 +3,13 @@ pcb/bw_beer_caddy/export
 pcb/bw_beer_caddy/bw_beer_caddy-backups
 fp-info-cache
 
+# nano
+*.swap
+
+# libre office
+\#auto_saved_files\#
+.~lock*
+
 # MATLAB
 slprj/
 *.slxc
