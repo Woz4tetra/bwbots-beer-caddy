@@ -87,18 +87,18 @@ void loop()
     for (int value = 0; value < 255; value++) {
         set_m1(value);
         set_m2(value);
-        delay(5);
+        delay(50);
     }
 
     for (int value = 255; value >= -255; value--) {
         set_m1(value);
         set_m2(value);
-        delay(5);
+        delay(50);
     }
 
     for (int value = -255; value < 0; value++) {
         set_m1(value);
         set_m2(value);
-        delay(5);
+        delay(50);
     }
 }

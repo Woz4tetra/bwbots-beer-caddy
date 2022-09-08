@@ -3,6 +3,9 @@ pcb/bw_beer_caddy/export
 pcb/bw_beer_caddy/bw_beer_caddy-backups
 fp-info-cache
 
+# platformio
+.pio/
+
 # nano
 *.swap
 
