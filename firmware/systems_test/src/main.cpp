@@ -146,6 +146,16 @@ void setup()
     enc2.write(0);
     enc3.write(0);
     enc4.write(0);
+
+    servos.setPWM(0, 0, 400);
+    servos.setPWM(1, 0, 235);
+    servos.setPWM(2, 0, 235);
+    servos.setPWM(3, 0, 400);
+
+    for (int pixel = 0; pixel < NUM_PIXELS; pixel++) {
+        led_ring.setPixelColor(pixel, led_ring.Color(0, 0, 0, 0));
+    }
+    led_ring.show();
 }
 
 void set_all_motors(int speed) {
@@ -164,41 +174,165 @@ void set_all_servos(int position) {
     // Serial.println(signal);
 }
 
-int motor_value = 0;
-int base_increment = 1;
-int increment = 1;
-uint32_t increment_delay = 10;
-uint32_t increment_timer = 0;
-uint32_t current_time = 0;
+// int motor_value = 0;
+// int base_increment = 1;
+// int increment = 1;
+// uint32_t increment_delay = 10;
+// uint32_t increment_timer = 0;
+// uint32_t current_time = 0;
 
-void loop()
+// bool prev_button_state = false;
+// int servo_pos = 450;
+
+void square_demo()
 {
-    // set_button_led(read_button());
+    // straight
+    //   0 - 400
+    //   1 - 235
+    //   2 - 235
+    //   3 - 400
+
+    // rotated
+    //   0 - 165
+    //   1 - 490
+    //   2 - 490
+    //   3 - 135
 
     if (read_button())
     {
-        set_button_led(false);
-        set_all_motors(100);
-        set_all_servos(50);
-        delay(1000);
-        for (int pixel = 0; pixel < NUM_PIXELS; pixel++) {
-            led_ring.setPixelColor(pixel, led_ring.Color(255, 0, 0, 0));
-            delay(20);
-            led_ring.show();
-        }
-        set_all_motors(-100);
-        set_all_servos(-50);
-        delay(1000);
-        for (int pixel = 0; pixel < NUM_PIXELS; pixel++) {
-            led_ring.setPixelColor(pixel, led_ring.Color(0, 255, 0, 0));
-            delay(20);
-            led_ring.show();
-        }
+        // forward
+        servos.setPWM(0, 0, 400);
+        servos.setPWM(1, 0, 235);
+        servos.setPWM(2, 0, 235);
+        servos.setPWM(3, 0, 400);
+
+        motor1.set(-100);
+        motor2.set(100);
+        motor3.set(-100);
+        motor4.set(100);
+        delay(2000);
+
         set_all_motors(0);
+        delay(1000);
+
+        // sideways +
+
+        servos.setPWM(0, 0, 165);
+        servos.setPWM(1, 0, 490);
+        servos.setPWM(2, 0, 490);
+        servos.setPWM(3, 0, 135);
+
+        motor1.set(-100);
+        motor2.set(-100);
+        motor3.set(100);
+        motor4.set(100);
+        delay(2000);
+
+        set_all_motors(0);
+        delay(1000);
+
+        // backward
+
+        servos.setPWM(0, 0, 400);
+        servos.setPWM(1, 0, 235);
+        servos.setPWM(2, 0, 235);
+        servos.setPWM(3, 0, 400);
+
+        motor1.set(100);
+        motor2.set(-100);
+        motor3.set(100);
+        motor4.set(-100);
+        delay(2000);
+
+        set_all_motors(0);
+        delay(1000);
+
+        // sideways -
+
+        servos.setPWM(0, 0, 165);
+        servos.setPWM(1, 0, 490);
+        servos.setPWM(2, 0, 490);
+        servos.setPWM(3, 0, 135);
+
+        motor1.set(100);
+        motor2.set(100);
+        motor3.set(-100);
+        motor4.set(-100);
+        delay(2000);
+
+        set_all_motors(0);
+        delay(1000);
+
+        servos.setPWM(0, 0, 400);
+        servos.setPWM(1, 0, 235);
+        servos.setPWM(2, 0, 235);
+        servos.setPWM(3, 0, 400);
     }
-    else {
-        set_button_led(true);
+}
+
+void rotate_demo()
+{
+    if (read_button())
+    {
+        servos.setPWM(0, 0, 165);
+        servos.setPWM(1, 0, 490);
+        servos.setPWM(2, 0, 490);
+        servos.setPWM(3, 0, 135);
+
+        motor1.set(200);
+        motor2.set(200);
+        motor3.set(200);
+        motor4.set(200);
+        delay(2000);
+
+        set_all_motors(0);
+        delay(1000);
+
+        servos.setPWM(0, 0, 400);
+        servos.setPWM(1, 0, 235);
+        servos.setPWM(2, 0, 235);
+        servos.setPWM(3, 0, 400);
     }
+}
+
+void loop()
+{
+    rotate_demo();
+
+    // bool button_state = read_button();
+    // if (button_state && button_state != prev_button_state) {
+    //     servo_pos -= 10;
+    //     Serial.println(servo_pos);
+    //     servos.setPWM(3, 0, servo_pos);
+    // }
+    // prev_button_state = button_state;
+
+    // set_button_led(read_button());
+
+    // if (read_button())
+    // {
+    //     set_button_led(false);
+    //     set_all_motors(100);
+    //     set_all_servos(50);
+    //     delay(1000);
+    //     for (int pixel = 0; pixel < NUM_PIXELS; pixel++) {
+    //         led_ring.setPixelColor(pixel, led_ring.Color(255, 0, 0, 0));
+    //         delay(20);
+    //         led_ring.show();
+    //     }
+    //     set_all_motors(-100);
+    //     set_all_servos(-50);
+    //     delay(1000);
+    //     for (int pixel = 0; pixel < NUM_PIXELS; pixel++) {
+    //         led_ring.setPixelColor(pixel, led_ring.Color(0, 255, 0, 0));
+    //         delay(20);
+    //         led_ring.show();
+    //     }
+    //     set_all_motors(0);
+    // }
+    // else {
+    //     set_button_led(true);
+    // }
 
     // current_time = millis();
     // if (current_time - increment_timer > increment_delay) {
