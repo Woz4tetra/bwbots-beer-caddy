@@ -3,6 +3,7 @@
 #include <Encoder.h>
 #include <Adafruit_PWMServoDriver.h>
 #include <Adafruit_INA219.h>
+#include <Adafruit_NeoPixel.h>
 #include <MotorControllerMC33926/MotorControllerMC33926.h>
 
 #define I2C_BUS_1 Wire
@@ -12,6 +13,7 @@ const int MOTOR_EN = 1;
 
 const int BUTTON_IN = 15;
 const int BUTTON_LED = 14;
+const int BUILTIN_LED = 13;
 
 
 const int M1_SPEED = 9;
@@ -64,8 +66,11 @@ const int USMAX = 2400; // This is the rounded 'maximum' microsecond length base
 const int SERVO_FREQ = 50; // Analog servos run at ~50 Hz updates
 Adafruit_PWMServoDriver servos = Adafruit_PWMServoDriver(0x40 + 0b000010, I2C_BUS_1);
 
-Adafruit_INA219 main_ina(0x40);
 Adafruit_INA219 charge_ina(0x40 + 0b01);
+
+const int LED_RING = 39;
+const int NUM_PIXELS = 24;
+Adafruit_NeoPixel led_ring(NUM_PIXELS, LED_RING, NEO_GRBW + NEO_KHZ800);
 
 void report_encoders()
 {
@@ -88,6 +93,10 @@ void set_status_led(bool state) {
     digitalWrite(STATUS_LED, state);
 }
 
+void set_builtin_led(bool state) {
+    digitalWrite(BUILTIN_LED, state);
+}
+
 void set_motor_enable(bool state) {
     digitalWrite(MOTOR_EN, state);
 }
@@ -97,7 +106,7 @@ void set_button_led(bool state) {
 }
 
 bool read_button() {
-    return digitalRead(BUTTON_IN);
+    return !digitalRead(BUTTON_IN);
 }
 
 void setup()
@@ -112,16 +121,19 @@ void setup()
     servos.setOscillatorFrequency(27000000);
     servos.setPWMFreq(SERVO_FREQ);
 
-    main_ina.begin();
     charge_ina.begin();
+
+    led_ring.begin();
 
     pinMode(STATUS_LED, OUTPUT);
     pinMode(MOTOR_EN, OUTPUT);
 
     pinMode(BUTTON_IN, INPUT_PULLUP);
     pinMode(BUTTON_LED, OUTPUT);
+    pinMode(BUILTIN_LED, OUTPUT);
 
     set_status_led(true);
+    set_builtin_led(true);
     set_motor_enable(true);
     set_button_led(true);
 
@@ -136,53 +148,83 @@ void setup()
     enc4.write(0);
 }
 
+void set_all_motors(int speed) {
+    motor1.set(speed);
+    motor2.set(speed);
+    motor3.set(speed);
+    motor4.set(speed);
+}
+
+void set_all_servos(int position) {
+    int signal = map(position, -255, 255, SERVOMIN, SERVOMAX);
+    servos.setPWM(0, 0, signal);
+    servos.setPWM(1, 0, signal);
+    servos.setPWM(2, 0, signal);
+    servos.setPWM(3, 0, signal);
+    // Serial.println(signal);
+}
+
+int motor_value = 0;
+int base_increment = 1;
+int increment = 1;
+uint32_t increment_delay = 10;
+uint32_t increment_timer = 0;
+uint32_t current_time = 0;
+
 void loop()
 {
-    Serial.print(main_ina.getPower_mW());
-    Serial.print('\t');
-    Serial.println(charge_ina.getPower_mW());
-    delay(100);
+    // set_button_led(read_button());
 
-    // Serial.println("150");
-    // servos.setPWM(0, 0, 150);
-    // servos.setPWM(1, 0, 150);
-    // servos.setPWM(2, 0, 150);
-    // servos.setPWM(3, 0, 150);
+    if (read_button())
+    {
+        set_button_led(false);
+        set_all_motors(100);
+        set_all_servos(50);
+        delay(1000);
+        for (int pixel = 0; pixel < NUM_PIXELS; pixel++) {
+            led_ring.setPixelColor(pixel, led_ring.Color(255, 0, 0, 0));
+            delay(20);
+            led_ring.show();
+        }
+        set_all_motors(-100);
+        set_all_servos(-50);
+        delay(1000);
+        for (int pixel = 0; pixel < NUM_PIXELS; pixel++) {
+            led_ring.setPixelColor(pixel, led_ring.Color(0, 255, 0, 0));
+            delay(20);
+            led_ring.show();
+        }
+        set_all_motors(0);
+    }
+    else {
+        set_button_led(true);
+    }
 
-    // delay(1000);
+    // current_time = millis();
+    // if (current_time - increment_timer > increment_delay) {
+    //     motor_value += increment;
+    //     Serial.println(motor_value);
+    //     if (motor_value >= 255) {
+    //         increment = -base_increment;
 
-    // Serial.println("600");
-    // servos.setPWM(0, 0, 600);
-    // servos.setPWM(1, 0, 600);
-    // servos.setPWM(2, 0, 600);
-    // servos.setPWM(3, 0, 600);
+    //         set_all_servos(50);
+    //         for (int pixel = 0; pixel < NUM_PIXELS; pixel++) {
+    //             led_ring.setPixelColor(pixel, led_ring.Color(abs(motor_value), 0, 0, 0));
+    //         }
+    //         led_ring.show();
+    //     }
+    //     else if (motor_value <= -255) {
+    //         increment = base_increment;
 
-    // delay(1000);
-
-    // for (int value = 0; value < 255; value++) {
-    //     motor1.set(value);
-    //     motor2.set(value);
-    //     motor3.set(value);
-    //     motor4.set(value);
-    //     delay(50);
+    //         set_all_servos(-50);
+    //         for (int pixel = 0; pixel < NUM_PIXELS; pixel++) {
+    //             led_ring.setPixelColor(pixel, led_ring.Color(0, 0, abs(motor_value), 0));
+    //         }
+    //         led_ring.show();
+    //     }
     //     report_encoders();
-    // }
-
-    // for (int value = 255; value >= -255; value--) {
-    //     motor1.set(value);
-    //     motor2.set(value);
-    //     motor3.set(value);
-    //     motor4.set(value);
-    //     delay(50);
-    //     report_encoders();
-    // }
-
-    // for (int value = -255; value < 0; value++) {
-    //     motor1.set(value);
-    //     motor2.set(value);
-    //     motor3.set(value);
-    //     motor4.set(value);
-    //     delay(50);
-    //     report_encoders();
+    //     set_all_motors(motor_value);
+    //     Serial.println(charge_ina.getBusVoltage_V());
+    //     increment_timer = current_time;
     // }
 }
