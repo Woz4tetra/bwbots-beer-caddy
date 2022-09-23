@@ -109,6 +109,22 @@ bool read_button() {
     return !digitalRead(BUTTON_IN);
 }
 
+void point_servos_straight()
+{
+    servos.setPWM(0, 0, 400);
+    servos.setPWM(1, 0, 235);
+    servos.setPWM(2, 0, 235);
+    servos.setPWM(3, 0, 400);
+}
+
+void point_servos_sideways()
+{
+    servos.setPWM(0, 0, 165);
+    servos.setPWM(1, 0, 490);
+    servos.setPWM(2, 0, 490);
+    servos.setPWM(3, 0, 135);
+}
+
 void setup()
 {
     Serial.begin(9600);
@@ -147,10 +163,7 @@ void setup()
     enc3.write(0);
     enc4.write(0);
 
-    servos.setPWM(0, 0, 400);
-    servos.setPWM(1, 0, 235);
-    servos.setPWM(2, 0, 235);
-    servos.setPWM(3, 0, 400);
+    point_servos_straight();
 
     for (int pixel = 0; pixel < NUM_PIXELS; pixel++) {
         led_ring.setPixelColor(pixel, led_ring.Color(0, 0, 0, 0));
@@ -165,24 +178,52 @@ void set_all_motors(int speed) {
     motor4.set(speed);
 }
 
+
+void set_motor(int channel, int speed) {
+    switch (channel)
+    {
+    case 0:
+        motor1.set(speed);
+        break;
+    case 1:
+        motor2.set(speed);
+        break;
+    case 2:
+        motor3.set(speed);
+        break;
+    case 3:
+        motor4.set(speed);
+        break;
+    
+    default:
+        break;
+    }
+}
+
 void set_all_servos(int position) {
     int signal = map(position, -255, 255, SERVOMIN, SERVOMAX);
     servos.setPWM(0, 0, signal);
     servos.setPWM(1, 0, signal);
     servos.setPWM(2, 0, signal);
     servos.setPWM(3, 0, signal);
-    // Serial.println(signal);
+    Serial.println(signal);
 }
 
-// int motor_value = 0;
-// int base_increment = 1;
-// int increment = 1;
-// uint32_t increment_delay = 10;
-// uint32_t increment_timer = 0;
-// uint32_t current_time = 0;
+void straight_demo()
+{
+    point_servos_straight();
+    if (read_button())
+    {
+        motor1.set(-100);
+        motor2.set(100);
+        motor3.set(-100);
+        motor4.set(100);
+    }
+    else {
+        set_all_motors(0);
+    }
+}
 
-// bool prev_button_state = false;
-// int servo_pos = 450;
 
 void square_demo()
 {
@@ -201,10 +242,7 @@ void square_demo()
     if (read_button())
     {
         // forward
-        servos.setPWM(0, 0, 400);
-        servos.setPWM(1, 0, 235);
-        servos.setPWM(2, 0, 235);
-        servos.setPWM(3, 0, 400);
+        point_servos_straight();
 
         motor1.set(-100);
         motor2.set(100);
@@ -215,12 +253,9 @@ void square_demo()
         set_all_motors(0);
         delay(1000);
 
-        // sideways +
+        // sideways + (left)
 
-        servos.setPWM(0, 0, 165);
-        servos.setPWM(1, 0, 490);
-        servos.setPWM(2, 0, 490);
-        servos.setPWM(3, 0, 135);
+        point_servos_sideways();
 
         motor1.set(-100);
         motor2.set(-100);
@@ -233,10 +268,7 @@ void square_demo()
 
         // backward
 
-        servos.setPWM(0, 0, 400);
-        servos.setPWM(1, 0, 235);
-        servos.setPWM(2, 0, 235);
-        servos.setPWM(3, 0, 400);
+        point_servos_straight();
 
         motor1.set(100);
         motor2.set(-100);
@@ -247,12 +279,9 @@ void square_demo()
         set_all_motors(0);
         delay(1000);
 
-        // sideways -
+        // sideways - (right)
 
-        servos.setPWM(0, 0, 165);
-        servos.setPWM(1, 0, 490);
-        servos.setPWM(2, 0, 490);
-        servos.setPWM(3, 0, 135);
+        point_servos_sideways();
 
         motor1.set(100);
         motor2.set(100);
@@ -263,10 +292,7 @@ void square_demo()
         set_all_motors(0);
         delay(1000);
 
-        servos.setPWM(0, 0, 400);
-        servos.setPWM(1, 0, 235);
-        servos.setPWM(2, 0, 235);
-        servos.setPWM(3, 0, 400);
+        point_servos_straight();
     }
 }
 
@@ -274,10 +300,7 @@ void rotate_demo()
 {
     if (read_button())
     {
-        servos.setPWM(0, 0, 165);
-        servos.setPWM(1, 0, 490);
-        servos.setPWM(2, 0, 490);
-        servos.setPWM(3, 0, 135);
+        point_servos_sideways();
 
         motor1.set(200);
         motor2.set(200);
@@ -288,77 +311,111 @@ void rotate_demo()
         set_all_motors(0);
         delay(1000);
 
-        servos.setPWM(0, 0, 400);
-        servos.setPWM(1, 0, 235);
-        servos.setPWM(2, 0, 235);
-        servos.setPWM(3, 0, 400);
+        point_servos_straight();
     }
 }
 
+
+void motor_ramp_demo()
+{
+    static int motor_value = 0;
+    static int base_increment = 1;
+    static int increment = 1;
+    static uint32_t increment_delay = 10;
+    static uint32_t increment_timer = 0;
+    static uint32_t current_time = 0;
+
+    if (!read_button())
+        return;
+    }
+
+    current_time = millis();
+    if (current_time - increment_timer > increment_delay) {
+        motor_value += increment;
+        Serial.println(motor_value);
+        if (motor_value >= 255) {
+            increment = -base_increment;
+
+            set_all_servos(50);
+            for (int pixel = 0; pixel < NUM_PIXELS; pixel++) {
+                led_ring.setPixelColor(pixel, led_ring.Color(abs(motor_value), 0, 0, 0));
+            }
+            led_ring.show();
+        }
+        else if (motor_value <= -255) {
+            increment = base_increment;
+
+            set_all_servos(-50);
+            for (int pixel = 0; pixel < NUM_PIXELS; pixel++) {
+                led_ring.setPixelColor(pixel, led_ring.Color(0, 0, abs(motor_value), 0));
+            }
+            led_ring.show();
+        }
+        report_encoders();
+        set_all_motors(motor_value);
+        Serial.println(charge_ina.getBusVoltage_V());
+        increment_timer = current_time;
+    }
+}
+
+void command_line_demo()
+{
+    static int servo_position;
+    static int motor_velocity;
+    static int selected_channel;
+
+    if (Serial.available()) {
+        String command = Serial.readStringUntil('\n');
+        switch (command.charAt(0))
+        {
+        case 'c':
+            selected_channel = command.substring(1).toInt();
+            Serial.print("Selecting channel ");
+            Serial.println(selected_channel);
+            break;
+        case 'p'
+            servo_position = command.substring(1).toInt();
+            Serial.print("Setting servo ");
+            Serial.print(selected_channel);
+            Serial.print(" to ");
+            Serial.println(servo_position);
+            servos.setPWM(selected_channel, 0, servo_position);
+            break;
+        case 'v':
+            motor_velocity = command.substring(1).toInt();
+            Serial.print("Setting motor ");
+            Serial.print(selected_channel);
+            Serial.print(" to ");
+            Serial.println(motor_velocity);
+            set_motor(selected_channel, motor_velocity);
+            break;
+        case 'x':
+            set_all_motors(0);
+            point_servos_straight();
+            break;
+
+        default:
+            break;
+        }
+    }
+}
+
+/*
+straight to sideways angle: 74.293309
+straight to alcove angle: 30.0
+straight to rotate in place angle: 54.293309
+    straight    alcove  rotate  
+0   400			400		400
+1   400			400		400
+2   400			400		400
+3   400			400		400
+*/
+
 void loop()
 {
-    rotate_demo();
-
-    // bool button_state = read_button();
-    // if (button_state && button_state != prev_button_state) {
-    //     servo_pos -= 10;
-    //     Serial.println(servo_pos);
-    //     servos.setPWM(3, 0, servo_pos);
-    // }
-    // prev_button_state = button_state;
-
-    // set_button_led(read_button());
-
-    // if (read_button())
-    // {
-    //     set_button_led(false);
-    //     set_all_motors(100);
-    //     set_all_servos(50);
-    //     delay(1000);
-    //     for (int pixel = 0; pixel < NUM_PIXELS; pixel++) {
-    //         led_ring.setPixelColor(pixel, led_ring.Color(255, 0, 0, 0));
-    //         delay(20);
-    //         led_ring.show();
-    //     }
-    //     set_all_motors(-100);
-    //     set_all_servos(-50);
-    //     delay(1000);
-    //     for (int pixel = 0; pixel < NUM_PIXELS; pixel++) {
-    //         led_ring.setPixelColor(pixel, led_ring.Color(0, 255, 0, 0));
-    //         delay(20);
-    //         led_ring.show();
-    //     }
-    //     set_all_motors(0);
-    // }
-    // else {
-    //     set_button_led(true);
-    // }
-
-    // current_time = millis();
-    // if (current_time - increment_timer > increment_delay) {
-    //     motor_value += increment;
-    //     Serial.println(motor_value);
-    //     if (motor_value >= 255) {
-    //         increment = -base_increment;
-
-    //         set_all_servos(50);
-    //         for (int pixel = 0; pixel < NUM_PIXELS; pixel++) {
-    //             led_ring.setPixelColor(pixel, led_ring.Color(abs(motor_value), 0, 0, 0));
-    //         }
-    //         led_ring.show();
-    //     }
-    //     else if (motor_value <= -255) {
-    //         increment = base_increment;
-
-    //         set_all_servos(-50);
-    //         for (int pixel = 0; pixel < NUM_PIXELS; pixel++) {
-    //             led_ring.setPixelColor(pixel, led_ring.Color(0, 0, abs(motor_value), 0));
-    //         }
-    //         led_ring.show();
-    //     }
-    //     report_encoders();
-    //     set_all_motors(motor_value);
-    //     Serial.println(charge_ina.getBusVoltage_V());
-    //     increment_timer = current_time;
-    // }
+    straight_demo();
+    // square_demo();
+    // rotate_demo();
+    // motor_ramp_demo();
+    command_line_demo();
 }

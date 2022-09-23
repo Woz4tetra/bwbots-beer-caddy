@@ -17,6 +17,7 @@ void MotorControllerMC33926::begin()
     pinMode(DIR_N, OUTPUT);
     pinMode(SF, INPUT);
     pinMode(FB, INPUT);
+    analogWriteFrequency(SPEED, 500);  // Set PWM frequency of the speed pin to 500 Hz
 }
 
 void MotorControllerMC33926::set(int speed)
