@@ -214,10 +214,10 @@ void straight_demo()
     point_servos_straight();
     if (read_button())
     {
-        motor1.set(-100);
-        motor2.set(100);
-        motor3.set(-100);
-        motor4.set(100);
+        motor1.set(-80);
+        motor2.set(80);
+        motor3.set(-80);
+        motor4.set(80);
     }
     else {
         set_all_motors(0);
@@ -325,7 +325,7 @@ void motor_ramp_demo()
     static uint32_t increment_timer = 0;
     static uint32_t current_time = 0;
 
-    if (!read_button())
+    if (!read_button()) {
         return;
     }
 
@@ -373,7 +373,7 @@ void command_line_demo()
             Serial.print("Selecting channel ");
             Serial.println(selected_channel);
             break;
-        case 'p'
+        case 'p':
             servo_position = command.substring(1).toInt();
             Serial.print("Setting servo ");
             Serial.print(selected_channel);
