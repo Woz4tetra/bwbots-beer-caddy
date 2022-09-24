@@ -241,6 +241,12 @@ void square_demo()
 
     if (read_button())
     {
+        for (int pixel = 0; pixel < NUM_PIXELS; pixel++) {
+            led_ring.setPixelColor(pixel, led_ring.Color(255, 0, 0, 0));
+            delay(10);
+            led_ring.show();
+        }
+
         // forward
         point_servos_straight();
 
@@ -251,6 +257,13 @@ void square_demo()
         delay(2000);
 
         set_all_motors(0);
+
+        for (int pixel = 0; pixel < NUM_PIXELS; pixel++) {
+            led_ring.setPixelColor(pixel, led_ring.Color(0, 255, 0, 0));
+            delay(10);
+            led_ring.show();
+        }
+
         delay(1000);
 
         // sideways + (left)
@@ -264,6 +277,13 @@ void square_demo()
         delay(2000);
 
         set_all_motors(0);
+        
+        for (int pixel = 0; pixel < NUM_PIXELS; pixel++) {
+            led_ring.setPixelColor(pixel, led_ring.Color(0, 0, 255, 0));
+            delay(10);
+            led_ring.show();
+        }
+
         delay(1000);
 
         // backward
@@ -277,6 +297,13 @@ void square_demo()
         delay(2000);
 
         set_all_motors(0);
+
+        for (int pixel = 0; pixel < NUM_PIXELS; pixel++) {
+            led_ring.setPixelColor(pixel, led_ring.Color(0, 0, 255, 0));
+            delay(10);
+            led_ring.show();
+        }
+
         delay(1000);
 
         // sideways - (right)
@@ -290,9 +317,22 @@ void square_demo()
         delay(2000);
 
         set_all_motors(0);
+
+        for (int pixel = 0; pixel < NUM_PIXELS; pixel++) {
+            led_ring.setPixelColor(pixel, led_ring.Color(0, 0, 0, 255));
+            delay(10);
+            led_ring.show();
+        }
+
         delay(1000);
 
         point_servos_straight();
+
+        for (int pixel = 0; pixel < NUM_PIXELS; pixel++) {
+            led_ring.setPixelColor(pixel, led_ring.Color(0, 0, 0, 0));
+            delay(10);
+            led_ring.show();
+        }
     }
 }
 
@@ -417,5 +457,5 @@ void loop()
     square_demo();
     // rotate_demo();
     // motor_ramp_demo();
-    // command_line_demo();
+    command_line_demo();
 }
