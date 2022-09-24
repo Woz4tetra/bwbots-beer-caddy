@@ -413,9 +413,9 @@ straight to rotate in place angle: 54.293309
 
 void loop()
 {
-    straight_demo();
-    // square_demo();
+    // straight_demo();
+    square_demo();
     // rotate_demo();
     // motor_ramp_demo();
-    command_line_demo();
+    // command_line_demo();
 }

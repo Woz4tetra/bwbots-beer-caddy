@@ -47,11 +47,25 @@ I recommend running all of these commands inside of a tmux session in case of ne
 Setup options:
 - username: ben
 - password: s0mething
-- hostname/computer name: chansey
+- hostname/computer name: robeert
 - Log in automatically: Yes
 
 After rebooting, try ssh: `ssh ben@chansey.local` <br>
 Install openssh server if it doesn’t work: `sudo apt-get install openssh-server -y`
+
+## If the Jetson's been set up already
+
+### Change host name
+- `sudo nano /etc/hostname`
+- Replace with the robot's name
+- `sudo nano /etc/hosts`
+- Replace all instances of old hostname with the robot's name
+
+### Change password
+
+- `passwd`
+- Type old password (probably nvidia)
+- Change to s0mething
 
 ## Apt refresh + basic packages
 - `sudo apt update`
@@ -66,7 +80,7 @@ If you haven't generated new SSH keys, [follow this guide](networking/ssh_instru
 
 If you already have a key generated:
 - Upload keys to `~/.ssh` on the Jetson (make the directory if it doesn’t exist)
-- `cp chansey.pub authorized_keys`
+- `cp robeert.pub authorized_keys`
 - Optionally disable password login:
   - `sudo nano /etc/ssh/sshd_config`
   - Search for `#PasswordAuthentication yes`
@@ -96,16 +110,16 @@ wifi.powersave = 2
 - `sudo reboot`
 
 ## Add to sudo group
-- usermod -aG sudo $USER
-- sudo visudo
+- `sudo usermod -aG sudo $USER`
+- `sudo visudo`
 - If vim opens,
   - Press a to enter edit mode
-  - Add the following line to the file: <br>`ben  ALL=(ALL) NOPASSWD:ALL`
+  - Add the following line to the file: <br>`nvidia  ALL=(ALL) NOPASSWD:ALL`
   - Press esc
   - Type `:x`
   - Press enter
 - If nano opens,
-  - Add the following line to the file: <br>`ben  ALL=(ALL) NOPASSWD:ALL`
+  - Add the following line to the file: <br>`nvidia  ALL=(ALL) NOPASSWD:ALL`
   - Press ctrl-S then ctrl-X
 - Log out with ctrl-D
 - Log in and try `sudo su`
@@ -115,7 +129,7 @@ wifi.powersave = 2
 
 Run this command on your local machine:
 
-`~/dodobot-ros/install/upload.sh chansey.local ~/.ssh/chansey n`
+`~/bwbots-beer-caddy/install/upload.sh robeert.local ~/.ssh/robeert n`
 
 ## Upload firmware
 
@@ -130,9 +144,9 @@ Run this command on your local machine:
 
 #### Compile
 
-- `cd ~/dodobot-ros/firmware/main-firmware`
+- `cd ~/bwbots-beer-caddy/firmware/bw_bcause`
 - `./compile.sh`
-- Packages should download (~15-20 minutes)
+- Packages should download
 - Platformio should say "SUCCESS"
 
 #### Upload
@@ -141,41 +155,31 @@ Run this command on your local machine:
 - `sudo mv 00-teensy.rules /etc/udev/rules.d/49-teensy.rules`
 - `sudo adduser $USER dialout`
 - `sudo reboot`
-- `cd ~/dodobot-ros/firmware/main-firmware`
+- `cd ~/bwbots-beer-caddy/firmware/bw_bcause`
 - `./upload.sh`
 - Platformio should say "SUCCESS"
 
-### Power box firmware upload
+#### Troubleshooting
+
+- If uploading gets stuck on `Waiting for Teensy device...`, you'll need to trigger an upload using the teensy app.
+- For this you'll need a separate machine (with a screen)
+- Follow the instructions here to download and install Teensyduino: https://www.pjrc.com/teensy/td_download.html
+- Upload the blink project from the examples dropdown menu
+- Try uploading using the above method again
+
+### Load cell firmware upload
 
 #### Compile
 
-- `cd ~/dodobot-ros/firmware/power-box-firmware`
+- `cd ~/bwbots-beer-caddy/firmware/bw_load_cell`
 - `./compile.sh`
-- Packages should download (~15-20 minutes)
+- Packages should download
 - Platformio should say "SUCCESS"
 
 #### Upload
-- `cd ~/dodobot-ros/firmware/power-box-firmware`
+- `cd ~/bwbots-beer-caddy/firmware/bw_load_cell`
 - `./upload.sh`
 - Platformio should say "SUCCESS"
-
-## dodobot_py
-
-This package manages various systems like wifi control and the power button.
-
-- Download [Music](https://drive.google.com/drive/u/1/folders/1SWovwBrNBWshl8dWEFh8yaypQgWAwOSE)
-- Run this from your local machine. Upload Music.zip: `scp -i ~/.ssh/chansey ~/Downloads/Music.zip ben@chansey.local:/home/ben`
-- `unzip Music.zip`
-- `sudo apt-get install python3-pip python3-pil`
-- `cd ~/dodobot-ros/dodobot_py`
-- `./install.sh`
-
-### Check if it’s running
-- `systemctl status --user dodobot_py.service`
-- The speaker should play a sound on successful startup
-- Watch the process logs
-- `tail -F -n 300 ~/.local/dodobot/dodobot_py/logs/dodobot`
-- Reboot to ensure that the process starts on its own: `sudo reboot`
 
 ## ROS and Package Dependencies
 
@@ -383,7 +387,7 @@ This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY
 
 ## ROS Installation
 
-- `cd ~/dodobot-ros/install/source_installation`
+- `cd ~/bwbots-beer-caddy/install/source_installation`
 - `./00_ros_setup.sh`
 - `./01_noetic_ws_prep.sh`
 - `./02_noetic_ws_rosdep.sh` This may take a while
@@ -397,8 +401,8 @@ This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY
 - `./08_build_ros_ws.sh`
 - `./09_install_python_libraries.sh`
 
-## dodobot-ros systemd install
-- `cd ~/dodobot-ros/systemd`
+## bwbots-beer-caddy systemd install
+- `cd ~/bwbots-beer-caddy/systemd`
 - `sudo ./install_systemd.sh`
 - Verify installation:
     - `sudo systemctl status roscore.service`
@@ -441,7 +445,7 @@ Requires a secondary wifi adapter (USB is ok)
 
 Copy the following files:
 - `sudo su`
-- `cd ~/dodobot-ros/networking`
+- `cd ~/bwbots-beer-caddy/networking`
 - `cp dhcpcd.conf /etc/dhcpcd.conf`
 - `cp dnsmasq.conf /etc/dnsmasq.conf`
 - `cp hostapd.conf /etc/hostapd/hostapd.conf`
@@ -476,7 +480,7 @@ wlan0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
         TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 ```
 - In this case. See this line: `ether XX:XX:XX:XX:XX:XX`
-- `cd ~/dodobot-ros/networking`
+- `cd ~/bwbots-beer-caddy/networking`
 - `sudo cp NetworkManager.conf /etc/NetworkManager/NetworkManager.conf`
 - `sudo nano /etc/NetworkManager/NetworkManager.conf`
 - Replace the x’s in mac:xx:xx:xx:xx:xx:xx with the MAC address of your device
