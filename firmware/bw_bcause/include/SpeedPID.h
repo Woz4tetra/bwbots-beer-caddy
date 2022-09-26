@@ -1,3 +1,4 @@
+#pragma once
 #include <Arduino.h>
 
 
@@ -15,9 +16,11 @@ private:
 public:
     double Kp, Ki, Kd;
     double K_ff;  // feedforward constant
-    double deadzone;
+    int deadzone_command;
     double error_sum_clamp;
     int command_min, command_max;
+    double epsilon;  // values that are basically zero
+    uint32_t command_timeout_ms;
 
     SpeedPID();
     bool timed_out();
@@ -26,4 +29,7 @@ public:
     void reset();
     int limit(double value);
     int compute(double measurement);
+
+    static double sign(double x);
+    static int sign(int x);
 };

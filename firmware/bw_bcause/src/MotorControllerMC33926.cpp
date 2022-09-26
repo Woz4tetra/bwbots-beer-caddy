@@ -1,4 +1,4 @@
-#include <MotorControllerMC33926/MotorControllerMC33926.h>
+#include <MotorControllerMC33926.h>
 
 
 MotorControllerMC33926::MotorControllerMC33926(int speed_pin, int dir_p_pin, int dir_n_pin, int sf_pin, int fb_pin)

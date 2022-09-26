@@ -4,8 +4,8 @@
 #include <Adafruit_PWMServoDriver.h>
 #include <Adafruit_INA219.h>
 #include <Adafruit_NeoPixel.h>
-#include <MotorControllerMC33926/MotorControllerMC33926.h>
-#include <BwDriveTrain/BwDriveTrain.h>
+#include <MotorControllerMC33926.h>
+#include <BwDriveTrain.h>
 
 #define I2C_BUS_1 Wire
 
@@ -69,7 +69,7 @@ Encoder* encoders[NUM_CHANNELS] = {
     new Encoder(MOTOR2_ENCA, MOTOR2_ENCB),
     new Encoder(MOTOR3_ENCA, MOTOR3_ENCB),
     new Encoder(MOTOR4_ENCA, MOTOR4_ENCB)
-}
+};
 
 // ---
 // Servos
@@ -83,7 +83,17 @@ Adafruit_PWMServoDriver* servos = new Adafruit_PWMServoDriver(0x40 + 0b000010, I
 // ---
 // Drive train
 // ---
-BwDriveTrain drive(servos, motors, encoders, NUM_CHANNELS);
+const double MAX_MOTOR_SPEED = 1.0;  // m/s
+const double MAX_SERVO_SPEED = 1.0;  // rad/s
+const int DEADZONE_COMMAND = 50;
+const int MAX_SPEED_COMMAND = 255;
+const double ALCOVE_ANGLE = 0.5236;  // 30 degrees
+const double FRONT_ANGLE = -1.2967;  // -74.293 degrees
+const double GEAR_RATIO = 54.0;
+const double ENCODER_PPR = 11.0;  // pulses per rotation
+const double WHEEL_DIAMETER = 0.115;  // meters
+const double OUTPUT_RATIO = 2 * M_PI * WHEEL_DIAMETER / (GEAR_RATIO * ENCODER_PPR);  // encoder counts (pulses) * output_ratio = m/s at wheel
+BwDriveTrain drive(servos, motors, encoders, NUM_CHANNELS, MOTOR_EN, OUTPUT_RATIO);
 
 // ---
 // Power management
@@ -120,6 +130,52 @@ void setup()
     pinMode(BUTTON_IN, INPUT_PULLUP);
     pinMode(BUTTON_LED, OUTPUT);
     pinMode(BUILTIN_LED, OUTPUT);
+
+    for (unsigned int channel = 0; channel < drive.get_num_motors(); channel++) {
+        SpeedPID* pid = drive.get_pid(channel);
+        pid->Kp = 1.0;
+        pid->Ki = 0.0;
+        pid->Kd = 0.0;
+        pid->K_ff = (double)MAX_SPEED_COMMAND / MAX_MOTOR_SPEED;
+        pid->deadzone_command = DEADZONE_COMMAND;
+        pid->error_sum_clamp = -1.0;
+        pid->command_min = -MAX_SPEED_COMMAND;
+        pid->command_max = MAX_SPEED_COMMAND;
+        pid->command_timeout_ms = 1000;
+    }
+    
+    drive.set_limits(
+        0,
+        ALCOVE_ANGLE,
+        FRONT_ANGLE,
+        200,
+        500,
+        MAX_SERVO_SPEED
+    );
+    drive.set_limits(
+        1,
+        -ALCOVE_ANGLE,
+        -FRONT_ANGLE,
+        200,
+        500,
+        MAX_SERVO_SPEED
+    );
+    drive.set_limits(
+        2,
+        ALCOVE_ANGLE,
+        FRONT_ANGLE,
+        200,
+        500,
+        MAX_SERVO_SPEED
+    );
+    drive.set_limits(
+        4,
+        -ALCOVE_ANGLE,
+        -FRONT_ANGLE,
+        200,
+        500,
+        MAX_SERVO_SPEED
+    );
 
     drive.begin();
 }
