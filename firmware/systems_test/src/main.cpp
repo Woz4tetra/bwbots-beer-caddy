@@ -441,14 +441,14 @@ void command_line_demo()
 }
 
 /*
-straight to sideways angle: 74.293309
+straight to sideways angle: -74.293309
 straight to alcove angle: 30.0
 straight to rotate in place angle: 54.293309
-    straight    alcove  rotate  
-0   400			400		400
-1   400			400		400
-2   400			400		400
-3   400			400		400
+    straight    alcove
+0   375			470
+1   235			125
+2   230			140
+3   405			515
 */
 
 void loop()

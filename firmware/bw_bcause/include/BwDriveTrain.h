@@ -15,6 +15,7 @@ private:
     bool is_enabled;
     static const unsigned int MAX_CHANNELS = 16;
     BwDriveModule** drive_modules;
+    Adafruit_PWMServoDriver* servos;
 
 public:
     BwDriveTrain(
@@ -29,7 +30,8 @@ public:
     void set_enable(bool state);
     bool get_enable();
     void reset();
-    void drive(float vx, float vy, float vt);
+    void drive(double vx, double vy, double vt);
+    void set(unsigned int channel, double angle, double velocity);
     SpeedPID* get_pid(unsigned int channel);
     SpeedFilter* get_filter(unsigned int channel);
     unsigned int get_num_motors();
@@ -40,8 +42,10 @@ public:
         unsigned int channel,
         double servo_min_angle,
         double servo_max_angle,
-        int servo_min_command,
-        int servo_max_command,
+        double servo_angle_1,
+        double servo_angle_2,
+        int servo_command_1,
+        int servo_command_2,
         double servo_max_velocity
     );
 };

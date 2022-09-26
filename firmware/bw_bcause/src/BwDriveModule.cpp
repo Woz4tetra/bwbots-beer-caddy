@@ -12,10 +12,13 @@ BwDriveModule::BwDriveModule(int channel, double output_ratio, Adafruit_PWMServo
     speed_filter = new SpeedFilter(1.0);
     servo_min_angle = 0.0;
     servo_max_angle = 90.0;
-    servo_min_command = 500;   // semi neural default
-    servo_max_command = 300;   // semi neural default
+    servo_angle_1 = 0.0;
+    servo_angle_2 = 90.0;
+    servo_command_1 = 450;   // semi neural default
+    servo_command_2 = 300;   // semi neural default
     setpoint_angle = 0.0;
     predicted_angle = 0.0;
+    is_enabled = false;
 }
 
 void BwDriveModule::begin()
@@ -34,28 +37,48 @@ void BwDriveModule::reset()
 
 void BwDriveModule::set_direction(double setpoint)
 {
+    if (setpoint < servo_min_angle) {
+        setpoint = servo_min_angle;
+    }
+    if (setpoint > servo_max_angle) {
+        setpoint = servo_max_angle;
+    }
+    
     setpoint_angle = setpoint;
     int pulse = (int)(
-        (servo_max_command - servo_min_command) / 
-        (servo_max_angle - servo_min_angle) * 
-        (setpoint - servo_min_angle) + 
-        servo_min_command
+        (servo_command_2 - servo_command_1) / 
+        (servo_angle_2 - servo_angle_1) * 
+        (setpoint - servo_angle_1) + 
+        servo_command_1
     );
+
+    if (!is_enabled) {
+        return;
+    }
     servos->setPWM(channel, 0, pulse);
     update_predicted_angle();
 }
 
+void BwDriveModule::set_enable(bool state) {
+    is_enabled = state;
+}
+
+
 void BwDriveModule::set_limits(
     double servo_min_angle,
     double servo_max_angle,
-    int servo_min_command,
-    int servo_max_command,
+    double servo_angle_1,
+    double servo_angle_2,
+    int servo_command_1,
+    int servo_command_2,
     double servo_max_velocity)
 {
     this->servo_min_angle = servo_min_angle;
     this->servo_max_angle = servo_max_angle;
-    this->servo_min_command = servo_min_command;
-    this->servo_max_command = servo_max_command;
+    this->servo_angle_1 = servo_angle_1;
+    this->servo_angle_2 = servo_angle_2;
+    this->servo_command_1 = servo_command_1;
+    this->servo_command_2 = servo_command_2;
     this->servo_max_velocity = servo_max_velocity;
 }
 
@@ -94,6 +117,9 @@ void BwDriveModule::set_velocity(double velocity)
     encoder_position = encoder->read();
     double measured_velocity = update_velocity();
     int command = speed_pid->compute(measured_velocity);
+    if (!is_enabled) {
+        return;
+    }
     motor->set(command);
 }
 

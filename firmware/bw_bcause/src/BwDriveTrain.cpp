@@ -10,6 +10,7 @@ BwDriveTrain::BwDriveTrain(
 {
     this->num_motors = num_motors;
     this->motor_enable_pin = motor_enable_pin;
+    this->servos = servos;
     is_enabled = false;
 
     if (this->num_motors > BwDriveTrain::MAX_CHANNELS) {
@@ -29,6 +30,7 @@ unsigned int BwDriveTrain::get_num_motors() {
 
 void BwDriveTrain::begin()
 {
+    is_enabled = true;
     set_enable(false);
     for (unsigned int channel = 0; channel < get_num_motors(); channel++) {
         drive_modules[channel]->begin();
@@ -36,10 +38,22 @@ void BwDriveTrain::begin()
 }
 
 void BwDriveTrain::set_enable(bool state) {
+    if (is_enabled == state) {
+        return;
+    }
     is_enabled = state;
     digitalWrite(motor_enable_pin, state);
     if (is_enabled) {
         reset();
+    }
+    else {
+        for (unsigned int channel = 0; channel < MAX_CHANNELS; channel++) {
+            servos->setPWM(channel, 0, 4096);
+        }
+    }
+
+    for (unsigned int channel = 0; channel < get_num_motors(); channel++) {
+        drive_modules[channel]->set_enable(is_enabled);
     }
 }
 
@@ -59,8 +73,10 @@ void BwDriveTrain::set_limits(
     unsigned int channel,
     double servo_min_angle,
     double servo_max_angle,
-    int servo_min_command,
-    int servo_max_command,
+    double servo_angle_1,
+    double servo_angle_2,
+    int servo_command_1,
+    int servo_command_2,
     double servo_max_velocity)
 {
     if (channel > get_num_motors()) {
@@ -69,14 +85,24 @@ void BwDriveTrain::set_limits(
     drive_modules[channel]->set_limits(
         servo_min_angle,
         servo_max_angle,
-        servo_min_command,
-        servo_max_command,
+        servo_angle_1,
+        servo_angle_2,
+        servo_command_1,
+        servo_command_2,
         servo_max_velocity
     );
 }
 
+void BwDriveTrain::set(unsigned int channel, double angle, double velocity)
+{
+    if (channel <= get_num_motors()) {
+        drive_modules[channel]->set_direction(angle);
+        drive_modules[channel]->set_velocity(velocity);
+    }
+}
 
-void BwDriveTrain::drive(float vx, float vy, float vt)
+
+void BwDriveTrain::drive(double vx, double vy, double vt)
 {
     for (unsigned int channel = 0; channel < get_num_motors(); channel++) {
         // drive_modules[channel]->set_direction()

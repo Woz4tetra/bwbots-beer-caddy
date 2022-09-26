@@ -16,13 +16,13 @@ private:
     SpeedFilter* speed_filter;
     int channel;
     double output_ratio;  // encoder counts * output_ratio = m/s at wheel
-    double servo_min_angle;
-    double servo_max_angle;
-    unsigned int servo_min_command;
-    unsigned int servo_max_command;
+    double servo_min_angle, servo_max_angle;
+    double servo_angle_1, servo_angle_2;
+    int servo_command_1, servo_command_2;
     double servo_max_velocity;
     double setpoint_angle, predicted_angle;
     uint32_t prev_time;
+    bool is_enabled;
 
     double dt();
     void update_predicted_angle();
@@ -30,12 +30,15 @@ public:
     BwDriveModule(int channel, double output_ratio, Adafruit_PWMServoDriver* servos, MotorControllerMC33926* motor, Encoder* encoder);
     void begin();
     void reset();
+    void set_enable(bool state);
     void set_direction(double setpoint);
     void set_limits(
         double servo_min_angle,
         double servo_max_angle,
-        int servo_min_command,
-        int servo_max_command,
+        double servo_angle_1,
+        double servo_angle_2,
+        int servo_command_1,
+        int servo_command_2,
         double servo_max_velocity
     );
     double get_angle();

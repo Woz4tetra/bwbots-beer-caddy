@@ -14,9 +14,14 @@
 // Status LEDs
 // ---
 const int STATUS_LED = 0;
-const int BUTTON_IN = 15;
 const int BUTTON_LED = 14;
 const int BUILTIN_LED = 13;
+
+// ---
+// Buttons
+// ---
+
+const int BUTTON_IN = 15;
 
 // ---
 // Drive controllers
@@ -78,17 +83,19 @@ Encoder* encoders[NUM_CHANNELS] = {
 const int SERVOMIN = 150; // This is the 'minimum' pulse length count (out of 4096)
 const int SERVOMAX = 600; // This is the 'maximum' pulse length count (out of 4096)
 const int SERVO_FREQ = 50; // Analog servos run at ~50 Hz updates
+const int SERVO_OSC_FREQ = 27000000;
 Adafruit_PWMServoDriver* servos = new Adafruit_PWMServoDriver(0x40 + 0b000010, I2C_BUS_1);
 
 // ---
 // Drive train
 // ---
-const double MAX_MOTOR_SPEED = 1.0;  // m/s
-const double MAX_SERVO_SPEED = 1.0;  // rad/s
+const double MAX_MOTOR_SPEED = 0.843;  // m/s
+const double MAX_SERVO_SPEED = 5.950;  // rad/s
 const int DEADZONE_COMMAND = 50;
 const int MAX_SPEED_COMMAND = 255;
 const double ALCOVE_ANGLE = 0.5236;  // 30 degrees
 const double FRONT_ANGLE = -1.2967;  // -74.293 degrees
+const double STRAIGHT_ANGLE = 0.0;  // 0 degrees
 const double GEAR_RATIO = 54.0;
 const double ENCODER_PPR = 11.0;  // pulses per rotation
 const double WHEEL_DIAMETER = 0.115;  // meters
@@ -110,14 +117,43 @@ const int NUM_PIXELS = 24;
 Adafruit_NeoPixel led_ring(NUM_PIXELS, LED_RING, NEO_GRBW + NEO_KHZ800);
 
 
+bool read_button() {
+    return !digitalRead(BUTTON_IN);
+}
+
+bool prev_button_state = false;
+bool did_button_press(bool comparison_state) {
+    bool state = read_button();
+    if (state != prev_button_state) {
+        prev_button_state = state;
+        return state == comparison_state;
+    }
+    else {
+        return false;
+    }
+}
+
+void set_status_led(bool state) {
+    digitalWrite(STATUS_LED, state);
+}
+
+void set_builtin_led(bool state) {
+    digitalWrite(BUILTIN_LED, state);
+}
+
+void set_button_led(bool state) {
+    digitalWrite(BUTTON_LED, state);
+}
+
 void setup()
 {
+    Serial.begin(9600);
     I2C_BUS_1.begin();
     I2C_BUS_1.setSDA(18);
     I2C_BUS_1.setSCL(19);
 
     servos->begin();
-    servos->setOscillatorFrequency(27000000);
+    servos->setOscillatorFrequency(SERVO_OSC_FREQ);
     servos->setPWMFreq(SERVO_FREQ);
 
     charge_ina.begin();
@@ -130,6 +166,10 @@ void setup()
     pinMode(BUTTON_IN, INPUT_PULLUP);
     pinMode(BUTTON_LED, OUTPUT);
     pinMode(BUILTIN_LED, OUTPUT);
+
+    set_status_led(true);
+    set_builtin_led(true);
+    set_button_led(true);
 
     for (unsigned int channel = 0; channel < drive.get_num_motors(); channel++) {
         SpeedPID* pid = drive.get_pid(channel);
@@ -146,41 +186,85 @@ void setup()
     
     drive.set_limits(
         0,
-        ALCOVE_ANGLE,
-        FRONT_ANGLE,
-        200,
-        500,
+        -ALCOVE_ANGLE,
+        -FRONT_ANGLE,
+        STRAIGHT_ANGLE,
+        -ALCOVE_ANGLE,
+        375,
+        470,
         MAX_SERVO_SPEED
     );
     drive.set_limits(
         1,
         -ALCOVE_ANGLE,
         -FRONT_ANGLE,
-        200,
-        500,
+        STRAIGHT_ANGLE,
+        -ALCOVE_ANGLE,
+        235,
+        125,
         MAX_SERVO_SPEED
     );
     drive.set_limits(
         2,
-        ALCOVE_ANGLE,
-        FRONT_ANGLE,
-        200,
-        500,
+        -ALCOVE_ANGLE,
+        -FRONT_ANGLE,
+        STRAIGHT_ANGLE,
+        -ALCOVE_ANGLE,
+        230,
+        140,
         MAX_SERVO_SPEED
     );
     drive.set_limits(
-        4,
+        3,
         -ALCOVE_ANGLE,
         -FRONT_ANGLE,
-        200,
-        500,
+        STRAIGHT_ANGLE,
+        -ALCOVE_ANGLE,
+        405,
+        515,
         MAX_SERVO_SPEED
     );
 
     drive.begin();
+
 }
+
+int state = 0;
+bool enabled = false;
 
 void loop()
 {
+    if (did_button_press(true)) {
+        state = (state + 1) % 4;
+        Serial.println(state);
+    }
+    switch (state)
+    {
+    case 0:
+        drive.set_enable(false);
+        break;
+    case 1:
+        drive.set_enable(true);
+        drive.set(0, 0.0, 0.0);
+        drive.set(1, 0.0, 0.0);
+        drive.set(2, 0.0, 0.0);
+        drive.set(3, 0.0, 0.0);
+        break;
+    case 2:
+        drive.set(0, 0.5, 0.1);
+        drive.set(1, 0.5, 0.1);
+        drive.set(2, 0.5, 0.1);
+        drive.set(3, 0.5, 0.1);
+        break;
+    case 3:
+        drive.set(0, -0.5, -0.1);
+        drive.set(1, -0.5, -0.1);
+        drive.set(2, -0.5, -0.1);
+        drive.set(3, -0.5, -0.1);
+        break;
     
+    default:
+        break;
+    }
+
 }
