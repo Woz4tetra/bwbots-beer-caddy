@@ -46,6 +46,7 @@ public:
         double servo_angle_2,
         int servo_command_1,
         int servo_command_2,
-        double servo_max_velocity
+        double servo_max_velocity,
+        bool flip_motor_commands
     );
 };

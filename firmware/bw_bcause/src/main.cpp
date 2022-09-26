@@ -100,6 +100,10 @@ const double GEAR_RATIO = 54.0;
 const double ENCODER_PPR = 11.0;  // pulses per rotation
 const double WHEEL_DIAMETER = 0.115;  // meters
 const double OUTPUT_RATIO = 2 * M_PI * WHEEL_DIAMETER / (GEAR_RATIO * ENCODER_PPR);  // encoder counts (pulses) * output_ratio = m/s at wheel
+const int BACK_LEFT = 0;  // module 1
+const int BACK_RIGHT = 1;  // module 2
+const int FRONT_LEFT = 2;  // module 3
+const int FRONT_RIGHT = 3;  // module 4
 BwDriveTrain drive(servos, motors, encoders, NUM_CHANNELS, MOTOR_EN, OUTPUT_RATIO);
 
 // ---
@@ -185,44 +189,48 @@ void setup()
     }
     
     drive.set_limits(
-        0,
+        BACK_LEFT,
         -ALCOVE_ANGLE,
         -FRONT_ANGLE,
         STRAIGHT_ANGLE,
         -ALCOVE_ANGLE,
         375,
         470,
-        MAX_SERVO_SPEED
+        MAX_SERVO_SPEED,
+        false
     );
     drive.set_limits(
-        1,
+        BACK_RIGHT,
         -ALCOVE_ANGLE,
         -FRONT_ANGLE,
         STRAIGHT_ANGLE,
-        -ALCOVE_ANGLE,
+        ALCOVE_ANGLE,
         235,
         125,
-        MAX_SERVO_SPEED
+        MAX_SERVO_SPEED,
+        true
     );
     drive.set_limits(
-        2,
+        FRONT_LEFT,
         -ALCOVE_ANGLE,
         -FRONT_ANGLE,
         STRAIGHT_ANGLE,
-        -ALCOVE_ANGLE,
+        ALCOVE_ANGLE,
         230,
         140,
-        MAX_SERVO_SPEED
+        MAX_SERVO_SPEED,
+        false
     );
     drive.set_limits(
-        3,
+        FRONT_RIGHT,
         -ALCOVE_ANGLE,
         -FRONT_ANGLE,
         STRAIGHT_ANGLE,
         -ALCOVE_ANGLE,
         405,
         515,
-        MAX_SERVO_SPEED
+        MAX_SERVO_SPEED,
+        true
     );
 
     drive.begin();
@@ -245,22 +253,22 @@ void loop()
         break;
     case 1:
         drive.set_enable(true);
-        drive.set(0, 0.0, 0.0);
-        drive.set(1, 0.0, 0.0);
-        drive.set(2, 0.0, 0.0);
-        drive.set(3, 0.0, 0.0);
+        drive.set(BACK_LEFT, 0.0, 0.0);
+        drive.set(BACK_RIGHT, 0.0, 0.0);
+        drive.set(FRONT_LEFT, 0.0, 0.0);
+        drive.set(FRONT_RIGHT, 0.0, 0.0);
         break;
     case 2:
-        drive.set(0, 0.5, 0.1);
-        drive.set(1, 0.5, 0.1);
-        drive.set(2, 0.5, 0.1);
-        drive.set(3, 0.5, 0.1);
+        drive.set(BACK_LEFT, 0.5, 0.3);
+        drive.set(BACK_RIGHT, 0.5, 0.3);
+        drive.set(FRONT_LEFT, 0.5, 0.3);
+        drive.set(FRONT_RIGHT, 0.5, 0.3);
         break;
     case 3:
-        drive.set(0, -0.5, -0.1);
-        drive.set(1, -0.5, -0.1);
-        drive.set(2, -0.5, -0.1);
-        drive.set(3, -0.5, -0.1);
+        drive.set(BACK_LEFT, -0.5, -0.3);
+        drive.set(BACK_RIGHT, -0.5, -0.3);
+        drive.set(FRONT_LEFT, -0.5, -0.3);
+        drive.set(FRONT_RIGHT, -0.5, -0.3);
         break;
     
     default:

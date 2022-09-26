@@ -23,6 +23,7 @@ private:
     double setpoint_angle, predicted_angle;
     uint32_t prev_time;
     bool is_enabled;
+    bool flip_motor_commands;
 
     double dt();
     void update_predicted_angle();
@@ -39,7 +40,8 @@ public:
         double servo_angle_2,
         int servo_command_1,
         int servo_command_2,
-        double servo_max_velocity
+        double servo_max_velocity,
+        bool flip_motor_commands
     );
     double get_angle();
     double get_position();

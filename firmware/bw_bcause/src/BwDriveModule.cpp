@@ -19,6 +19,7 @@ BwDriveModule::BwDriveModule(int channel, double output_ratio, Adafruit_PWMServo
     setpoint_angle = 0.0;
     predicted_angle = 0.0;
     is_enabled = false;
+    flip_motor_commands = false;
 }
 
 void BwDriveModule::begin()
@@ -71,7 +72,8 @@ void BwDriveModule::set_limits(
     double servo_angle_2,
     int servo_command_1,
     int servo_command_2,
-    double servo_max_velocity)
+    double servo_max_velocity,
+    bool flip_motor_commands)
 {
     this->servo_min_angle = servo_min_angle;
     this->servo_max_angle = servo_max_angle;
@@ -80,6 +82,7 @@ void BwDriveModule::set_limits(
     this->servo_command_1 = servo_command_1;
     this->servo_command_2 = servo_command_2;
     this->servo_max_velocity = servo_max_velocity;
+    this->flip_motor_commands = flip_motor_commands;
 }
 
 double BwDriveModule::get_angle() {
@@ -115,10 +118,16 @@ void BwDriveModule::set_velocity(double velocity)
 {
     speed_pid->set_target(velocity);
     encoder_position = encoder->read();
+    if (flip_motor_commands) {
+        encoder_position = -encoder_position;
+    }
     double measured_velocity = update_velocity();
     int command = speed_pid->compute(measured_velocity);
     if (!is_enabled) {
         return;
+    }
+    if (flip_motor_commands) {
+        command = -command;
     }
     motor->set(command);
 }

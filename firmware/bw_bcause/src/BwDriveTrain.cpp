@@ -77,7 +77,8 @@ void BwDriveTrain::set_limits(
     double servo_angle_2,
     int servo_command_1,
     int servo_command_2,
-    double servo_max_velocity)
+    double servo_max_velocity,
+    bool flip_motor_commands)
 {
     if (channel > get_num_motors()) {
         return;
@@ -89,7 +90,8 @@ void BwDriveTrain::set_limits(
         servo_angle_2,
         servo_command_1,
         servo_command_2,
-        servo_max_velocity
+        servo_max_velocity,
+        flip_motor_commands
     );
 }
 
