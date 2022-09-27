@@ -36,14 +36,19 @@ void BwDriveModule::reset()
     motor->set(0);
 }
 
-void BwDriveModule::set_direction(double setpoint)
+void BwDriveModule::set_azimuth(double setpoint)
 {
+    Serial.print(channel);
+    Serial.print("\tsetpoint 1: ");
+    Serial.print(setpoint);
     if (setpoint < servo_min_angle) {
         setpoint = servo_min_angle;
     }
     if (setpoint > servo_max_angle) {
         setpoint = servo_max_angle;
     }
+    Serial.print("\tsetpoint 2: ");
+    Serial.println(setpoint);
     
     setpoint_angle = setpoint;
     int pulse = (int)(
@@ -57,7 +62,7 @@ void BwDriveModule::set_direction(double setpoint)
         return;
     }
     servos->setPWM(channel, 0, pulse);
-    update_predicted_angle();
+    update_predicted_azimuth();
 }
 
 void BwDriveModule::set_enable(bool state) {
@@ -85,23 +90,23 @@ void BwDriveModule::set_limits(
     this->flip_motor_commands = flip_motor_commands;
 }
 
-double BwDriveModule::get_angle() {
+double BwDriveModule::get_azimuth() {
     return predicted_angle;
 }
 
-double BwDriveModule::get_velocity() {
+double BwDriveModule::get_wheel_velocity() {
     return speed_filter->get_velocity();
 }
 
-double BwDriveModule::update_velocity() {
-    return speed_filter->compute(get_position());
+double BwDriveModule::update_wheel_velocity() {
+    return speed_filter->compute(get_wheel_position());
 }
 
-double BwDriveModule::get_position() {
+double BwDriveModule::get_wheel_position() {
     return (double)(encoder_position) * output_ratio;
 }
 
-void BwDriveModule::update_predicted_angle() {
+void BwDriveModule::update_predicted_azimuth() {
     double error = setpoint_angle - predicted_angle;
     if (abs(error) < 0.1) { // TODO: make this configurable
         predicted_angle = setpoint_angle;
@@ -114,14 +119,14 @@ void BwDriveModule::update_predicted_angle() {
     predicted_angle += servo_delta;
 }
 
-void BwDriveModule::set_velocity(double velocity)
+void BwDriveModule::set_wheel_velocity(double velocity)
 {
     speed_pid->set_target(velocity);
     encoder_position = encoder->read();
     if (flip_motor_commands) {
         encoder_position = -encoder_position;
     }
-    double measured_velocity = update_velocity();
+    double measured_velocity = update_wheel_velocity();
     int command = speed_pid->compute(measured_velocity);
     if (!is_enabled) {
         return;

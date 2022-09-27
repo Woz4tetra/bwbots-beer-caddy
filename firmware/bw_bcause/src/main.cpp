@@ -100,11 +100,14 @@ const double GEAR_RATIO = 54.0;
 const double ENCODER_PPR = 11.0;  // pulses per rotation
 const double WHEEL_DIAMETER = 0.115;  // meters
 const double OUTPUT_RATIO = 2 * M_PI * WHEEL_DIAMETER / (GEAR_RATIO * ENCODER_PPR);  // encoder counts (pulses) * output_ratio = m/s at wheel
+const double WIDTH = 0.115;  // meters, chassis pivot to pivot Y dimension
+const double LENGTH = 0.160;  // meters, chassis pivot to pivot X dimension
+const double ARMATURE = 0.037;  // meters, pivot to wheel center dimension
+const int FRONT_LEFT = 2;  // module 3
 const int BACK_LEFT = 0;  // module 1
 const int BACK_RIGHT = 1;  // module 2
-const int FRONT_LEFT = 2;  // module 3
 const int FRONT_RIGHT = 3;  // module 4
-BwDriveTrain drive(servos, motors, encoders, NUM_CHANNELS, MOTOR_EN, OUTPUT_RATIO);
+BwDriveTrain drive(servos, motors, encoders, NUM_CHANNELS, MOTOR_EN, OUTPUT_RATIO, WIDTH, LENGTH, ARMATURE);
 
 // ---
 // Power management
@@ -189,6 +192,17 @@ void setup()
     }
     
     drive.set_limits(
+        FRONT_LEFT,
+        -ALCOVE_ANGLE,
+        -FRONT_ANGLE,
+        STRAIGHT_ANGLE,
+        ALCOVE_ANGLE,
+        230,
+        140,
+        MAX_SERVO_SPEED,
+        true
+    );
+    drive.set_limits(
         BACK_LEFT,
         -ALCOVE_ANGLE,
         -FRONT_ANGLE,
@@ -197,7 +211,7 @@ void setup()
         375,
         470,
         MAX_SERVO_SPEED,
-        false
+        true
     );
     drive.set_limits(
         BACK_RIGHT,
@@ -208,19 +222,9 @@ void setup()
         235,
         125,
         MAX_SERVO_SPEED,
-        true
-    );
-    drive.set_limits(
-        FRONT_LEFT,
-        -ALCOVE_ANGLE,
-        -FRONT_ANGLE,
-        STRAIGHT_ANGLE,
-        ALCOVE_ANGLE,
-        230,
-        140,
-        MAX_SERVO_SPEED,
         false
     );
+    
     drive.set_limits(
         FRONT_RIGHT,
         -ALCOVE_ANGLE,
@@ -230,7 +234,7 @@ void setup()
         405,
         515,
         MAX_SERVO_SPEED,
-        true
+        false
     );
 
     drive.begin();
@@ -243,7 +247,7 @@ bool enabled = false;
 void loop()
 {
     if (did_button_press(true)) {
-        state = (state + 1) % 4;
+        state = (state + 1) % 5;
         Serial.println(state);
     }
     switch (state)
@@ -253,22 +257,29 @@ void loop()
         break;
     case 1:
         drive.set_enable(true);
-        drive.set(BACK_LEFT, 0.0, 0.0);
-        drive.set(BACK_RIGHT, 0.0, 0.0);
-        drive.set(FRONT_LEFT, 0.0, 0.0);
-        drive.set(FRONT_RIGHT, 0.0, 0.0);
+        drive.set(FRONT_LEFT, ALCOVE_ANGLE, 0.0);
+        drive.set(BACK_LEFT, ALCOVE_ANGLE, 0.0);
+        drive.set(BACK_RIGHT, ALCOVE_ANGLE, 0.0);
+        drive.set(FRONT_RIGHT, ALCOVE_ANGLE, 0.0);
         break;
     case 2:
-        drive.set(BACK_LEFT, 0.5, 0.3);
-        drive.set(BACK_RIGHT, 0.5, 0.3);
-        drive.set(FRONT_LEFT, 0.5, 0.3);
-        drive.set(FRONT_RIGHT, 0.5, 0.3);
+        // drive.drive(0.0, 0.0, 2.0);
+        drive.set(FRONT_LEFT, FRONT_ANGLE, 0.0);
+        drive.set(BACK_LEFT, FRONT_ANGLE, 0.0);
+        drive.set(BACK_RIGHT, FRONT_ANGLE, 0.0);
+        drive.set(FRONT_RIGHT, FRONT_ANGLE, 0.0);
         break;
     case 3:
-        drive.set(BACK_LEFT, -0.5, -0.3);
-        drive.set(BACK_RIGHT, -0.5, -0.3);
-        drive.set(FRONT_LEFT, -0.5, -0.3);
-        drive.set(FRONT_RIGHT, -0.5, -0.3);
+        drive.set(FRONT_LEFT, 0.3, 0.0);
+        drive.set(BACK_LEFT, 0.3, 0.0);
+        drive.set(BACK_RIGHT, 0.3, 0.0);
+        drive.set(FRONT_RIGHT, 0.3, 0.0);
+        break;
+    case 4:
+        drive.set(FRONT_LEFT, STRAIGHT_ANGLE, 0.0);
+        drive.set(BACK_LEFT, STRAIGHT_ANGLE, 0.0);
+        drive.set(BACK_RIGHT, STRAIGHT_ANGLE, 0.0);
+        drive.set(FRONT_RIGHT, STRAIGHT_ANGLE, 0.0);
         break;
     
     default:

@@ -14,8 +14,14 @@ private:
     unsigned int motor_enable_pin;
     bool is_enabled;
     static const unsigned int MAX_CHANNELS = 16;
+    double width, length;
+    double armature_length;
+    uint32_t prev_time;
     BwDriveModule** drive_modules;
     Adafruit_PWMServoDriver* servos;
+
+    void compute_module_state(double x, double y, double vx, double vy, double vt, double dt, double& azimuth, double& wheel_velocity);
+    double dt();
 
 public:
     BwDriveTrain(
@@ -24,7 +30,9 @@ public:
         Encoder** encoders,
         unsigned int num_motors,
         unsigned int motor_enable_pin,
-        double output_ratio
+        double output_ratio,
+        double width, double length,
+        double armature_length
     );
     void begin();
     void set_enable(bool state);
@@ -35,9 +43,9 @@ public:
     SpeedPID* get_pid(unsigned int channel);
     SpeedFilter* get_filter(unsigned int channel);
     unsigned int get_num_motors();
-    double get_velocity(unsigned int channel);
-    double get_position(unsigned int channel);
-    double get_angle(unsigned int channel);
+    double get_wheel_velocity(unsigned int channel);
+    double get_wheel_position(unsigned int channel);
+    double get_azimuth(unsigned int channel);
     void set_limits(
         unsigned int channel,
         double servo_min_angle,

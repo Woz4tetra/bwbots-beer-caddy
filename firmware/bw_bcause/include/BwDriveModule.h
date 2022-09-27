@@ -26,13 +26,13 @@ private:
     bool flip_motor_commands;
 
     double dt();
-    void update_predicted_angle();
+    void update_predicted_azimuth();
 public:
     BwDriveModule(int channel, double output_ratio, Adafruit_PWMServoDriver* servos, MotorControllerMC33926* motor, Encoder* encoder);
     void begin();
     void reset();
     void set_enable(bool state);
-    void set_direction(double setpoint);
+    void set_azimuth(double setpoint);
     void set_limits(
         double servo_min_angle,
         double servo_max_angle,
@@ -43,11 +43,11 @@ public:
         double servo_max_velocity,
         bool flip_motor_commands
     );
-    double get_angle();
-    double get_position();
-    double get_velocity();
-    double update_velocity();
-    void set_velocity(double velocity);
+    double get_azimuth();
+    double get_wheel_position();
+    double get_wheel_velocity();
+    double update_wheel_velocity();
+    void set_wheel_velocity(double velocity);
     SpeedPID* get_pid()  { return speed_pid; }
     SpeedFilter* get_filter()  { return speed_filter; }
 };
