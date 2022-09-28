@@ -7,20 +7,12 @@ log:
   file_name: "{name}-{date:%Y-%m-%d}.log"
   format: "%(levelname)s\t%(asctime)s\t[%(name)s, %(filename)s:%(lineno)d]\t%(message)s"
 
-gpio:
-  led_out: 18
-  button_in: 27
-  fan_out: 22
-  shutdown_time_s: 3.0
-  led_pwm_rate: 20
-  lidar_out: 26
-
-
 tunnel:
-  address: /dev/serial0
+  address: /dev/ttyTHS0
 
-balance:
-  setpoint: 0.0  # degrees
-  kp: 1.0
-  kd: 0.0
+joystick:
+  address: /dev/input/js0
 
+tcp:
+  host: "127.0.0.1"
+  port: 3625

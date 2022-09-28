@@ -38,6 +38,7 @@ public:
     void set_enable(bool state);
     bool get_enable();
     void reset();
+    void stop();
     void drive(double vx, double vy, double vt);
     void set(unsigned int channel, double angle, double velocity);
     SpeedPID* get_pid(unsigned int channel);

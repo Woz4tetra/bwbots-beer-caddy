@@ -26,20 +26,6 @@ class MyClient(TunnelSerialClient):
             ping = current_time - sent_time
             print("Ping: %0.5f (current: %0.5f, recv: %0.5f)" % (ping, current_time, sent_time))
             self.pings.append(ping)
-        elif result.category == "encdoser":
-            position = result.get_int()
-            position &= 0xffff
-            position *= 360.0 / 0xffff
-            if abs(position - self.prev_doser) > 1.0:
-                print("Doser:", position)
-                self.prev_doser = position
-        elif result.category == "encflipper":
-            position = result.get_int()
-            position &= 0xffff
-            position *= 360.0 / 0xffff
-            if abs(position - self.prev_flipper) > 1.0:
-                print("Flipper:", position)
-                self.prev_flipper = position
 
     def get_time(self):
         return time.monotonic() - self.start_time
@@ -70,13 +56,13 @@ async def write_thread(tunnel):
     while True:
         await asyncio.sleep(1.0 / 30.0)
         if time.time() - last_ping > 0.5:
-            tunnel.write_handshake("hand", 0.0, write_interval=0.1)
-            tunnel.write("ping", tunnel.get_time())
+            tunnel.write_handshake("hand", "f", 0.0, write_interval=0.1)
+            tunnel.write("ping", "f", tunnel.get_time())
             last_ping = time.time()
 
 
 def main():
-    tunnel = MyClient("/dev/serial0", 1000000)
+    tunnel = MyClient("/dev/ttyTHS0", 1000000)
     tunnel.start()
     time.sleep(1.5)
 
@@ -104,7 +90,10 @@ def main():
         stop = time.time()
         duration = stop - start
 
-        print("mean:", sum(tunnel.pings) / len(tunnel.pings))
+        if len(tunnel.pings) == 0:
+            print("No pings received!")
+        else:
+            print("mean:", sum(tunnel.pings) / len(tunnel.pings))
         print("len:", len(tunnel.pings))
         print("Num packets sent: ", tunnel.protocol.write_packet_num)
         print("Num packets recv: ", tunnel.protocol.read_packet_num)

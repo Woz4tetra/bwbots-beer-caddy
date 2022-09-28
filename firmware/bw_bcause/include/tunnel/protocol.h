@@ -5,7 +5,7 @@
 
 
 #define DEBUG_SERIAL Serial
-#define DEBUG_BAUD 57600
+#define DEBUG_BAUD 9600
 
 
 void REPORT_ERROR(const char* report, ...);

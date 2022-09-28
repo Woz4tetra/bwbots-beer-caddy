@@ -6,6 +6,7 @@
 #include <Adafruit_NeoPixel.h>
 #include <MotorControllerMC33926.h>
 #include <BwDriveTrain.h>
+#include "tunnel/serial.h"
 
 #define I2C_BUS_1 Wire
 
@@ -91,23 +92,40 @@ Adafruit_PWMServoDriver* servos = new Adafruit_PWMServoDriver(0x40 + 0b000010, I
 // ---
 const double MAX_MOTOR_SPEED = 0.843;  // m/s
 const double MAX_SERVO_SPEED = 5.950;  // rad/s
+
 const int DEADZONE_COMMAND = 50;
 const int MAX_SPEED_COMMAND = 255;
+
 const double ALCOVE_ANGLE = 0.5236;  // 30 degrees
 const double FRONT_ANGLE = -1.2967;  // -74.293 degrees
 const double STRAIGHT_ANGLE = 0.0;  // 0 degrees
+
 const double GEAR_RATIO = 54.0;
 const double ENCODER_PPR = 11.0;  // pulses per rotation
 const double WHEEL_DIAMETER = 0.115;  // meters
 const double OUTPUT_RATIO = 2 * M_PI * WHEEL_DIAMETER / (GEAR_RATIO * ENCODER_PPR);  // encoder counts (pulses) * output_ratio = m/s at wheel
+
 const double WIDTH = 0.115;  // meters, chassis pivot to pivot Y dimension
 const double LENGTH = 0.160;  // meters, chassis pivot to pivot X dimension
 const double ARMATURE = 0.037;  // meters, pivot to wheel center dimension
+
 const int FRONT_LEFT = 2;  // module 3
 const int BACK_LEFT = 0;  // module 1
 const int BACK_RIGHT = 1;  // module 2
 const int FRONT_RIGHT = 3;  // module 4
+
+// Servo commands that correspond to real dimensions
+const int FRONT_LEFT_ALCOVE = 230;
+const int FRONT_LEFT_STRAIGHT = 140;
+const int BACK_LEFT_ALCOVE = 375;
+const int BACK_LEFT_STRAIGHT = 470;
+const int BACK_RIGHT_ALCOVE = 235;
+const int BACK_RIGHT_STRAIGHT = 125;
+const int FRONT_RIGHT_ALCOVE = 405;
+const int FRONT_RIGHT_STRAIGHT = 515;
+
 BwDriveTrain drive(servos, motors, encoders, NUM_CHANNELS, MOTOR_EN, OUTPUT_RATIO, WIDTH, LENGTH, ARMATURE);
+double vx_command = 0.0, vy_command = 0.0, vt_command = 0.0;
 
 // ---
 // Power management
@@ -123,6 +141,17 @@ const int LED_RING = 39;
 const int NUM_PIXELS = 24;
 Adafruit_NeoPixel led_ring(NUM_PIXELS, LED_RING, NEO_GRBW + NEO_KHZ800);
 
+// ---
+// Timers
+// ---
+
+uint32_t current_time = 0;
+
+uint32_t prev_command_time = 0;
+uint32_t COMMAND_TIMEOUT_MS = 1000;
+
+uint32_t prev_enc_time = 0;
+const uint32_t ENCODER_UPDATE_INTERVAL_MS = 20;
 
 bool read_button() {
     return !digitalRead(BUTTON_IN);
@@ -154,7 +183,6 @@ void set_button_led(bool state) {
 
 void setup()
 {
-    Serial.begin(9600);
     I2C_BUS_1.begin();
     I2C_BUS_1.setSDA(18);
     I2C_BUS_1.setSCL(19);
@@ -197,8 +225,8 @@ void setup()
         ALCOVE_ANGLE,  // 30 deg
         STRAIGHT_ANGLE,
         ALCOVE_ANGLE,
-        230,
-        140,
+        FRONT_LEFT_ALCOVE,
+        FRONT_LEFT_STRAIGHT,
         MAX_SERVO_SPEED,
         true
     );
@@ -208,8 +236,8 @@ void setup()
         M_PI - FRONT_ANGLE,  // 225 deg
         STRAIGHT_ANGLE + M_PI,
         M_PI - ALCOVE_ANGLE,
-        375,
-        470,
+        BACK_LEFT_ALCOVE,
+        BACK_LEFT_STRAIGHT,
         MAX_SERVO_SPEED,
         false
     );
@@ -219,8 +247,8 @@ void setup()
         ALCOVE_ANGLE + M_PI,  // 210 deg
         STRAIGHT_ANGLE + M_PI,
         ALCOVE_ANGLE + M_PI,
-        235,
-        125,
+        BACK_RIGHT_ALCOVE,
+        BACK_RIGHT_STRAIGHT,
         MAX_SERVO_SPEED,
         true
     );
@@ -231,45 +259,89 @@ void setup()
         -FRONT_ANGLE,  // 75 deg
         STRAIGHT_ANGLE,
         -ALCOVE_ANGLE,
-        405,
-        515,
+        FRONT_RIGHT_ALCOVE,
+        FRONT_RIGHT_STRAIGHT,
         MAX_SERVO_SPEED,
         false
     );
 
     drive.begin();
+    drive.set_enable(false);
+
+    for(int i = 0; i < NUM_PIXELS; i++) {
+        led_ring.setPixelColor(i, led_ring.Color(0, 150, 0, 0));
+        led_ring.show();
+        delay(10);
+    }
+    for(int i = 0; i < NUM_PIXELS; i++) {
+        led_ring.setPixelColor(i, led_ring.Color(0, 0, 0, 0));
+        led_ring.show();
+        delay(10);
+    }
+
+    tunnel_begin();
 }
 
-int state = 0;
-bool enabled = false;
+void packetCallback(PacketResult* result)
+{
+    // if the result is not set for some reason, don't do anything
+    if (result == NULL) {
+        return;
+    }
+
+    // Extract category and check which event it maps to
+    String category = result->getCategory();
+    Serial.print("Received packet: ");
+    Serial.println(category);
+    if (category.equals("ping")) {
+        // Respond to ping by writing back the same value
+        float value;
+        if (!result->getFloat(value)) { DEBUG_SERIAL.println(F("Failed to get ping")); return; }
+        tunnel_writePacket("ping", "f", value);
+    }
+    else if (category.equals("d")) {
+        float vx, vy, vt;
+        if (!result->getFloat(vx)) { DEBUG_SERIAL.println(F("Failed to get vx")); return; }
+        if (!result->getFloat(vy)) { DEBUG_SERIAL.println(F("Failed to get vy")); return; }
+        if (!result->getFloat(vt)) { DEBUG_SERIAL.println(F("Failed to get vt")); return; }
+        vx_command = (double)vx;
+        vy_command = (double)vy;
+        vt_command = (double)vt;
+        prev_command_time = current_time;
+        DEBUG_SERIAL.println(vx_command);
+        DEBUG_SERIAL.println(vy_command);
+        DEBUG_SERIAL.println(vt_command);
+    }
+    else if (category.equals("en")) {
+        bool enabled;
+        if (!result->getBool(enabled)) { DEBUG_SERIAL.println(F("Failed to get enable state")); return; }
+        drive.set_enable(enabled);
+        DEBUG_SERIAL.print("Setting enabled to ");
+        DEBUG_SERIAL.println(enabled);
+    }
+    else if (category.equals("?en")) {
+        tunnel_writePacket("?en", "b", drive.get_enable());
+    }
+}
 
 void loop()
 {
+    current_time = millis();
+    packetCallback(tunnel_readPacket());
     if (did_button_press(true)) {
-        state = (state + 1) % 5;
-        Serial.println(state);
+        drive.set_enable(!drive.get_enable());
     }
-    switch (state)
-    {
-    case 0:
-        drive.set_enable(false);
-        break;
-    case 1:
-        drive.set_enable(true);
-        drive.drive(0.3, 0.0, 2.0);
-        break;
-    case 2:
-        drive.drive(0.3, 0.0, -2.0);
-        break;
-    case 3:
-        drive.drive(0.3, 0.0, 0.0);
-        break;
-    case 4:
-        drive.drive(0.0, 0.0, 0.0);
-        break;
+    if (current_time - prev_command_time > COMMAND_TIMEOUT_MS) {
+        vx_command = 0.0;
+        vy_command = 0.0;
+        vt_command = 0.0;
+        drive.stop();
+    }
+    else {
+        drive.drive(vx_command, vy_command, vt_command);
+    }
     
-    default:
-        break;
-    }
-
+    // if (current_time - prev_enc_time > ENCODER_UPDATE_INTERVAL_MS) {
+    //     prev_enc_time = current_time;
+    // }
 }

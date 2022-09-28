@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include "tunnel/protocol.h"
 
-#define PROTOCOL_SERIAL Serial5
+#define PROTOCOL_SERIAL Serial2
 #define PROTOCOL_BAUD 1000000
 
 #ifndef DEBUG_SERIAL

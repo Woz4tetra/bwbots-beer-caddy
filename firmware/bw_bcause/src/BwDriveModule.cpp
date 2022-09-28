@@ -154,22 +154,24 @@ double BwDriveModule::wrap_angle(double angle)
 
 void BwDriveModule::set(double azimuth, double wheel_velocity)
 {
+    azimuth = wrap_angle(azimuth);
+
     Serial.print(channel);
     Serial.print("\t");
     Serial.print(azimuth);
-    azimuth = wrap_angle(azimuth);
     Serial.print("\t");
-    Serial.print(azimuth);
+    Serial.print(wheel_velocity);
+    
     if (azimuth < servo_min_angle || azimuth > servo_max_angle) {
         azimuth = wrap_angle(azimuth + M_PI);
         wheel_velocity = -wheel_velocity;
     }
 
-    // Serial.print(channel);
     Serial.print("\t");
     Serial.print(azimuth);
     Serial.print("\t");
     Serial.println(wheel_velocity);
+
     set_azimuth(azimuth);
     set_wheel_velocity(wheel_velocity);
 }

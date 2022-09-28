@@ -181,6 +181,13 @@ Run this command on your local machine:
 - `./upload.sh`
 - Platformio should say "SUCCESS"
 
+## Configure serial port
+
+### Disable serial console
+- `sudo systemctl stop nvgetty`
+- `sudo systemctl disable nvgetty`
+- `sudo udevadm trigger`
+- `sudo reboot`
 ## ROS and Package Dependencies
 
 I recommend running all of these commands inside of a tmux session in case of network dropouts:

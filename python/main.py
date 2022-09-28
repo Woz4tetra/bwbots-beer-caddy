@@ -11,15 +11,15 @@ from lib.session import Session
 from lib.config import Config
 
 from beer_caddy.tunnel_client import RobotTunnelClient
-from beer_caddy.gpio_manager import GpioManager
 from beer_caddy.commandline import RobotCLI
+from beer_caddy.tcp_server import TCPServer
 
 
 class MySession(Session):
     """Contains all subsystems in this project. Allows for subsystems to reference each other via this object."""
     def __init__(self, args):
         """
-        :param args: session arguments. An object containing the properties "rig_name" and "test_name"
+        :param args: session arguments"
         """
         super().__init__()
 
@@ -32,22 +32,22 @@ class MySession(Session):
 
         self.config = Config()  # contains the combined base and overlay configs
         self.base_config = Config()  # all parameters for project (the base config)
-        self.overlay_config = Config()  # all rig specific parameters
+        self.overlay_config = Config()  # all project specific parameters
         self._load_config()  # pulls parameters from disk into config objects
         self.logger = self._init_log()  # initializes log object. Only call this once!!
 
         # wrapper for arduino interactions including Fuse stepper encoders
         self.tunnel = RobotTunnelClient(self.logger, self.config.tunnel.address)
 
-        self.gpio = GpioManager(self.logger, self.config.gpio)
         self.cli = RobotCLI(self)
+
+        self.tcp_server = TCPServer(self.config.tcp.port)
 
         self.logger.info("Session initialized!")
 
     def start(self):
         """start relevant subsystems to fully initialize them"""
         self.tunnel.start()
-        self.gpio.start()
 
         self.logger.info("Session started!")
 
@@ -72,7 +72,7 @@ class MySession(Session):
         """
         Calls RecursiveNamespace.set_nested on merged config object. Allows config to be set via tuple keys.
         For use in slack bot callbacks.
-        This method also sets the rig overlay config and saves it to disk so changes are loaded on restart.
+        This method also sets the project overlay config and saves it to disk so changes are loaded on restart.
 
         :param key: a tuple of hashable objects
         :param value: value to set the config entry with
@@ -81,7 +81,7 @@ class MySession(Session):
         self.config.set_nested(key, value)
         self.overlay_config.set_nested(key, value, create=True)
         self.logger.info("Setting parameter %s to %s" % (key, value))
-        self.logger.info("Saving rig overlay to %s" % self.overlay_config_path)
+        self.logger.info("Saving project overlay to %s" % self.overlay_config_path)
         self.overlay_config.save(self.overlay_config_path)
 
     def stop(self, exception):
@@ -91,7 +91,6 @@ class MySession(Session):
         So this method isn't 100% necessary.
         """
         self.tunnel.stop()  # shuts down serial communication
-        self.gpio.stop()
         if exception is not None:
             self.logger.error(exception, exc_info=True)
         if isinstance(exception, ShutdownException):
@@ -107,13 +106,7 @@ async def update_tunnel(session: MySession):
     tunnel = session.tunnel
     while True:
         await tunnel.update()
-        await asyncio.sleep(0.005)
-
-
-async def config_controller(session: MySession):
-    tunnel = session.tunnel
-    config = session.config
-    await tunnel.set_balance_config(config.balance)
+        await asyncio.sleep(0.001)
 
 
 async def ping_tunnel(session: MySession):
@@ -123,14 +116,16 @@ async def ping_tunnel(session: MySession):
         await asyncio.sleep(0.5)
 
 
-async def update_gpio(session: MySession):
-    """
-    Task to call tunnel.update (arduino communications) in a loop
-    :param session: instance of MySession
-    """
-    gpio = session.gpio
+async def update_tcp(session: MySession):
+    tcp_server = session.tcp_server
+    tunnel = session.tunnel
+    logger = session.logger
     while True:
-        await gpio.update()
+        tcp_server.update()
+        vx, vy, vt = tcp_server.get_command()
+        logger.info(f"{vx}, {vy}, {vt}")
+        tunnel.drive(vx, vy, vt)
+        await asyncio.sleep(1.0 / 50.0)
 
 
 async def enable_motors(session: MySession):
@@ -159,9 +154,8 @@ def main():
 
     # add relevant asyncio tasks to run
     session.add_task(update_tunnel(session))
-    session.add_task(config_controller(session))
+    session.add_task(update_tcp(session))
     # session.add_task(ping_tunnel(session))
-    session.add_task(update_gpio(session))
     if args.cli:
         session.add_task(session.cli.run())
 

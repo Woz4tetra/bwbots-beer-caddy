@@ -131,6 +131,14 @@ void BwDriveTrain::drive(double vx, double vy, double vt)
     set(3, azimuth, wheel_velocity);  // front right
 }
 
+void BwDriveTrain::stop()
+{
+    for (unsigned int channel = 0; channel < get_num_motors(); channel++) {
+        drive_modules[channel]->set_wheel_velocity(0.0);
+    }
+}
+
+
 void BwDriveTrain::compute_module_state(double x, double y, double vx, double vy, double vt, double dt, double& azimuth, double& wheel_velocity)
 {
     double theta_mag = vt * dt;
@@ -152,6 +160,7 @@ void BwDriveTrain::compute_module_state(double x, double y, double vx, double vy
             module_vy = vt * x;
         }
         else {
+            v_mag = vx;
             double module_angle = atan2(x, radius_of_curvature + y);
             double module_radc = x / sin(module_angle) - armature_length;
 

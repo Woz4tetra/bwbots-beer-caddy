@@ -1,2 +1,0 @@
-#!/usr/bin/env bash
-cd /home/pi/home-delivery-bot && /usr/bin/python3 ./main.py > /dev/null 2>&1
