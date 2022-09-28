@@ -4,3 +4,4 @@ __pycache__
 pcb/
 matlab/
 .pio/
+python/logs/
