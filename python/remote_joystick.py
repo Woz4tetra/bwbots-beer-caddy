@@ -9,7 +9,7 @@ from lib.recursive_namespace import RecursiveNamespace
 from lib.logger_manager import LoggerManager
 from lib.session import Session
 from lib.config import Config
-from beer_caddy.joystick import Joystick
+from beer_caddy.joystick import UnixJoystick
 from beer_caddy.tcp_client import TCPClient
 
 
@@ -35,7 +35,7 @@ class MySession(Session):
         self.logger = self._init_log()  # initializes log object. Only call this once!!
 
         joystick_address = self.config.joystick.address if len(args.joystick_address) == 0 else args.joystick_address
-        self.joystick = Joystick(self.logger, joystick_address)
+        self.joystick = UnixJoystick(self.logger, joystick_address)
 
         self.tcp_client = TCPClient(
             self.config.tcp.host,
@@ -84,19 +84,14 @@ async def update_joystick(session: MySession):
     tcp_client = session.tcp_client
     logger = session.logger
     while True:
-        joystick.update()
+        await joystick.update()
         await asyncio.sleep(0.05)
-        vx = -joystick.axis_states["y"]
-        if abs(vx) < 0.05:
-            vx = 0.0
-        vt = -joystick.axis_states["rx"]
-        if abs(vt) < 0.05:
-            vt = 0.0
-        vx *= 0.5
-        vt *= 3.0
+        vx = -joystick.deadband_axis("left/y", 0.05, 0.5)
+        vt = -joystick.deadband_axis("right/x", 0.05, 3.0)
         tcp_client.set_command(vx, 0.0, vt)
         tcp_client.update()
-        logger.info(f"{tcp_client.drive_command}")
+        if any(joystick.check_list(joystick.did_axis_change, "left/y", "right/x")):
+            logger.info(f"{tcp_client.drive_command}")
 
 
 def main():

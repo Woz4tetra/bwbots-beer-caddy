@@ -123,7 +123,7 @@ async def update_tcp(session: MySession):
     while True:
         tcp_server.update()
         vx, vy, vt = tcp_server.get_command()
-        logger.info(f"{vx}, {vy}, {vt}")
+        # logger.info(f"{vx}, {vy}, {vt}")
         tunnel.drive(vx, vy, vt)
         await asyncio.sleep(1.0 / 50.0)
 
