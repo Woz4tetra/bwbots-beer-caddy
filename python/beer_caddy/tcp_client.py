@@ -7,9 +7,15 @@ class TCPClient:
         self.host = host
         self.port = port
         self.drive_command = (0.0, 0.0, 0.0)
+        self.enabled = False
     
     def set_command(self, vx, vy, vt):
         self.drive_command = (vx, vy, vt)
+    
+    def set_enable(self, enabled):
+        self.enabled = enabled
+        data = f"e,{int(self.enabled)}\n"
+        self.s.sendall(data.encode())
 
     def start(self):
         print(f"Connecting to {self.host}:{self.port}")

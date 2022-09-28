@@ -35,7 +35,11 @@ class MySession(Session):
         self.logger = self._init_log()  # initializes log object. Only call this once!!
 
         joystick_address = self.config.joystick.address if len(args.joystick_address) == 0 else args.joystick_address
-        self.joystick = UnixJoystick(self.logger, joystick_address)
+        self.joystick = UnixJoystick(
+            self.logger, joystick_address,
+            self.config.joystick.button_mapping,
+            self.config.joystick.axis_mapping,
+        )
 
         self.tcp_client = TCPClient(
             self.config.tcp.host,
@@ -92,6 +96,12 @@ async def update_joystick(session: MySession):
         tcp_client.update()
         if any(joystick.check_list(joystick.did_axis_change, "left/y", "right/x")):
             logger.info(f"{tcp_client.drive_command}")
+        if all(joystick.check_list(joystick.is_button_down, "triggers/L1", "menu/Start")):
+            tcp_client.set_enable(True)
+            logger.info(f"Enabling")
+        elif any(joystick.check_list(joystick.did_button_down, "triggers/L1", "triggers/R1")):
+            tcp_client.set_enable(False)
+            logger.info(f"Disabling")
 
 
 def main():

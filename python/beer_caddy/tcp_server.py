@@ -10,9 +10,13 @@ class TCPServer:
         self.disconnect_time = None
         self.port = port
         self.drive_command = [0.0, 0.0, 0.0]
+        self.enabled = False
     
     def get_command(self):
         return self.drive_command
+    
+    def get_enabled(self):
+        return self.enabled
 
     def update(self):
         if self.s is None:
@@ -64,5 +68,7 @@ class TCPServer:
                                     self.drive_command[0] = command[1]
                                     self.drive_command[1] = command[2]
                                     self.drive_command[2] = command[3]
+                                elif command[0] == 'e':
+                                    self.enabled = bool(command[1])
                         else:
                             print('not valid: {}'.format(data))

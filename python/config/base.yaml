@@ -12,6 +12,8 @@ tunnel:
 
 joystick:
   address: /dev/input/js0
+  axis_mapping: {}
+  button_mapping: {}
 
 tcp:
   host: "127.0.0.1"

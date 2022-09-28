@@ -120,9 +120,14 @@ async def update_tcp(session: MySession):
     tcp_server = session.tcp_server
     tunnel = session.tunnel
     logger = session.logger
+    enabled = False
     while True:
         tcp_server.update()
         vx, vy, vt = tcp_server.get_command()
+        if tcp_server.get_enabled() != enabled:
+            enabled = tcp_server.get_enabled()
+            tunnel.set_motor_enable(enabled)
+            logger.info(f"Setting enabled to {enabled}")
         # logger.info(f"{vx}, {vy}, {vt}")
         tunnel.drive(vx, vy, vt)
         await asyncio.sleep(1.0 / 50.0)

@@ -105,6 +105,9 @@ class UnixJoystick(Joystick):
         self.evbuf_queue = queue.Queue()
         self.buffered_message = JoystickMessage()
 
+        self.unix_axis_map = {}
+        self.unix_button_map = {}
+
         this_axis_mapping = RecursiveNamespace(**{
             "left": {
                 "x": 0,  # x
@@ -224,8 +227,8 @@ class UnixJoystick(Joystick):
 
             self.logger.info("Joystick: %s" % self.get_device_name())
             self.get_axes_buttons()
-            # self.get_axis_map()
-            # self.get_button_map()
+            self.get_axis_map()
+            self.get_button_map()
 
             self.logger.info(f"{len(self.buffered_message.axes)} axes found")
             self.logger.info(f"{len(self.buffered_message.buttons)} buttons found")
@@ -256,19 +259,19 @@ class UnixJoystick(Joystick):
         num_buttons = buf[0]
         self.buffered_message.set_num_buttons(num_buttons)
 
-    # def get_axis_map(self):
-    #     buf = array.array('B', [0] * 0x40)
-    #     ioctl(self.jsdev, 0x80406a32, buf) # JSIOCGAXMAP
-    #     for axis in buf[:self.num_axes]:
-    #         axis_num = AXES_MAP.get(axis, 'unknown(0x%02x)' % axis)
+    def get_axis_map(self):
+        buf = array.array('B', [0] * 0x40)
+        ioctl(self.jsdev, 0x80406a32, buf) # JSIOCGAXMAP
+        for axis in buf[:len(self.buffered_message.axes)]:
+            axis_num = AXES_MAP.get(axis, 'unknown(0x%02x)' % axis)
+            self.unix_axis_map[axis] = axis_num
 
-    # def get_button_map(self):
-    #     buf = array.array('H', [0] * 200)
-    #     ioctl(self.jsdev, 0x80406a34, buf) # JSIOCGBTNMAP
-    #     for btn in buf[:self.num_buttons]:
-    #         btn_name = button_names.get(btn, 'unknown(0x%03x)' % btn)
-    #         self.button_map.append(btn_name)
-    #         self.button_states[btn_name] = 0
+    def get_button_map(self):
+        buf = array.array('H', [0] * 200)
+        ioctl(self.jsdev, 0x80406a34, buf) # JSIOCGBTNMAP
+        for btn in buf[:len(self.buffered_message.buttons)]:
+            btn_name = BUTTONS_MAP.get(btn, 'unknown(0x%03x)' % btn)
+            self.unix_button_map[btn] = btn_name
 
     async def update(self):
         await self.check_joystick_events()
@@ -297,11 +300,9 @@ class UnixJoystick(Joystick):
         evtime, value, type, number = struct.unpack('IhBB', evbuf)
 
         if type & 0x01:
-            if number in BUTTONS_MAP:
-                button_index = BUTTONS_MAP[number]
-                self.buffered_message.buttons[button_index] = bool(value)
+            if number < len(self.buffered_message.buttons):
+                self.buffered_message.buttons[number] = bool(value)
 
         if type & 0x02:
-            if number in AXES_MAP:
-                axis_index = AXES_MAP[number]
-                self.buffered_message.axes[axis_index] = value / 32767.0
+            if number < len(self.buffered_message.axes):
+                self.buffered_message.axes[number] = value / 32767.0
