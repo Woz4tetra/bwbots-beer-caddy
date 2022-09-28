@@ -38,17 +38,12 @@ void BwDriveModule::reset()
 
 void BwDriveModule::set_azimuth(double setpoint)
 {
-    Serial.print(channel);
-    Serial.print("\tsetpoint 1: ");
-    Serial.print(setpoint);
     if (setpoint < servo_min_angle) {
         setpoint = servo_min_angle;
     }
     if (setpoint > servo_max_angle) {
         setpoint = servo_max_angle;
     }
-    Serial.print("\tsetpoint 2: ");
-    Serial.println(setpoint);
     
     setpoint_angle = setpoint;
     int pulse = (int)(
@@ -135,6 +130,48 @@ void BwDriveModule::set_wheel_velocity(double velocity)
         command = -command;
     }
     motor->set(command);
+}
+
+double BwDriveModule::wrap_angle(double angle)
+{
+    // wrap to -pi..pi for front modules, 0..2pi for back modules
+    angle = fmod(angle, 2.0 * M_PI);
+    if (servo_max_angle < M_PI) {
+        if (angle >= M_PI) {
+            angle -= 2.0 * M_PI;
+        }
+        if (angle < -M_PI) {
+            angle += 2.0 * M_PI;
+        }
+    }
+    else {
+        if (angle < 0.0) {
+            angle += 2.0 * M_PI;
+        }
+    }
+    return angle;
+}
+
+void BwDriveModule::set(double azimuth, double wheel_velocity)
+{
+    Serial.print(channel);
+    Serial.print("\t");
+    Serial.print(azimuth);
+    azimuth = wrap_angle(azimuth);
+    Serial.print("\t");
+    Serial.print(azimuth);
+    if (azimuth < servo_min_angle || azimuth > servo_max_angle) {
+        azimuth = wrap_angle(azimuth + M_PI);
+        wheel_velocity = -wheel_velocity;
+    }
+
+    // Serial.print(channel);
+    Serial.print("\t");
+    Serial.print(azimuth);
+    Serial.print("\t");
+    Serial.println(wheel_velocity);
+    set_azimuth(azimuth);
+    set_wheel_velocity(wheel_velocity);
 }
 
 

@@ -103,13 +103,7 @@ void BwDriveTrain::set_limits(
 void BwDriveTrain::set(unsigned int channel, double azimuth, double wheel_velocity)
 {
     if (channel <= get_num_motors()) {
-        Serial.print(channel);
-        Serial.print("\tazimuth: ");
-        Serial.print(azimuth);
-        Serial.print("\twheel_velocity: ");
-        Serial.println(wheel_velocity);
-        drive_modules[channel]->set_azimuth(azimuth);
-        drive_modules[channel]->set_wheel_velocity(wheel_velocity);
+        drive_modules[channel]->set(azimuth, wheel_velocity);
     }
 }
 

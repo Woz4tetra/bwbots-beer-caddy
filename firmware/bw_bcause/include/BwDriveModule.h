@@ -27,12 +27,12 @@ private:
 
     double dt();
     void update_predicted_azimuth();
+    double wrap_angle(double angle);
 public:
     BwDriveModule(int channel, double output_ratio, Adafruit_PWMServoDriver* servos, MotorControllerMC33926* motor, Encoder* encoder);
     void begin();
     void reset();
     void set_enable(bool state);
-    void set_azimuth(double setpoint);
     void set_limits(
         double servo_min_angle,
         double servo_max_angle,
@@ -47,6 +47,8 @@ public:
     double get_wheel_position();
     double get_wheel_velocity();
     double update_wheel_velocity();
+    void set(double azimuth, double wheel_velocity);
+    void set_azimuth(double setpoint);
     void set_wheel_velocity(double velocity);
     SpeedPID* get_pid()  { return speed_pid; }
     SpeedFilter* get_filter()  { return speed_filter; }

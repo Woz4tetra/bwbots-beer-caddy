@@ -193,8 +193,8 @@ void setup()
     
     drive.set_limits(
         FRONT_LEFT,
-        -ALCOVE_ANGLE,
-        -FRONT_ANGLE,
+        FRONT_ANGLE,  // -75 deg
+        ALCOVE_ANGLE,  // 30 deg
         STRAIGHT_ANGLE,
         ALCOVE_ANGLE,
         230,
@@ -204,31 +204,31 @@ void setup()
     );
     drive.set_limits(
         BACK_LEFT,
-        -ALCOVE_ANGLE,
-        -FRONT_ANGLE,
-        STRAIGHT_ANGLE,
-        -ALCOVE_ANGLE,
+        M_PI - ALCOVE_ANGLE,  // 150 deg
+        M_PI - FRONT_ANGLE,  // 225 deg
+        STRAIGHT_ANGLE + M_PI,
+        M_PI - ALCOVE_ANGLE,
         375,
         470,
         MAX_SERVO_SPEED,
-        true
+        false
     );
     drive.set_limits(
         BACK_RIGHT,
-        -ALCOVE_ANGLE,
-        -FRONT_ANGLE,
-        STRAIGHT_ANGLE,
-        ALCOVE_ANGLE,
+        FRONT_ANGLE + M_PI,  // 105 deg
+        ALCOVE_ANGLE + M_PI,  // 210 deg
+        STRAIGHT_ANGLE + M_PI,
+        ALCOVE_ANGLE + M_PI,
         235,
         125,
         MAX_SERVO_SPEED,
-        false
+        true
     );
     
     drive.set_limits(
         FRONT_RIGHT,
-        -ALCOVE_ANGLE,
-        -FRONT_ANGLE,
+        -ALCOVE_ANGLE,  // 30 deg
+        -FRONT_ANGLE,  // 75 deg
         STRAIGHT_ANGLE,
         -ALCOVE_ANGLE,
         405,
@@ -238,7 +238,6 @@ void setup()
     );
 
     drive.begin();
-
 }
 
 int state = 0;
@@ -257,29 +256,16 @@ void loop()
         break;
     case 1:
         drive.set_enable(true);
-        drive.set(FRONT_LEFT, ALCOVE_ANGLE, 0.0);
-        drive.set(BACK_LEFT, ALCOVE_ANGLE, 0.0);
-        drive.set(BACK_RIGHT, ALCOVE_ANGLE, 0.0);
-        drive.set(FRONT_RIGHT, ALCOVE_ANGLE, 0.0);
+        drive.drive(0.3, 0.0, 2.0);
         break;
     case 2:
-        // drive.drive(0.0, 0.0, 2.0);
-        drive.set(FRONT_LEFT, FRONT_ANGLE, 0.0);
-        drive.set(BACK_LEFT, FRONT_ANGLE, 0.0);
-        drive.set(BACK_RIGHT, FRONT_ANGLE, 0.0);
-        drive.set(FRONT_RIGHT, FRONT_ANGLE, 0.0);
+        drive.drive(0.3, 0.0, -2.0);
         break;
     case 3:
-        drive.set(FRONT_LEFT, 0.3, 0.0);
-        drive.set(BACK_LEFT, 0.3, 0.0);
-        drive.set(BACK_RIGHT, 0.3, 0.0);
-        drive.set(FRONT_RIGHT, 0.3, 0.0);
+        drive.drive(0.3, 0.0, 0.0);
         break;
     case 4:
-        drive.set(FRONT_LEFT, STRAIGHT_ANGLE, 0.0);
-        drive.set(BACK_LEFT, STRAIGHT_ANGLE, 0.0);
-        drive.set(BACK_RIGHT, STRAIGHT_ANGLE, 0.0);
-        drive.set(FRONT_RIGHT, STRAIGHT_ANGLE, 0.0);
+        drive.drive(0.0, 0.0, 0.0);
         break;
     
     default:
