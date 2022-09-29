@@ -14,13 +14,14 @@ private:
     unsigned int motor_enable_pin;
     bool is_enabled;
     static const unsigned int MAX_CHANNELS = 16;
-    double width, length;
     double armature_length;
     uint32_t prev_time;
+    double min_strafe_angle, max_strafe_angle;
+    double reverse_min_strafe_angle, reverse_max_strafe_angle;
+    double min_radius_of_curvature;
     BwDriveModule** drive_modules;
     Adafruit_PWMServoDriver* servos;
 
-    void compute_module_state(double x, double y, double vx, double vy, double vt, double dt, double& azimuth, double& wheel_velocity);
     double dt();
 
 public:
@@ -31,8 +32,10 @@ public:
         unsigned int num_motors,
         unsigned int motor_enable_pin,
         double output_ratio,
-        double width, double length,
-        double armature_length
+        double armature_length,
+        double min_radius_of_curvature,
+        double* x_locations,
+        double* y_locations
     );
     void begin();
     void set_enable(bool state);
@@ -47,6 +50,7 @@ public:
     double get_wheel_velocity(unsigned int channel);
     double get_wheel_position(unsigned int channel);
     double get_azimuth(unsigned int channel);
+    static double wrap_angle(double angle);
     void set_limits(
         unsigned int channel,
         double servo_min_angle,

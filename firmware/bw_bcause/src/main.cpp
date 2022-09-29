@@ -109,6 +109,12 @@ const double WIDTH = 0.115;  // meters, chassis pivot to pivot Y dimension
 const double LENGTH = 0.160;  // meters, chassis pivot to pivot X dimension
 const double ARMATURE = 0.037;  // meters, pivot to wheel center dimension
 
+// ordered by channel index
+double MODULE_X_LOCATIONS[NUM_CHANNELS] = {-LENGTH / 2.0, -LENGTH / 2.0, LENGTH / 2.0, LENGTH / 2.0};
+double MODULE_Y_LOCATIONS[NUM_CHANNELS] = {WIDTH / 2.0, -WIDTH / 2.0, WIDTH / 2.0, -WIDTH / 2.0};
+
+const double MIN_RADIUS_OF_CURVATURE = 0.1;
+
 const int FRONT_LEFT = 2;  // module 3
 const int BACK_LEFT = 0;  // module 1
 const int BACK_RIGHT = 1;  // module 2
@@ -124,7 +130,13 @@ const int BACK_RIGHT_STRAIGHT = 125;
 const int FRONT_RIGHT_ALCOVE = 405;
 const int FRONT_RIGHT_STRAIGHT = 515;
 
-BwDriveTrain drive(servos, motors, encoders, NUM_CHANNELS, MOTOR_EN, OUTPUT_RATIO, WIDTH, LENGTH, ARMATURE);
+BwDriveTrain drive(
+    servos, motors, encoders,
+    NUM_CHANNELS, MOTOR_EN,
+    OUTPUT_RATIO, ARMATURE,
+    MIN_RADIUS_OF_CURVATURE,
+    MODULE_X_LOCATIONS, MODULE_Y_LOCATIONS
+);
 double vx_command = 0.0, vy_command = 0.0, vt_command = 0.0;
 
 // ---

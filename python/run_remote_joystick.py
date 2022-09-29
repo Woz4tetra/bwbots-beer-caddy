@@ -91,8 +91,9 @@ async def update_joystick(session: MySession):
         await joystick.update()
         await asyncio.sleep(0.05)
         vx = -joystick.deadband_axis("left/y", 0.05, 0.5)
+        vy = -joystick.deadband_axis("left/x", 0.05, 0.5)
         vt = -joystick.deadband_axis("right/x", 0.05, 3.0)
-        tcp_client.set_command(vx, 0.0, vt)
+        tcp_client.set_command(vx, vy, vt)
         tcp_client.update()
         if any(joystick.check_list(joystick.did_axis_change, "left/y", "right/x")):
             logger.info(f"{tcp_client.drive_command}")

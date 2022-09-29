@@ -21,6 +21,10 @@ private:
     int servo_command_1, servo_command_2;
     double servo_max_velocity;
     double setpoint_angle, predicted_angle;
+    double x_location, y_location;
+    double armature_length;
+    double min_radius_of_curvature;
+    double min_strafe_angle, max_strafe_angle;
     uint32_t prev_time;
     bool is_enabled;
     bool flip_motor_commands;
@@ -28,8 +32,19 @@ private:
     double dt();
     void update_predicted_azimuth();
     double wrap_angle(double angle);
+    void compute_state(double vx, double vy, double vt, double dt, double& azimuth, double& wheel_velocity);
 public:
-    BwDriveModule(int channel, double output_ratio, Adafruit_PWMServoDriver* servos, MotorControllerMC33926* motor, Encoder* encoder);
+    BwDriveModule(
+        int channel,
+        double output_ratio,
+        double x_location,
+        double y_location,
+        double min_radius_of_curvature,
+        double armature_length,
+        Adafruit_PWMServoDriver* servos,
+        MotorControllerMC33926* motor,
+        Encoder* encoder
+    );
     void begin();
     void reset();
     void set_enable(bool state);
@@ -43,11 +58,12 @@ public:
         double servo_max_velocity,
         bool flip_motor_commands
     );
+    void set_strafe_limits(double min_strafe_angle, double max_strafe_angle);
     double get_azimuth();
     double get_wheel_position();
     double get_wheel_velocity();
     double update_wheel_velocity();
-    void set(double azimuth, double wheel_velocity);
+    void set(double vx, double vy, double vt, double dt);
     void set_azimuth(double setpoint);
     void set_wheel_velocity(double velocity);
     SpeedPID* get_pid()  { return speed_pid; }
