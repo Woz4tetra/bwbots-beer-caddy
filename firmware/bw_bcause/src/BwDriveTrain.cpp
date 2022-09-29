@@ -156,6 +156,20 @@ void BwDriveTrain::drive(double vx, double vy, double vt)
     }
 }
 
+void BwDriveTrain::get_position(double& x, double& y, double& theta)
+{
+    x = 0.0;
+    y = 0.0;
+    theta = 0.0;
+}
+
+void BwDriveTrain::get_velocity(double& vx, double& vy, double& vt)
+{
+    vx = 0.0;
+    vy = 0.0;
+    vt = 0.0;
+}
+
 void BwDriveTrain::stop()
 {
     for (unsigned int channel = 0; channel < get_num_motors(); channel++) {

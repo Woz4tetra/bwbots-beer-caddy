@@ -50,6 +50,8 @@ public:
     double get_wheel_velocity(unsigned int channel);
     double get_wheel_position(unsigned int channel);
     double get_azimuth(unsigned int channel);
+    void get_position(double& x, double& y, double& theta);
+    void get_velocity(double& vx, double& vy, double& vt);
     static double wrap_angle(double angle);
     void set_limits(
         unsigned int channel,

@@ -138,6 +138,8 @@ BwDriveTrain drive(
     MODULE_X_LOCATIONS, MODULE_Y_LOCATIONS
 );
 double vx_command = 0.0, vy_command = 0.0, vt_command = 0.0;
+double odom_vx = 0.0, odom_vy = 0.0, odom_vt = 0.0;
+double odom_x = 0.0, odom_y = 0.0, odom_t = 0.0;
 
 // ---
 // Power management
@@ -162,8 +164,8 @@ uint32_t current_time = 0;
 uint32_t prev_command_time = 0;
 uint32_t COMMAND_TIMEOUT_MS = 1000;
 
-uint32_t prev_enc_time = 0;
-const uint32_t ENCODER_UPDATE_INTERVAL_MS = 20;
+uint32_t prev_odom_time = 0;
+const uint32_t ODOM_UPDATE_INTERVAL_MS = 20;
 
 bool read_button() {
     return !digitalRead(BUTTON_IN);
@@ -353,7 +355,13 @@ void loop()
         drive.drive(vx_command, vy_command, vt_command);
     }
     
-    // if (current_time - prev_enc_time > ENCODER_UPDATE_INTERVAL_MS) {
-    //     prev_enc_time = current_time;
-    // }
+    if (current_time - prev_odom_time > ODOM_UPDATE_INTERVAL_MS) {
+        prev_odom_time = current_time;
+        drive.get_position(odom_x, odom_y, odom_t);
+        drive.get_velocity(odom_vx, odom_vy, odom_vt);
+        tunnel_writePacket("od", "eeefff",
+            odom_x, odom_y, odom_t,
+            odom_vx, odom_vy, odom_vt
+        );
+    }
 }

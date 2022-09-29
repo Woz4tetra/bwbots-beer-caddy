@@ -19,6 +19,15 @@ class RobotTunnelClient(TunnelSerialClient):
         self.logger = logger
         self.protocol.use_double_precision = True
         self.start_time = time.monotonic()  # timer for ping
+        self.odom_state = {
+            "timestamp": self.start_time,
+            "x": 0.0,
+            "y": 0.0,
+            "theta": 0.0,
+            "vx": 0.0,
+            "vy": 0.0,
+            "vt": 0.0,
+        }
 
     async def packet_callback(self, result: PacketResult):
         """
@@ -31,7 +40,23 @@ class RobotTunnelClient(TunnelSerialClient):
             current_time = self.get_time()
             ping = current_time - sent_time
             self.logger.info("Ping: %0.5f (current: %0.5f, recv: %0.5f)" % (ping, current_time, sent_time))
-            await asyncio.sleep(0.0)
+        elif result.category == "od":
+            x = result.get_double()
+            y = result.get_double()
+            theta = result.get_double()
+            vx = result.get_float()
+            vy = result.get_float()
+            vt = result.get_float()
+
+            self.odom_state["timestamp"] = time.monotonic()
+            self.odom_state["x"] = x
+            self.odom_state["y"] = y
+            self.odom_state["theta"] = theta
+            self.odom_state["vx"] = vx
+            self.odom_state["vy"] = vy
+            self.odom_state["vt"] = vt
+            # self.logger.info(f"{x}, {y}, {theta}, {vx}, {vy}, {vt}")
+        await asyncio.sleep(0.0)
 
     def get_time(self):
         """Get the time since __init__ was called"""

@@ -211,22 +211,11 @@ void BwDriveModule::set(double vx, double vy, double vt, double dt)
     double azimuth, wheel_velocity;
     compute_state(vx, vy, vt, dt, azimuth, wheel_velocity);
 
-    Serial.print(channel);
-    Serial.print("\t");
-    Serial.print(azimuth);
-    Serial.print("\t");
-    Serial.print(wheel_velocity);
-
     azimuth = wrap_angle(azimuth);
     if (azimuth < servo_min_angle || azimuth > servo_max_angle) {
         azimuth = wrap_angle(azimuth + M_PI);
         wheel_velocity = -wheel_velocity;
     }
-
-    Serial.print("\t");
-    Serial.print(azimuth);
-    Serial.print("\t");
-    Serial.println(wheel_velocity);
 
     set_azimuth(azimuth);
     set_wheel_velocity(wheel_velocity);
