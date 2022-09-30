@@ -74,6 +74,11 @@ class RobotTunnelClient(TunnelSerialClient):
                 state.wheel_velocity = result.get_float()
                 if channel + 1 == len(self.module_states.states):
                     self.parsed_pub.publish(aiopubsub.Key('module'), self.module_states)
+        
+        elif result.category == "power":
+            voltage = result.get_float()
+            current = result.get_float()
+            self.logger.info(f"{voltage: 0.4f} V, {current: 0.4f} A")
         await asyncio.sleep(0.0)
 
     def get_time(self):

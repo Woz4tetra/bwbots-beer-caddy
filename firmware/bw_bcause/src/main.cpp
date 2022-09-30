@@ -93,7 +93,7 @@ Adafruit_PWMServoDriver* servos = new Adafruit_PWMServoDriver(0x40 + 0b000010, I
 const double SPEED_TO_COMMAND = 255.0 / 2.0;  // calculated max speed: 0.843 m/s
 const double MAX_SERVO_SPEED = 5.950;  // rad/s
 
-const int DEADZONE_COMMAND = 60;
+const int DEADZONE_COMMAND = 80;
 const int MAX_SPEED_COMMAND = 255;
 
 const double ALCOVE_ANGLE = 0.5236;  // 30 degrees
@@ -168,6 +168,9 @@ uint32_t COMMAND_TIMEOUT_MS = 500;
 uint32_t prev_control_time = 0;
 const uint32_t CONTROL_UPDATE_INTERVAL_MS = 20;
 
+uint32_t prev_power_time = 0;
+const uint32_t POWER_UPDATE_INTERVAL_MS = 500;
+
 bool read_button() {
     return !digitalRead(BUTTON_IN);
 }
@@ -232,7 +235,7 @@ void setup()
         pid->command_min = -MAX_SPEED_COMMAND;
         pid->command_max = MAX_SPEED_COMMAND;
         SpeedFilter* filter = drive.get_filter(channel);
-        filter->Kf = 0.95;
+        filter->Kf = 0.9;
     }
     
     drive.set_limits(
@@ -377,5 +380,23 @@ void loop()
             );
         }
         // Serial.print('\n');
+    }
+    if (current_time - prev_power_time > POWER_UPDATE_INTERVAL_MS) {
+        prev_power_time = current_time;
+
+        float shuntvoltage = 0;
+        float busvoltage = 0;
+        float current_mA = 0;
+        float loadvoltage = 0;
+
+        shuntvoltage = charge_ina.getShuntVoltage_mV();
+        busvoltage = charge_ina.getBusVoltage_V();
+        current_mA = charge_ina.getCurrent_mA();
+        loadvoltage = busvoltage + (shuntvoltage / 1000);
+
+        tunnel_writePacket("power", "ff",
+            loadvoltage,
+            current_mA
+        );
     }
 }
