@@ -24,6 +24,22 @@ class Kinematics:
             [front_angle, alcove_angle],
             [-front_angle, -alcove_angle],
         ]
+
+        print(self.get_kinematics([
+            [-self.length / 2.0, self.width / 2.0],  # module 1, channel 0, back left
+            [-self.length / 2.0, -self.width / 2.0],  # module 2, channel 1, back right
+            [self.length / 2.0, self.width / 2.0],  # module 3, channel 2, front left
+            [self.length / 2.0, -self.width / 2.0],  # module 4, channel 3, front right
+        ])[1].tolist())
+
+    def get_kinematics(self, locations):
+        self.inverse_kinematics = []
+        for x, y in locations:
+            self.inverse_kinematics.append([1.0, 0.0, -y])
+            self.inverse_kinematics.append([0.0, 1.0, x])
+        inverse_kinematics = np.array(self.inverse_kinematics)
+        forward_kinematics = np.linalg.pinv(self.inverse_kinematics)
+        return inverse_kinematics, forward_kinematics
     
     def compute_module_state(self, channel, x, y, vx, vy, vt, dt):
         theta_mag = vt * dt
@@ -52,11 +68,9 @@ class Kinematics:
 
         azimuth = self.wrap_angle(channel, azimuth)
         min_angle, max_angle = self.angle_limits[channel]
-        print(azimuth, wheel_velocity)
         if azimuth < min_angle or azimuth > max_angle:
             azimuth = self.wrap_angle(channel, azimuth + math.pi)
             wheel_velocity = -wheel_velocity
-            print(f"{channel} wrapping")
         return azimuth, wheel_velocity
 
     def wrap_angle(self, channel, angle):

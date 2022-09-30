@@ -64,11 +64,14 @@ class TCPServer:
                                 elif command[ix].replace(".", "").isnumeric():
                                     command[ix] = float(command[ix])  # convert to float
                             if data != '':
-                                if command[0] == 'd':
-                                    self.drive_command[0] = command[1]
-                                    self.drive_command[1] = command[2]
-                                    self.drive_command[2] = command[3]
-                                elif command[0] == 'e':
-                                    self.enabled = bool(command[1])
+                                try:
+                                    if command[0] == 'd':
+                                        self.drive_command[0] = command[1]
+                                        self.drive_command[1] = command[2]
+                                        self.drive_command[2] = command[3]
+                                    elif command[0] == 'e':
+                                        self.enabled = bool(command[1])
+                                except BaseException as e:
+                                    print(f"Error occurred while parsing tcp command: {e}")
                         else:
                             print('not valid: {}'.format(data))

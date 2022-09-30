@@ -5,19 +5,26 @@ SpeedFilter::SpeedFilter(double Kf)
 {
     this->Kf = Kf;
     accum_value = 0.0;
+    prev_value = 0.0;
     prev_velocity = 0.0;
     prev_time = micros();
 }
 
 double SpeedFilter::compute(double next_value)
 {
-    double value = next_value - prev_value / dt();
+    double delta_time = dt();
+    if (delta_time <= 0.0) {
+        prev_velocity = 0.0;
+        return 0.0;
+    }
+    double value = (next_value - prev_value) / delta_time;
+    prev_value = next_value;
     if (Kf < 0.0) {
         prev_velocity = value;
         return value;
     }
     else {
-        accum_value += Kf * (accum_value - accum_value);
+        accum_value += Kf * (value - accum_value);
         prev_velocity = accum_value;
         return accum_value;
     }

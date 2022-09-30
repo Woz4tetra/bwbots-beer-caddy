@@ -101,9 +101,10 @@ const double FRONT_ANGLE = -1.2967;  // -74.293 degrees
 const double STRAIGHT_ANGLE = 0.0;  // 0 degrees
 
 const double GEAR_RATIO = 54.0;
-const double ENCODER_PPR = 11.0;  // pulses per rotation
+const double ENCODER_PPR = 64.0;  // pulses per rotation
 const double WHEEL_DIAMETER = 0.115;  // meters
-const double OUTPUT_RATIO = 2 * M_PI * WHEEL_DIAMETER / (GEAR_RATIO * ENCODER_PPR);  // encoder counts (pulses) * output_ratio = m/s at wheel
+const double WHEEL_RADIUS = WHEEL_DIAMETER / 2.0;  // meters
+const double OUTPUT_RATIO = -2.0 * M_PI * WHEEL_RADIUS / (GEAR_RATIO * ENCODER_PPR);  // encoder counts (pulses) * output_ratio = meters at wheel
 
 const double WIDTH = 0.115;  // meters, chassis pivot to pivot Y dimension
 const double LENGTH = 0.160;  // meters, chassis pivot to pivot X dimension
@@ -164,8 +165,8 @@ uint32_t current_time = 0;
 uint32_t prev_command_time = 0;
 uint32_t COMMAND_TIMEOUT_MS = 1000;
 
-uint32_t prev_odom_time = 0;
-const uint32_t ODOM_UPDATE_INTERVAL_MS = 20;
+uint32_t prev_control_time = 0;
+const uint32_t CONTROL_UPDATE_INTERVAL_MS = 20;
 
 bool read_button() {
     return !digitalRead(BUTTON_IN);
@@ -231,6 +232,8 @@ void setup()
         pid->command_min = -MAX_SPEED_COMMAND;
         pid->command_max = MAX_SPEED_COMMAND;
         pid->command_timeout_ms = 1000;
+        SpeedFilter* filter = drive.get_filter(channel);
+        filter->Kf = 0.95;
     }
     
     drive.set_limits(
@@ -305,8 +308,8 @@ void packetCallback(PacketResult* result)
 
     // Extract category and check which event it maps to
     String category = result->getCategory();
-    Serial.print("Received packet: ");
-    Serial.println(category);
+    // Serial.print("Received packet: ");
+    // Serial.println(category);
     if (category.equals("ping")) {
         // Respond to ping by writing back the same value
         float value;
@@ -322,9 +325,6 @@ void packetCallback(PacketResult* result)
         vy_command = (double)vy;
         vt_command = (double)vt;
         prev_command_time = current_time;
-        DEBUG_SERIAL.println(vx_command);
-        DEBUG_SERIAL.println(vy_command);
-        DEBUG_SERIAL.println(vt_command);
     }
     else if (category.equals("en")) {
         bool enabled;
@@ -345,23 +345,38 @@ void loop()
     if (did_button_press(true)) {
         drive.set_enable(!drive.get_enable());
     }
-    if (current_time - prev_command_time > COMMAND_TIMEOUT_MS) {
-        vx_command = 0.0;
-        vy_command = 0.0;
-        vt_command = 0.0;
-        drive.stop();
-    }
-    else {
-        drive.drive(vx_command, vy_command, vt_command);
-    }
     
-    if (current_time - prev_odom_time > ODOM_UPDATE_INTERVAL_MS) {
-        prev_odom_time = current_time;
-        drive.get_position(odom_x, odom_y, odom_t);
-        drive.get_velocity(odom_vx, odom_vy, odom_vt);
-        tunnel_writePacket("od", "eeefff",
-            odom_x, odom_y, odom_t,
-            odom_vx, odom_vy, odom_vt
-        );
+    if (current_time - prev_control_time > CONTROL_UPDATE_INTERVAL_MS) {
+        if (current_time - prev_command_time > COMMAND_TIMEOUT_MS) {
+            vx_command = 0.0;
+            vy_command = 0.0;
+            vt_command = 0.0;
+            drive.stop();
+        }
+        else {
+            drive.drive(vx_command, vy_command, vt_command);
+        }
+        
+        prev_control_time = current_time;
+        // drive.get_position(odom_x, odom_y, odom_t);
+        // drive.get_velocity(odom_vx, odom_vy, odom_vt);
+        // tunnel_writePacket("od", "eeefff",
+        //     odom_x, odom_y, odom_t,
+        //     odom_vx, odom_vy, odom_vt
+        // );
+        tunnel_writePacket("ms", "c", drive.get_num_motors());
+        for (unsigned int channel = 0; channel < drive.get_num_motors(); channel++) {
+            // Serial.print(drive.get_wheel_velocity(channel));
+            // Serial.print('\t');
+            tunnel_writePacket(
+                "mo",
+                "cfef",
+                channel,
+                drive.get_azimuth(channel),
+                drive.get_wheel_position(channel),
+                drive.get_wheel_velocity(channel)
+            );
+        }
+        // Serial.print('\n');
     }
 }

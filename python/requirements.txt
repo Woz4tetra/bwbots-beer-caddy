@@ -1,2 +1,4 @@
 pyserial
 aiocmd
+aiopubsub
+dataclasses

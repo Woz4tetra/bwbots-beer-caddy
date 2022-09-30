@@ -1,6 +1,7 @@
 import os
 import asyncio
 import argparse
+import aiopubsub
 import subprocess
 
 from lib.constants import *
@@ -13,7 +14,7 @@ from lib.config import Config
 from beer_caddy.tunnel_client import RobotTunnelClient
 from beer_caddy.commandline import RobotCLI
 from beer_caddy.tcp_server import TCPServer
-
+from beer_caddy.kinematics import ChassisKinematics
 
 class MySession(Session):
     """Contains all subsystems in this project. Allows for subsystems to reference each other via this object."""
@@ -36,12 +37,11 @@ class MySession(Session):
         self._load_config()  # pulls parameters from disk into config objects
         self.logger = self._init_log()  # initializes log object. Only call this once!!
 
-        # wrapper for arduino interactions including Fuse stepper encoders
-        self.tunnel = RobotTunnelClient(self.logger, self.config.tunnel.address)
-
+        self.hub = aiopubsub.Hub()
+        self.tunnel = RobotTunnelClient(self.logger, self.hub, self.config.tunnel.address)
         self.cli = RobotCLI(self)
-
         self.tcp_server = TCPServer(self.config.tcp.port)
+        self.kinematics = ChassisKinematics(self.logger, self.hub)
 
         self.logger.info("Session initialized!")
 
@@ -133,6 +133,18 @@ async def update_tcp(session: MySession):
         await asyncio.sleep(1.0 / 50.0)
 
 
+async def update_kinematics(session: MySession):
+    """
+    Task to call tunnel.update (arduino communications) in a loop
+    :param session: instance of MySession
+    """
+    kinematics = session.kinematics
+    await kinematics.start_listeners()
+    # while True:
+    #     await tunnel.update()
+    #     await asyncio.sleep(0.001)
+
+
 async def enable_motors(session: MySession):
     state = True
     self = session
@@ -160,6 +172,7 @@ def main():
     # add relevant asyncio tasks to run
     session.add_task(update_tunnel(session))
     session.add_task(update_tcp(session))
+    session.add_task(update_kinematics(session))
     if args.cli:
         session.add_task(session.cli.run())
     else:

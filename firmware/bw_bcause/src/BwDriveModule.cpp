@@ -124,16 +124,17 @@ double BwDriveModule::get_wheel_position() {
 }
 
 void BwDriveModule::update_predicted_azimuth() {
-    double error = setpoint_angle - predicted_angle;
-    if (abs(error) < 0.1) { // TODO: make this configurable
-        predicted_angle = setpoint_angle;
-    }
-    double delta_time = dt();
-    double servo_delta = error * delta_time;  // TODO: add ramping constant
-    if (abs(servo_delta) > servo_max_velocity) {
-        servo_delta = SpeedPID::sign(error) * servo_max_velocity * delta_time;
-    }
-    predicted_angle += servo_delta;
+    predicted_angle = setpoint_angle;
+    // double error = setpoint_angle - predicted_angle;
+    // if (abs(error) < 0.1) { // TODO: make this configurable
+    //     predicted_angle = setpoint_angle;
+    // }
+    // double delta_time = dt();
+    // double servo_delta = error * delta_time;  // TODO: add ramping constant
+    // if (abs(servo_delta) > servo_max_velocity) {
+    //     servo_delta = SpeedPID::sign(error) * servo_max_velocity * delta_time;
+    // }
+    // predicted_angle += servo_delta;
 }
 
 void BwDriveModule::set_wheel_velocity(double velocity)

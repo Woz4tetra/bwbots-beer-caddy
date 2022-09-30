@@ -131,6 +131,16 @@ Run this command on your local machine:
 
 `~/bwbots-beer-caddy/install/upload.sh robeert.local ~/.ssh/robeert n`
 
+## Python dependencies
+
+- `sudo apt-get install python3.8-dev`
+- `sudo rm /usr/bin/python3`
+- `sudo rm /usr/bin/python`
+- `sudo ln -s /usr/bin/python3.8 /usr/bin/python3`
+- `sudo ln -s /usr/bin/python3.8 /usr/bin/python`
+- `pip3 install --upgrade cython`
+- `pip3 install --upgrade --force-reinstall numpy`
+
 ## Upload firmware
 
 ### Install platformio
