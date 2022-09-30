@@ -151,6 +151,7 @@ float bus_voltage = 0.0f;
 float current_mA = 0.0f;
 float load_voltage = 0.0f;
 
+const float DISABLE_THRESHOLD = 8.0;
 Adafruit_INA219 charge_ina(0x40 + 0b01);
 
 // ---
@@ -338,9 +339,14 @@ void packetCallback(PacketResult* result)
     else if (category.equals("en")) {
         bool enabled;
         if (!result->getBool(enabled)) { DEBUG_SERIAL.println(F("Failed to get enable state")); return; }
-        drive.set_enable(enabled);
-        DEBUG_SERIAL.print("Setting enabled to ");
-        DEBUG_SERIAL.println(enabled);
+        if (enabled && load_voltage < DISABLE_THRESHOLD) {
+            DEBUG_SERIAL.println("Enabling is blocked! Battery is too low.");
+        }
+        else {
+            drive.set_enable(enabled);
+            DEBUG_SERIAL.print("Setting enabled to ");
+            DEBUG_SERIAL.println(enabled);
+        }
     }
     else if (category.equals("?en")) {
         tunnel_writePacket("?en", "b", drive.get_enable());
@@ -353,6 +359,15 @@ void loop()
     packetCallback(tunnel_readPacket());
     if (did_button_press(true)) {
         drive.set_enable(!drive.get_enable());
+    }
+
+    shunt_voltage = charge_ina.getShuntVoltage_mV();
+    bus_voltage = charge_ina.getBusVoltage_V();
+    current_mA = charge_ina.getCurrent_mA();
+    load_voltage = bus_voltage + (shunt_voltage / 1000);
+
+    if (load_voltage < DISABLE_THRESHOLD) {
+        drive.set_enable(false);
     }
     
     if (current_time - prev_control_time > CONTROL_UPDATE_INTERVAL_MS) {
@@ -390,11 +405,6 @@ void loop()
     }
     if (current_time - prev_power_time > POWER_UPDATE_INTERVAL_MS) {
         prev_power_time = current_time;
-
-        shunt_voltage = charge_ina.getShuntVoltage_mV();
-        bus_voltage = charge_ina.getBusVoltage_V();
-        current_mA = charge_ina.getCurrent_mA();
-        load_voltage = bus_voltage + (shunt_voltage / 1000);
 
         tunnel_writePacket("power", "ff",
             load_voltage,
