@@ -357,7 +357,7 @@ This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY
 
 ## ROS Installation
 
-- `cd ~/bwbots-beer-caddy/install/ros/robot_installation`
+- `cd ~/bwbots-beer-caddy/ros/install/robot_installation`
 - `./00_ros_setup.sh`
 - `./01_noetic_ws_prep.sh`
 - `./02_noetic_ws_rosdep.sh` This may take a while

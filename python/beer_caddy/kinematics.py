@@ -38,6 +38,7 @@ class ChassisKinematics:
 
     async def start_listeners(self):
         self.tunnel_sub.add_async_listener(aiopubsub.Key('tunnel', 'module'), self.on_module)
+        self.tunnel_sub.add_async_listener(aiopubsub.Key('tunnel', 'odom'), self.on_odom)
         await asyncio.sleep(0.0)
 
     def dt(self):
@@ -101,9 +102,14 @@ class ChassisKinematics:
 
         # self.logger.info(f"module_vector: " + ", ".join([f"{val:0.4f}" for val in module_vector]))
         # self.logger.info(f"chassis_velocities: " + ", ".join([f"{val:0.4f}" for val in chassis_velocities]))
-        self.logger.info(f"odom: {self.odom.x: 0.4f}, {self.odom.y: 0.4f}, {self.odom.theta: 0.4f}, {self.odom.vx: 0.4f}, {self.odom.vy: 0.4f}, {self.odom.vt: 0.4f}")
+        # self.logger.info(f"calc odom: {self.odom.x: 0.4f}, {self.odom.y: 0.4f}, {self.odom.theta: 0.4f}, {self.odom.vx: 0.4f}, {self.odom.vy: 0.4f}, {self.odom.vt: 0.4f}")
+        self.logger.info(f"calc odom: {self.odom.vx: 0.4f}, {self.odom.vy: 0.4f}, {self.odom.vt: 0.4f}")
         return self.odom
 
     async def on_module(self, key: aiopubsub.Key, states: BwModuleStates):
         self.to_chassis(states)
         await asyncio.sleep(0.0)
+    
+    async def on_odom(self, key: aiopubsub.Key, odom: Odometry):
+        self.logger.info(f"recv odom: {odom.vx: 0.4f}, {odom.vy: 0.4f}, {odom.vt: 0.4f}")
+

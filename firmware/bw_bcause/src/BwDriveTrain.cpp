@@ -1,5 +1,12 @@
 #include <BwDriveTrain.h>
 
+mtx_type inverse_kinematics[8][3];
+mtx_type forward_kinematics[3][8];
+mtx_type ik_transpose[3][8];
+mtx_type kinematics_temp[3][3];
+mtx_type chassis_vector[3][1];
+mtx_type module_vector[8][1];
+
 BwDriveTrain::BwDriveTrain(
         Adafruit_PWMServoDriver* servos,
         MotorControllerMC33926** motors,
@@ -28,7 +35,35 @@ BwDriveTrain::BwDriveTrain(
     if (this->num_motors > BwDriveTrain::MAX_CHANNELS) {
         this->num_motors = BwDriveTrain::MAX_CHANNELS;
     }
+    kinematics_channels_len = 2 * get_num_motors();
+    // inverse_kinematics = new mtx_type*[kinematics_channels_len];
+    // forward_kinematics = new mtx_type*[CHASSIS_STATE_LEN];
+    // ik_transpose = new mtx_type*[CHASSIS_STATE_LEN];
+    // kinematics_temp = new mtx_type*[CHASSIS_STATE_LEN];
+    // chassis_vector = new mtx_type*[CHASSIS_STATE_LEN];
+    // module_vector = new mtx_type*[kinematics_channels_len];
     drive_modules = new BwDriveModule*[get_num_motors()];
+
+    for (unsigned int row = 0; row < CHASSIS_STATE_LEN; row++) {
+        // forward_kinematics[row] = new mtx_type[kinematics_channels_len];
+        // ik_transpose[row] = new mtx_type[kinematics_channels_len];
+        // kinematics_temp[row] = new mtx_type[CHASSIS_STATE_LEN];
+        // chassis_vector[row] = new mtx_type[1];
+        
+        for (unsigned int col = 0; col < kinematics_channels_len; col++) {
+            forward_kinematics[row][col] = 0.0;
+            ik_transpose[row][col] = 0.0;
+        }
+        for (unsigned int col = 0; col < CHASSIS_STATE_LEN; col++) {
+            kinematics_temp[row][col] = 0.0;
+        }
+        chassis_vector[row][0] = 0.0;
+    }
+    for (unsigned int row = 0; row < kinematics_channels_len; row++) {
+        // module_vector[row] = new mtx_type[1];
+        module_vector[row][0] = 0.0;
+    }
+
     for (unsigned int channel = 0; channel < get_num_motors(); channel++) {
         double x_location = x_locations[channel];
         double y_location = y_locations[channel];
@@ -36,6 +71,17 @@ BwDriveTrain::BwDriveTrain(
             channel, output_ratio, x_location, y_location, min_radius_of_curvature, armature_length,
             servos, motors[channel], encoders[channel]
         );
+
+        unsigned int y_index = 2 * channel;
+        unsigned int x_index = 2 * channel + 1;
+        // inverse_kinematics[y_index] = new mtx_type[CHASSIS_STATE_LEN];
+        // inverse_kinematics[x_index] = new mtx_type[CHASSIS_STATE_LEN];
+        inverse_kinematics[y_index][0] = 1.0;
+        inverse_kinematics[y_index][1] = 0.0;
+        inverse_kinematics[y_index][2] = 0.0;  // filled in later
+        inverse_kinematics[x_index][0] = 0.0;
+        inverse_kinematics[x_index][1] = 1.0;
+        inverse_kinematics[x_index][2] = 0.0;  // filled in later
     }
 }
 
@@ -169,6 +215,84 @@ void BwDriveTrain::get_velocity(double& vx, double& vy, double& vt)
     vx = 0.0;
     vy = 0.0;
     vt = 0.0;
+    for (unsigned int channel = 0; channel < get_num_motors(); channel++) {
+        double azimuth = get_azimuth(channel);
+        double x = drive_modules[channel]->get_x_location() + this->armature_length * cos(azimuth);
+        double y = drive_modules[channel]->get_y_location() + this->armature_length * sin(azimuth);
+        unsigned int even_index = 2 * channel;
+        unsigned int odd_index = 2 * channel + 1;
+        inverse_kinematics[even_index][2] = -y;
+        inverse_kinematics[odd_index][2] = x;
+        
+        double wheel_velocity = get_wheel_velocity(channel);
+        double module_vx = wheel_velocity * cos(azimuth);
+        double module_vy = wheel_velocity * sin(azimuth);
+        module_vector[even_index][0] = module_vx;
+        module_vector[odd_index][0] = module_vy;
+    }
+
+    // Matrix.Print((mtx_type*)inverse_kinematics, kinematics_channels_len, CHASSIS_STATE_LEN, "M");
+
+    // pinv(M) = (M' * M) ^-1 * M
+    // (mtx_type*) cast "flattens" the matrix to a 1 x (col * rows) array
+
+    // ik_transpose = M'
+    Matrix.Transpose(
+        (mtx_type*)inverse_kinematics,  // source
+        kinematics_channels_len,  // rows
+        CHASSIS_STATE_LEN,  // columns
+        (mtx_type*)ik_transpose  // destination
+    );
+    // Matrix.Print((mtx_type*)ik_transpose, CHASSIS_STATE_LEN, kinematics_channels_len, "M.T");
+
+    // kinematics_temp = M' * M
+    Matrix.Multiply(
+        (mtx_type*)ik_transpose,
+        (mtx_type*)inverse_kinematics,
+        CHASSIS_STATE_LEN,  // rows of ik_transpose
+        kinematics_channels_len,  // columns of ik_transpose / rows of inverse_kinematics
+        CHASSIS_STATE_LEN,  // columns of inverse_kinematics
+        (mtx_type*)kinematics_temp  // destination
+    );
+
+    // Matrix.Print((mtx_type*)kinematics_temp, CHASSIS_STATE_LEN, CHASSIS_STATE_LEN, "M' * M");
+
+    // kinematics_temp = (M' * M)^-1
+    if (!Matrix.Invert((mtx_type*)kinematics_temp, CHASSIS_STATE_LEN)) {
+        Serial.println("Failed to invert matrix for velocity calculation!");
+        return;
+    }
+
+    // Matrix.Print((mtx_type*)kinematics_temp, CHASSIS_STATE_LEN, CHASSIS_STATE_LEN, "(M' * M)^-1");
+
+    // forward_kinematics = (M' * M)^-1 * M' = pinv(M)
+    Matrix.Multiply(
+        (mtx_type*)kinematics_temp,
+        (mtx_type*)ik_transpose,
+        CHASSIS_STATE_LEN,  // rows of kinematics_temp
+        CHASSIS_STATE_LEN,  // columns of ik_transpose / rows of kinematics_temp
+        kinematics_channels_len,  // columns of ik_transpose
+        (mtx_type*)forward_kinematics  // destination
+    );
+
+    // Matrix.Print((mtx_type*)forward_kinematics, CHASSIS_STATE_LEN, kinematics_channels_len, "(M' * M)^-1 * M'");
+
+    // chassis_vector = pinv(M) * module_vector
+    Matrix.Multiply(
+        (mtx_type*)forward_kinematics,
+        (mtx_type*)module_vector,
+        CHASSIS_STATE_LEN,  // rows of forward_kinematics
+        kinematics_channels_len,  // columns of forward_kinematics / rows of module_vector
+        1,  // columns of module_vector
+        (mtx_type*)chassis_vector  // destination
+    );
+
+    // Matrix.Print((mtx_type*)module_vector, kinematics_channels_len, 1, "mv");
+    // Matrix.Print((mtx_type*)chassis_vector, CHASSIS_STATE_LEN, 1, "pinv(M) * mv");
+
+    vx = chassis_vector[0][0];
+    vy = chassis_vector[1][0];
+    vt = chassis_vector[2][0];
 }
 
 void BwDriveTrain::stop()

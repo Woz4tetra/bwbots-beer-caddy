@@ -64,6 +64,8 @@ public:
     double get_azimuth();
     double get_wheel_position();
     double get_wheel_velocity();
+    double get_x_location()  { return x_location; }
+    double get_y_location()  { return y_location; }
     void set(double vx, double vy, double vt, double dt);
     void set_azimuth(double setpoint);
     void set_wheel_velocity(double velocity);

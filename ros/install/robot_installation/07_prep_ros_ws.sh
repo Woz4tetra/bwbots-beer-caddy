@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+BASE_DIR=$(realpath "$(dirname $0)")
 
 
 SOURCE_COMMAND='source ${HOME}/ros_ws/devel/setup.bash
@@ -9,8 +10,9 @@ if ! grep -qz "$SOURCE_COMMAND" ~/.bashrc; then
     echo "$SOURCE_COMMAND" | sudo tee -a ~/.bashrc > /dev/null
 fi
 
-WS_DIR=${HOME}/ros_ws/src
+WS_DIR=${HOME}/ros_ws/src/bwbots
 mkdir -p ${WS_DIR}
-ln -s ${HOME}/bwbots-beer-caddy/ros/src ${WS_DIR}/bwbots
+SOURCE_DIR=$(realpath ${BASE_DIR}/../../bwbots)
+ln -s ${SOURCE_DIR} ${WS_DIR}
 
 echo "re-open this terminal session for bashrc to go into affect"

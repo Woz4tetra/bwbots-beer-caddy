@@ -90,10 +90,10 @@ Adafruit_PWMServoDriver* servos = new Adafruit_PWMServoDriver(0x40 + 0b000010, I
 // ---
 // Drive train
 // ---
-const double SPEED_TO_COMMAND = 255.0 / 2.0;  // calculated max speed: 0.843 m/s
+const double SPEED_TO_COMMAND = 255.0 / 1.0;  // calculated max speed: 0.843 m/s
 const double MAX_SERVO_SPEED = 5.950;  // rad/s
 
-const int DEADZONE_COMMAND = 80;
+const int DEADZONE_COMMAND = 20;
 const int MAX_SPEED_COMMAND = 255;
 
 const double ALCOVE_ANGLE = 0.5236;  // 30 degrees
@@ -322,6 +322,8 @@ void packetCallback(PacketResult* result)
         float value;
         if (!result->getFloat(value)) { DEBUG_SERIAL.println(F("Failed to get ping")); return; }
         tunnel_writePacket("ping", "f", value);
+        Serial.print("Received ping: ");
+        Serial.println(value);
     }
     else if (category.equals("d")) {
         float vx, vy, vt;
@@ -365,12 +367,12 @@ void loop()
             drive.drive(vx_command, vy_command, vt_command);
         }
         
-        // drive.get_position(odom_x, odom_y, odom_t);
-        // drive.get_velocity(odom_vx, odom_vy, odom_vt);
-        // tunnel_writePacket("od", "eeefff",
-        //     odom_x, odom_y, odom_t,
-        //     odom_vx, odom_vy, odom_vt
-        // );
+        drive.get_position(odom_x, odom_y, odom_t);
+        drive.get_velocity(odom_vx, odom_vy, odom_vt);
+        tunnel_writePacket("od", "eeefff",
+            odom_x, odom_y, odom_t,
+            odom_vx, odom_vy, odom_vt
+        );
         tunnel_writePacket("ms", "c", drive.get_num_motors());
         for (unsigned int channel = 0; channel < drive.get_num_motors(); channel++) {
             // Serial.print(drive.get_wheel_velocity(channel));

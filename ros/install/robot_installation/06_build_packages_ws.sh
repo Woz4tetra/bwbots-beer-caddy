@@ -88,7 +88,7 @@ for (( i=0; i<$len; i++ )); do
     git clone --recursive ${packages[i]} --branch ${branches[i]}
 done
 
-cd ..
+cd ${DEPENDENCIES_WS}
 
 rosdep install --from-paths src --ignore-src --rosdistro=noetic -y -r
 

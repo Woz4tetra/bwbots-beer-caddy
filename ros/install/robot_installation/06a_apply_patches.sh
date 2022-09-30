@@ -1,6 +1,6 @@
 BASE_DIR=$(realpath "$(dirname $0)")
 
-DEPENDENCIES_WS=$HOME/packages_ros_ws
+DEPENDENCIES_WS=$HOME/ros_ws
 DEPENDENCIES_WS_SRC=${DEPENDENCIES_WS}/src
 
 find ${DEPENDENCIES_WS_SRC} -type f -name CMakeLists.txt -exec sed -i'' -e 's/Boost REQUIRED python37/Boost REQUIRED python3/g' {} +

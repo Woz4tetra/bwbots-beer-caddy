@@ -39,7 +39,11 @@ class Kinematics:
             self.inverse_kinematics.append([0.0, 1.0, x])
         inverse_kinematics = np.array(self.inverse_kinematics)
         forward_kinematics = np.linalg.pinv(self.inverse_kinematics)
+        print(self.diy_pinv(inverse_kinematics))
         return inverse_kinematics, forward_kinematics
+    
+    def diy_pinv(self, M):
+        return np.dot(np.linalg.inv(np.dot(M.T, M)), M.T)
     
     def compute_module_state(self, channel, x, y, vx, vy, vt, dt):
         theta_mag = vt * dt
