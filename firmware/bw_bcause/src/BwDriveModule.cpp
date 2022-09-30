@@ -36,6 +36,7 @@ BwDriveModule::BwDriveModule(
     flip_motor_commands = false;
     min_strafe_angle = 0.0;
     max_strafe_angle = 0.0;
+    prev_time = 0;
 }
 
 void BwDriveModule::begin()
@@ -115,8 +116,15 @@ double BwDriveModule::get_wheel_velocity() {
     return speed_filter->get_velocity();
 }
 
-double BwDriveModule::update_wheel_velocity() {
-    return speed_filter->compute(get_wheel_position());
+void BwDriveModule::update_wheel_velocity() {
+    speed_filter->compute(get_wheel_position());
+}
+
+void BwDriveModule::update_wheel_position() {
+    encoder_position = encoder->read();
+    if (flip_motor_commands) {
+        encoder_position = -encoder_position;
+    }
 }
 
 double BwDriveModule::get_wheel_position() {
@@ -140,12 +148,9 @@ void BwDriveModule::update_predicted_azimuth() {
 void BwDriveModule::set_wheel_velocity(double velocity)
 {
     speed_pid->set_target(velocity);
-    encoder_position = encoder->read();
-    if (flip_motor_commands) {
-        encoder_position = -encoder_position;
-    }
-    double measured_velocity = update_wheel_velocity();
-    int command = speed_pid->compute(measured_velocity);
+    update_wheel_position();
+    update_wheel_velocity();
+    int command = speed_pid->compute(speed_filter->get_velocity());
     if (!is_enabled) {
         return;
     }
@@ -225,6 +230,8 @@ void BwDriveModule::set(double vx, double vy, double vt, double dt)
 
 double BwDriveModule::dt()
 {
-    uint32_t delta_time = micros() - prev_time;
-    return (double)delta_time * 1E-6;
+    uint32_t current_time = millis();
+    uint32_t delta_time = current_time - prev_time;
+    prev_time = current_time;
+    return (double)delta_time * 1E-3;
 }

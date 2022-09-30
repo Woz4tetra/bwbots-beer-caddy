@@ -7,12 +7,10 @@ SpeedPID::SpeedPID()
     error_sum = 0.0;
     prev_error = 0.0;
     feedforward = 0.0;
-    prev_setpoint_time = 0;
     current_time = 0;
     prev_update_time = 0;
     dt = 0.0;
     out = 0.0;
-    is_timed_out = false;
     command_min = -255;
     command_max = 255;
     epsilon = 1E-4;
@@ -34,16 +32,10 @@ int SpeedPID::sign(int x) {
 }
 
 
-bool SpeedPID::timed_out() {
-    return is_timed_out;
-}
-
 void SpeedPID::set_target(double target) {
     feedforward = K_ff * target;
     this->target = target;
-    prev_setpoint_time = millis();
-    prev_update_time = micros();
-    is_timed_out = false;
+    prev_update_time = 0;
 }
 
 double SpeedPID::get_target() {
@@ -73,27 +65,24 @@ int SpeedPID::limit(double command) {
         return sign(value) * deadzone_command;
     }
 
-    return (int)(value);
+    return value;
 }
 
 int SpeedPID::compute(double measurement)
 {
-    if (!is_timed_out && millis() - prev_setpoint_time > command_timeout_ms) {
-        reset();
-        is_timed_out = true;
-    }
+    current_time = millis();
 
-    if (micros() - prev_update_time == 0) {
-        return out;
+    if (current_time - prev_update_time == 0) {
+        Serial.println("PID timer didn't change!");
+        return limit(out);
     }
-    else if (micros() - prev_update_time < 0) {  // edge case for timer looping
-        prev_update_time = micros();
-        return out;
+    else if (current_time - prev_update_time < 0) {  // edge case for timer looping
+        Serial.println("PID timer overflowed! Resetting.");
+        prev_update_time = 0;
     }
 
     double error = target - measurement;
-    current_time = micros();
-    dt = (current_time - prev_update_time) * 1E-6;
+    dt = (current_time - prev_update_time) * 1E-3;
     prev_update_time = current_time;
 
     out = 0.0;

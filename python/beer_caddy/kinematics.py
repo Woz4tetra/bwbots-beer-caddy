@@ -30,8 +30,8 @@ class ChassisKinematics:
         ik = []
         for index, (x, y) in enumerate(self.locations):
             azimuth = azimuths[index]
-            ik.append([1.0, 0.0, -y - self.armature * np.sin(azimuth)])
-            ik.append([0.0, 1.0, x + self.armature * np.cos(azimuth)])
+            ik.append([1.0, 0.0, -y - self.armature * np.sin(-azimuth)])
+            ik.append([0.0, 1.0, x + self.armature * np.cos(-azimuth)])
         ik = np.array(ik)
         fk = np.linalg.pinv(ik)
         return fk
@@ -59,7 +59,7 @@ class ChassisKinematics:
             c = 0.5 * dtheta
         else:
             s = sin_theta / dtheta
-            c = (1 - cos_theta) / dtheta
+            c = (1.0 - cos_theta) / dtheta
 
         tx = dx * s - dy * c
         ty = dx * c + dy * s
@@ -78,7 +78,7 @@ class ChassisKinematics:
     def rotate_by(self, x, y, theta):
         x = x * math.cos(theta) - y * math.sin(theta)
         y = x * math.sin(theta) + y * math.cos(theta)
-        return x, y    
+        return x, y
 
     def to_chassis(self, states: BwModuleStates) -> Odometry:
         module_vector = []
@@ -101,7 +101,7 @@ class ChassisKinematics:
 
         # self.logger.info(f"module_vector: " + ", ".join([f"{val:0.4f}" for val in module_vector]))
         # self.logger.info(f"chassis_velocities: " + ", ".join([f"{val:0.4f}" for val in chassis_velocities]))
-        self.logger.info(f"odom: {self.odom.x: 0.4f}, {self.odom.y: 0.4f}, {self.odom.theta: 0.4f}")
+        self.logger.info(f"odom: {self.odom.x: 0.4f}, {self.odom.y: 0.4f}, {self.odom.theta: 0.4f}, {self.odom.vx: 0.4f}, {self.odom.vy: 0.4f}, {self.odom.vt: 0.4f}")
         return self.odom
 
     async def on_module(self, key: aiopubsub.Key, states: BwModuleStates):

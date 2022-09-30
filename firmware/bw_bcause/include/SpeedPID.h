@@ -7,11 +7,9 @@ private:
     double target;
     double error_sum, prev_error;
     double feedforward;
-    uint32_t prev_setpoint_time;
     uint32_t current_time, prev_update_time;
     double dt;
     double out;
-    bool is_timed_out;
 
 public:
     double Kp, Ki, Kd;
@@ -20,7 +18,6 @@ public:
     double error_sum_clamp;
     int command_min, command_max;
     double epsilon;  // values that are basically zero
-    uint32_t command_timeout_ms;
 
     SpeedPID();
     bool timed_out();

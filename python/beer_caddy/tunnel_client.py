@@ -66,13 +66,14 @@ class RobotTunnelClient(TunnelSerialClient):
 
         elif result.category == "mo":
             channel = result.get_int(1, signed=False)
-            state = self.module_states.states[channel]
-            state.timestamp = time.monotonic()
-            state.azimuth = result.get_float()
-            state.wheel_position = result.get_double()
-            state.wheel_velocity = result.get_float()
-            if channel + 1 == len(self.module_states.states):
-                self.parsed_pub.publish(aiopubsub.Key('module'), self.module_states)
+            if channel < len(self.module_states.states):
+                state = self.module_states.states[channel]
+                state.timestamp = time.monotonic()
+                state.azimuth = result.get_float()
+                state.wheel_position = result.get_double()
+                state.wheel_velocity = result.get_float()
+                if channel + 1 == len(self.module_states.states):
+                    self.parsed_pub.publish(aiopubsub.Key('module'), self.module_states)
         await asyncio.sleep(0.0)
 
     def get_time(self):

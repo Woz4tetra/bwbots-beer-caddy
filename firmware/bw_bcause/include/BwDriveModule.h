@@ -33,6 +33,8 @@ private:
     void update_predicted_azimuth();
     double wrap_angle(double angle);
     void compute_state(double vx, double vy, double vt, double dt, double& azimuth, double& wheel_velocity);
+    void update_wheel_velocity();
+    void update_wheel_position();
 public:
     BwDriveModule(
         int channel,
@@ -62,7 +64,6 @@ public:
     double get_azimuth();
     double get_wheel_position();
     double get_wheel_velocity();
-    double update_wheel_velocity();
     void set(double vx, double vy, double vt, double dt);
     void set_azimuth(double setpoint);
     void set_wheel_velocity(double velocity);

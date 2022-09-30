@@ -90,10 +90,10 @@ Adafruit_PWMServoDriver* servos = new Adafruit_PWMServoDriver(0x40 + 0b000010, I
 // ---
 // Drive train
 // ---
-const double MAX_MOTOR_SPEED = 0.843;  // m/s
+const double SPEED_TO_COMMAND = 255.0 / 2.0;  // calculated max speed: 0.843 m/s
 const double MAX_SERVO_SPEED = 5.950;  // rad/s
 
-const int DEADZONE_COMMAND = 50;
+const int DEADZONE_COMMAND = 60;
 const int MAX_SPEED_COMMAND = 255;
 
 const double ALCOVE_ANGLE = 0.5236;  // 30 degrees
@@ -163,7 +163,7 @@ Adafruit_NeoPixel led_ring(NUM_PIXELS, LED_RING, NEO_GRBW + NEO_KHZ800);
 uint32_t current_time = 0;
 
 uint32_t prev_command_time = 0;
-uint32_t COMMAND_TIMEOUT_MS = 1000;
+uint32_t COMMAND_TIMEOUT_MS = 500;
 
 uint32_t prev_control_time = 0;
 const uint32_t CONTROL_UPDATE_INTERVAL_MS = 20;
@@ -223,15 +223,14 @@ void setup()
 
     for (unsigned int channel = 0; channel < drive.get_num_motors(); channel++) {
         SpeedPID* pid = drive.get_pid(channel);
-        pid->Kp = 1.0;
-        pid->Ki = 0.0;
-        pid->Kd = 0.0;
-        pid->K_ff = (double)MAX_SPEED_COMMAND / MAX_MOTOR_SPEED;
+        pid->Kp = 3.0;
+        pid->Ki = 0.001;
+        pid->Kd = 0.001;
+        pid->K_ff = SPEED_TO_COMMAND;
         pid->deadzone_command = DEADZONE_COMMAND;
-        pid->error_sum_clamp = -1.0;
+        pid->error_sum_clamp = 10.0;
         pid->command_min = -MAX_SPEED_COMMAND;
         pid->command_max = MAX_SPEED_COMMAND;
-        pid->command_timeout_ms = 1000;
         SpeedFilter* filter = drive.get_filter(channel);
         filter->Kf = 0.95;
     }
@@ -347,6 +346,7 @@ void loop()
     }
     
     if (current_time - prev_control_time > CONTROL_UPDATE_INTERVAL_MS) {
+        prev_control_time = current_time;
         if (current_time - prev_command_time > COMMAND_TIMEOUT_MS) {
             vx_command = 0.0;
             vy_command = 0.0;
@@ -357,7 +357,6 @@ void loop()
             drive.drive(vx_command, vy_command, vt_command);
         }
         
-        prev_control_time = current_time;
         // drive.get_position(odom_x, odom_y, odom_t);
         // drive.get_velocity(odom_vx, odom_vy, odom_vt);
         // tunnel_writePacket("od", "eeefff",

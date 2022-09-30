@@ -23,6 +23,7 @@ BwDriveTrain::BwDriveTrain(
     max_strafe_angle = M_PI;
     reverse_min_strafe_angle = -M_PI;
     reverse_max_strafe_angle = M_PI;
+    prev_time = 0;
 
     if (this->num_motors > BwDriveTrain::MAX_CHANNELS) {
         this->num_motors = BwDriveTrain::MAX_CHANNELS;
@@ -192,10 +193,10 @@ double BwDriveTrain::wrap_angle(double angle)
 
 double BwDriveTrain::dt()
 {
-    uint32_t current_time = micros();
+    uint32_t current_time = millis();
     uint32_t delta_time = current_time - prev_time;
     prev_time = current_time;
-    return (double)delta_time * 1E-6;
+    return (double)delta_time * 1E-3;
 }
 
 
