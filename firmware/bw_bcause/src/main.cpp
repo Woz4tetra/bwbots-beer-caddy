@@ -205,6 +205,18 @@ void set_button_led(bool state) {
     digitalWrite(BUTTON_LED, state);
 }
 
+void set_motor_enable(bool enabled)
+{
+    if (enabled && load_voltage < DISABLE_THRESHOLD) {
+        DEBUG_SERIAL.println("Enabling is blocked! Battery is too low.");
+    }
+    else {
+        drive.set_enable(enabled);
+        DEBUG_SERIAL.print("Setting enabled to ");
+        DEBUG_SERIAL.println(enabled);
+    }
+}
+
 void setup()
 {
     I2C_BUS_1.begin();
@@ -339,14 +351,7 @@ void packetCallback(PacketResult* result)
     else if (category.equals("en")) {
         bool enabled;
         if (!result->getBool(enabled)) { DEBUG_SERIAL.println(F("Failed to get enable state")); return; }
-        if (enabled && load_voltage < DISABLE_THRESHOLD) {
-            DEBUG_SERIAL.println("Enabling is blocked! Battery is too low.");
-        }
-        else {
-            drive.set_enable(enabled);
-            DEBUG_SERIAL.print("Setting enabled to ");
-            DEBUG_SERIAL.println(enabled);
-        }
+        set_motor_enable(enabled);
     }
     else if (category.equals("?en")) {
         tunnel_writePacket("?en", "b", drive.get_enable());
@@ -358,7 +363,7 @@ void loop()
     current_time = millis();
     packetCallback(tunnel_readPacket());
     if (did_button_press(true)) {
-        drive.set_enable(!drive.get_enable());
+        set_motor_enable(!drive.get_enable());
     }
 
     shunt_voltage = charge_ina.getShuntVoltage_mV();
