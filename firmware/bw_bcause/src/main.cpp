@@ -146,6 +146,11 @@ double odom_x = 0.0, odom_y = 0.0, odom_t = 0.0;
 // Power management
 // ---
 
+float shunt_voltage = 0.0f;
+float bus_voltage = 0.0f;
+float current_mA = 0.0f;
+float load_voltage = 0.0f;
+
 Adafruit_INA219 charge_ina(0x40 + 0b01);
 
 // ---
@@ -384,18 +389,13 @@ void loop()
     if (current_time - prev_power_time > POWER_UPDATE_INTERVAL_MS) {
         prev_power_time = current_time;
 
-        float shuntvoltage = 0;
-        float busvoltage = 0;
-        float current_mA = 0;
-        float loadvoltage = 0;
-
-        shuntvoltage = charge_ina.getShuntVoltage_mV();
-        busvoltage = charge_ina.getBusVoltage_V();
+        shunt_voltage = charge_ina.getShuntVoltage_mV();
+        bus_voltage = charge_ina.getBusVoltage_V();
         current_mA = charge_ina.getCurrent_mA();
-        loadvoltage = busvoltage + (shuntvoltage / 1000);
+        load_voltage = bus_voltage + (shunt_voltage / 1000);
 
         tunnel_writePacket("power", "ff",
-            loadvoltage,
+            load_voltage,
             current_mA
         );
     }

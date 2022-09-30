@@ -1,7 +1,7 @@
 .git
+.pio/
 .vscode/
-__pycache__
+__pycache__/
 pcb/
 matlab/
-.pio/
 python/logs/

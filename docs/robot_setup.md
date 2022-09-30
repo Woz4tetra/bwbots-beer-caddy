@@ -163,7 +163,7 @@ Run this command on your local machine:
 - sudo apt-get install libusb-0.1-4
 - `wget https://www.pjrc.com/teensy/00-teensy.rules`
 - `sudo mv 00-teensy.rules /etc/udev/rules.d/49-teensy.rules`
-- `sudo adduser $USER dialout`
+- `sudo usermod -aG dialout $USER`
 - `sudo reboot`
 - `cd ~/bwbots-beer-caddy/firmware/bw_bcause`
 - `./upload.sh`
@@ -198,6 +198,7 @@ Run this command on your local machine:
 - `sudo systemctl disable nvgetty`
 - `sudo udevadm trigger`
 - `sudo reboot`
+
 ## ROS and Package Dependencies
 
 I recommend running all of these commands inside of a tmux session in case of network dropouts:
@@ -210,6 +211,18 @@ Download all packages to a home based directory:
 - `cd ~/build_ws`
 
 Tip: list all CMake options: `cmake -LA | awk '{if(f)print} /-- Cache values/{f=1}'`
+
+#### Upgrade CMake
+This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY-NOTFOUND issue:
+- https://github.com/clab/dynet/issues/1457
+- Install CMake version 3.12.2 or higher
+<br>
+<br>
+
+- `sudo apt remove --purge cmake`
+- `sudo snap install cmake --classic`
+- `echo "export PATH=${PATH}:/snap/bin" >> ~/.bashrc`
+- Close and reopen terminal for this to take effect
 
 ### Install TBB
 - `cd ~/build_ws`
@@ -293,72 +306,12 @@ Tip: list all CMake options: `cmake -LA | awk '{if(f)print} /-- Cache values/{f=
     Pin-Priority: -1
     ```
 
-### Install librealsense
-
-(Based on Intel's jetson guide)[https://github.com/IntelRealSense/librealsense/blob/master/doc/installation_jetson.md]
-
-- `sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE`
-- `sudo add-apt-repository "deb https://librealsense.intel.com/Debian/apt-repo $(lsb_release -cs) main" -u`
-- `sudo apt-get install librealsense2-utils`
-- `sudo apt-get install librealsense2-dev`
-
 ### Install apriltag
 
 - `cd ~/build_ws`
 - `git clone https://github.com/AprilRobotics/apriltag.git`
 - `cd apriltag && mkdir build && cd build`
 - `cmake .. && make -j3 && sudo make install`
-
-### Install RTABmap dependencies
-
-#### Random dependencies
-
-- `sudo apt-get update`
-- `sudo apt-get install libsqlite3-dev libpcl-dev git cmake libproj-dev libqt5svg5-dev -y`
-
-#### libg2o
-- `sudo apt install libsuitesparse-dev qtdeclarative5-dev qt5-qmake libqglviewer-dev-qt5 libeigen3-dev -y`
-- `cd ~/build_ws`
-- `git clone https://github.com/RainerKuemmerle/g2o.git`
-- `cd g2o`
-- `git checkout tags/20200410_git`
-- `mkdir build && cd build`
-- `cmake -DBUILD_WITH_MARCH_NATIVE=OFF -DG2O_BUILD_APPS=OFF -DG2O_BUILD_EXAMPLES=OFF -DG2O_USE_OPENGL=OFF ..`
-- `make -j3`
-- `sudo make install`
-
-#### gtsam
-- `sudo add-apt-repository ppa:borglab/gtsam-develop`
-- `sudo apt update`
-- `sudo apt install libgtsam-dev libgtsam-unstable-dev -y`
-
-#### Octomap
-- `cd ~/build_ws`
-- `git clone https://github.com/OctoMap/octomap`
-- `cd octomap`
-- `mkdir build && cd build`
-- `cmake .. && make -j3`
-- `sudo make install`
-
-#### Upgrade CMake
-This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY-NOTFOUND issue:
-- https://github.com/clab/dynet/issues/1457
-- Install CMake version 3.12.2 or higher
-<br>
-<br>
-
-- `sudo apt remove --purge cmake`
-- `sudo snap install cmake --classic`
-- `echo "export PATH=${PATH}:/snap/bin" >> ~/.bashrc`
-- Close and reopen terminal for this to take effect
-
-### Install rtabmap
-- `cd ~/build_ws`
-- `git clone https://github.com/introlab/rtabmap.git`
-- `cd rtabmap/build`
-- `cmake .. && make -j1`  This will take a few hours
-- `sudo make install`
-- `sudo ldconfig`
 
 ### Install yolov5 dependencies
 
@@ -404,7 +357,7 @@ This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY
 
 ## ROS Installation
 
-- `cd ~/bwbots-beer-caddy/install/source_installation`
+- `cd ~/bwbots-beer-caddy/install/ros/robot_installation`
 - `./00_ros_setup.sh`
 - `./01_noetic_ws_prep.sh`
 - `./02_noetic_ws_rosdep.sh` This may take a while
