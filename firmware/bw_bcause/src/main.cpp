@@ -131,13 +131,7 @@ const int BACK_RIGHT_STRAIGHT = 125;
 const int FRONT_RIGHT_ALCOVE = 405;
 const int FRONT_RIGHT_STRAIGHT = 515;
 
-BwDriveTrain drive(
-    servos, motors, encoders,
-    NUM_CHANNELS, MOTOR_EN,
-    OUTPUT_RATIO, ARMATURE,
-    MIN_RADIUS_OF_CURVATURE,
-    MODULE_X_LOCATIONS, MODULE_Y_LOCATIONS
-);
+BwDriveTrain* drive;
 double vx_command = 0.0, vy_command = 0.0, vt_command = 0.0;
 double odom_vx = 0.0, odom_vy = 0.0, odom_vt = 0.0;
 double odom_x = 0.0, odom_y = 0.0, odom_t = 0.0;
@@ -151,7 +145,7 @@ float bus_voltage = 0.0f;
 float current_mA = 0.0f;
 float load_voltage = 0.0f;
 
-const float DISABLE_THRESHOLD = 8.0;
+const float DISABLE_THRESHOLD = -12.0;  // TODO: put back eventually
 Adafruit_INA219 charge_ina(0x40 + 0b01);
 
 // ---
@@ -211,7 +205,7 @@ void set_motor_enable(bool enabled)
         DEBUG_SERIAL.println("Enabling is blocked! Battery is too low.");
     }
     else {
-        drive.set_enable(enabled);
+        drive->set_enable(enabled);
         DEBUG_SERIAL.print("Setting enabled to ");
         DEBUG_SERIAL.println(enabled);
     }
@@ -219,6 +213,17 @@ void set_motor_enable(bool enabled)
 
 void setup()
 {
+    tunnel_begin();
+    Serial.println("setup");
+
+    drive = new BwDriveTrain(
+        servos, motors, encoders,
+        NUM_CHANNELS, MOTOR_EN,
+        OUTPUT_RATIO, ARMATURE,
+        MIN_RADIUS_OF_CURVATURE,
+        MODULE_X_LOCATIONS, MODULE_Y_LOCATIONS
+    );
+
     I2C_BUS_1.begin();
     I2C_BUS_1.setSDA(18);
     I2C_BUS_1.setSCL(19);
@@ -242,8 +247,8 @@ void setup()
     set_builtin_led(true);
     set_button_led(true);
 
-    for (unsigned int channel = 0; channel < drive.get_num_motors(); channel++) {
-        SpeedPID* pid = drive.get_pid(channel);
+    for (unsigned int channel = 0; channel < drive->get_num_motors(); channel++) {
+        SpeedPID* pid = drive->get_pid(channel);
         pid->Kp = 3.0;
         pid->Ki = 0.001;
         pid->Kd = 0.001;
@@ -252,11 +257,11 @@ void setup()
         pid->error_sum_clamp = 10.0;
         pid->command_min = -MAX_SPEED_COMMAND;
         pid->command_max = MAX_SPEED_COMMAND;
-        SpeedFilter* filter = drive.get_filter(channel);
+        SpeedFilter* filter = drive->get_filter(channel);
         filter->Kf = 0.9;
     }
     
-    drive.set_limits(
+    drive->set_limits(
         FRONT_LEFT,
         FRONT_ANGLE,  // -75 deg
         ALCOVE_ANGLE,  // 30 deg
@@ -267,7 +272,7 @@ void setup()
         MAX_SERVO_SPEED,
         true
     );
-    drive.set_limits(
+    drive->set_limits(
         BACK_LEFT,
         M_PI - ALCOVE_ANGLE,  // 150 deg
         M_PI - FRONT_ANGLE,  // 225 deg
@@ -278,7 +283,7 @@ void setup()
         MAX_SERVO_SPEED,
         false
     );
-    drive.set_limits(
+    drive->set_limits(
         BACK_RIGHT,
         FRONT_ANGLE + M_PI,  // 105 deg
         ALCOVE_ANGLE + M_PI,  // 210 deg
@@ -290,7 +295,7 @@ void setup()
         true
     );
     
-    drive.set_limits(
+    drive->set_limits(
         FRONT_RIGHT,
         -ALCOVE_ANGLE,  // 30 deg
         -FRONT_ANGLE,  // 75 deg
@@ -302,8 +307,8 @@ void setup()
         false
     );
 
-    drive.begin();
-    drive.set_enable(false);
+    drive->begin();
+    drive->set_enable(false);
 
     for(int i = 0; i < NUM_PIXELS; i++) {
         led_ring.setPixelColor(i, led_ring.Color(0, 150, 0, 0));
@@ -316,7 +321,7 @@ void setup()
         delay(10);
     }
 
-    tunnel_begin();
+    Serial.println("setup complete");
 }
 
 void packetCallback(PacketResult* result)
@@ -354,7 +359,7 @@ void packetCallback(PacketResult* result)
         set_motor_enable(enabled);
     }
     else if (category.equals("?en")) {
-        tunnel_writePacket("?en", "b", drive.get_enable());
+        tunnel_writePacket("?en", "b", drive->get_enable());
     }
 }
 
@@ -363,7 +368,7 @@ void loop()
     current_time = millis();
     packetCallback(tunnel_readPacket());
     if (did_button_press(true)) {
-        set_motor_enable(!drive.get_enable());
+        set_motor_enable(!drive->get_enable());
     }
 
     shunt_voltage = charge_ina.getShuntVoltage_mV();
@@ -372,7 +377,7 @@ void loop()
     load_voltage = bus_voltage + (shunt_voltage / 1000);
 
     if (load_voltage < DISABLE_THRESHOLD) {
-        drive.set_enable(false);
+        drive->set_enable(false);
     }
     
     if (current_time - prev_control_time > CONTROL_UPDATE_INTERVAL_MS) {
@@ -381,29 +386,29 @@ void loop()
             vx_command = 0.0;
             vy_command = 0.0;
             vt_command = 0.0;
-            drive.stop();
+            drive->stop();
         }
         else {
-            drive.drive(vx_command, vy_command, vt_command);
+            drive->drive(vx_command, vy_command, vt_command);
         }
         
-        drive.get_position(odom_x, odom_y, odom_t);
-        drive.get_velocity(odom_vx, odom_vy, odom_vt);
+        drive->get_position(odom_x, odom_y, odom_t);
+        drive->get_velocity(odom_vx, odom_vy, odom_vt);
         tunnel_writePacket("od", "eeefff",
             odom_x, odom_y, odom_t,
             odom_vx, odom_vy, odom_vt
         );
-        tunnel_writePacket("ms", "c", drive.get_num_motors());
-        for (unsigned int channel = 0; channel < drive.get_num_motors(); channel++) {
-            // Serial.print(drive.get_wheel_velocity(channel));
+        tunnel_writePacket("ms", "c", drive->get_num_motors());
+        for (unsigned int channel = 0; channel < drive->get_num_motors(); channel++) {
+            // Serial.print(drive->get_wheel_velocity(channel));
             // Serial.print('\t');
             tunnel_writePacket(
                 "mo",
                 "cfef",
                 channel,
-                drive.get_azimuth(channel),
-                drive.get_wheel_position(channel),
-                drive.get_wheel_velocity(channel)
+                drive->get_azimuth(channel),
+                drive->get_wheel_position(channel),
+                drive->get_wheel_velocity(channel)
             );
         }
         // Serial.print('\n');
