@@ -2,6 +2,12 @@ FROM stereolabs/zed:3.7-devel-cuda11.7-ubuntu22.04
 
 ## ROS 2 SETUP
 
+# Setup ENVs
+ENV LOGNAME root
+ENV ROS_DISTRO humble
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+
 # install packages
 RUN apt-get update || true && apt-get install -q -y --no-install-recommends \
     bash-completion \
@@ -12,11 +18,15 @@ RUN apt-get update || true && apt-get install -q -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # setup sources.list and keys
-RUN echo "deb http://packages.ros.org/ros2/ubuntu focal main" > /etc/apt/sources.list.d/ros2-latest.list && \
+RUN echo "deb http://packages.ros.org/ros2/ubuntu jammy main" > /etc/apt/sources.list.d/ros2-latest.list && \
     apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
 
 # install bootstrap tools
 RUN apt-get update || true && apt-get install --no-install-recommends -y \
+    ros-humble-ros-core=0.10.0-1* \
+    ros-humble-ros-base=0.10.0-1* \
+    ros-humble-desktop=0.10.0-1* \
+    ros-humble-desktop-full=0.10.0-1* \
     build-essential \
     git \
     python3-colcon-common-extensions \
