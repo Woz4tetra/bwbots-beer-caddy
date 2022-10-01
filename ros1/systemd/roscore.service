@@ -4,8 +4,8 @@ Description=roscore
 
 [Service]
 Type=forking
-User=tj2
-Group=tj2
+User=nvidia
+Group=nvidia
 # Start roscore as a fork and then wait for the tcp port to be opened.
 # Source all the environment variables, start roscore in a fork
 # Since the service type is forking, systemd doesn’t mark it as

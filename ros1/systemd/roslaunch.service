@@ -1,12 +1,12 @@
 [Unit]
 Wants=roscore.service
 After=NetworkManager.service time-sync.target
-Description=TJ2 roslaunch
+Description=BWBots roslaunch
 
 [Service]
 Type=forking
-User=tj2
-Group=tj2
+User=nvidia
+Group=nvidia
 RemainAfterExit=yes
 ExecStart=/usr/local/bin/roslaunch.sh
 ExecStop=/usr/local/bin/stop_roslaunch.sh

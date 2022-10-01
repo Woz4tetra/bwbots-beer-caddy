@@ -3,7 +3,7 @@ BASE_DIR=$(realpath "$(dirname $0)")
 
 
 SOURCE_COMMAND='source ${HOME}/ros_ws/devel/setup.bash
-source ${HOME}/bwbots-beer-caddy/ros/systemd/env.sh'
+source ${HOME}/bwbots-beer-caddy/ros1/systemd/env.sh'
 
 if ! grep -qz "$SOURCE_COMMAND" ~/.bashrc; then
     echo "Appending ros setup scripts to ~/.bashrc"
