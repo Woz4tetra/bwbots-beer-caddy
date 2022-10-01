@@ -1,4 +1,4 @@
-FROM stereolabs/zed:3.7-devel-cuda11.7-ubuntu22.04
+FROM stereolabs/zed:3.7-devel-jetson-jp4.4
 
 ## ROS 2 SETUP
 
