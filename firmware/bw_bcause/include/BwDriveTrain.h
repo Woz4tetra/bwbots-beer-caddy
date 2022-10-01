@@ -22,12 +22,12 @@ private:
     double min_radius_of_curvature;
     BwDriveModule** drive_modules;
     Adafruit_PWMServoDriver* servos;
-    // mtx_type** inverse_kinematics;
-    // mtx_type** forward_kinematics;
-    // mtx_type** ik_transpose;
-    // mtx_type** kinematics_temp;
-    // mtx_type** chassis_vector;
-    // mtx_type** module_vector;
+    mtx_type* inverse_kinematics;
+    mtx_type* forward_kinematics;
+    mtx_type* ik_transpose;
+    mtx_type* kinematics_temp;
+    mtx_type* chassis_vector;
+    mtx_type* module_vector;
     static const unsigned int CHASSIS_STATE_LEN = 3;
     unsigned int kinematics_channels_len;
 
