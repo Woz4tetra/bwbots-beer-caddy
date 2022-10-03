@@ -372,6 +372,10 @@ void loop()
     packetCallback(tunnel_readPacket());
     if (did_button_press(true)) {
         set_motor_enable(!drive->get_enable());
+        vx_command = 0.0;
+        vy_command = 0.0;
+        vt_command = 0.0;
+        drive->drive(vx_command, vy_command, vt_command);
     }
 
     shunt_voltage = charge_ina.getShuntVoltage_mV();
@@ -421,8 +425,6 @@ void loop()
         );
         tunnel_writePacket("ms", "c", drive->get_num_motors());
         for (unsigned int channel = 0; channel < drive->get_num_motors(); channel++) {
-            // Serial.print(drive->get_wheel_velocity(channel));
-            // Serial.print('\t');
             tunnel_writePacket(
                 "mo",
                 "cfef",
@@ -432,7 +434,6 @@ void loop()
                 drive->get_wheel_velocity(channel)
             );
         }
-        // Serial.print('\n');
     }
     if (current_time - prev_power_time > POWER_UPDATE_INTERVAL_MS) {
         prev_power_time = current_time;

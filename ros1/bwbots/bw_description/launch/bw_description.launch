@@ -21,6 +21,6 @@
 
     <include file="$(find bw_description)/launch/imu_joint.launch"/>
 
-    <node pkg="tf" type="static_transform_publisher" name="base_link_to_camera_tilt" args="0.2032 0.0 0.254  0 0 0 1 base_tilt_link camera_tilt_link 20" />
-    <node pkg="tf" type="static_transform_publisher" name="base_tilt_link_to_laser" args="-0.0553 0.116 0.253  0 0 1 0 base_tilt_link laser 20" />
+    <node pkg="tf" type="static_transform_publisher" name="base_link_to_camera_tilt" args="0.1511 0.0 0.1868  0 0 0 1 base_tilt_link camera_link 20" />
+    <node pkg="tf" type="static_transform_publisher" name="base_tilt_link_to_laser" args="0.0775 0.0 0.207  0 0 1 0 base_tilt_link laser 20" />
 </launch>

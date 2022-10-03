@@ -23,7 +23,7 @@
         </visual>
     </link>
 
-    <link name="module_1">
+    <link name="module_1">  <!-- back left -->
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
@@ -33,7 +33,17 @@
         </visual>
     </link>
 
-    <link name="module_2">
+    <link name="module_2">  <!-- back right -->
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 3.1415"/>
+            <geometry>
+                <mesh filename="package://bw_description/meshes/module.stl"/>
+            </geometry>
+            <material name="red"/>
+        </visual>
+    </link>
+
+    <link name="module_3">  <!-- front left -->
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
@@ -43,19 +53,9 @@
         </visual>
     </link>
 
-    <link name="module_3">
+    <link name="module_4">  <!-- front right -->
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <geometry>
-                <mesh filename="package://bw_description/meshes/module.stl"/>
-            </geometry>
-            <material name="red"/>
-        </visual>
-    </link>
-
-    <link name="module_4">
-        <visual>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <origin xyz="0 0 0" rpy="0 0 3.1415"/>
             <geometry>
                 <mesh filename="package://bw_description/meshes/module.stl"/>
             </geometry>
