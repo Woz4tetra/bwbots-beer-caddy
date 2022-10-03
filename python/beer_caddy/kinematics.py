@@ -22,6 +22,8 @@ class ChassisKinematics:
             [self.length / 2.0, self.width / 2.0],  # module 3, channel 2, front left
             [self.length / 2.0, -self.width / 2.0],  # module 4, channel 3, front right
         ]
+        self.prev_calc_time = time.time()
+        self.prev_recv_time = time.time()
 
         self.prev_time = time.monotonic()
         self.odom = Odometry()
@@ -102,8 +104,13 @@ class ChassisKinematics:
 
         # self.logger.info(f"module_vector: " + ", ".join([f"{val:0.4f}" for val in module_vector]))
         # self.logger.info(f"chassis_velocities: " + ", ".join([f"{val:0.4f}" for val in chassis_velocities]))
-        # self.logger.info(f"calc odom: {self.odom.x: 0.4f}, {self.odom.y: 0.4f}, {self.odom.theta: 0.4f}, {self.odom.vx: 0.4f}, {self.odom.vy: 0.4f}, {self.odom.vt: 0.4f}")
-        self.logger.info(f"calc odom: {self.odom.vx: 0.4f}, {self.odom.vy: 0.4f}, {self.odom.vt: 0.4f}")
+        
+        current_time = time.time()
+        if current_time - self.prev_calc_time > 1.0:
+            self.prev_calc_time = current_time
+            self.logger.info(f"calc odom: {self.odom.x: 0.4f}, {self.odom.y: 0.4f}, {self.odom.theta: 0.4f}, {self.odom.vx: 0.4f}, {self.odom.vy: 0.4f}, {self.odom.vt: 0.4f}")
+            # self.logger.info(f"calc odom: {self.odom.vx: 0.4f}, {self.odom.vy: 0.4f}, {self.odom.vt: 0.4f}")
+
         return self.odom
 
     async def on_module(self, key: aiopubsub.Key, states: BwModuleStates):
@@ -111,5 +118,10 @@ class ChassisKinematics:
         await asyncio.sleep(0.0)
     
     async def on_odom(self, key: aiopubsub.Key, odom: Odometry):
-        self.logger.info(f"recv odom: {odom.vx: 0.4f}, {odom.vy: 0.4f}, {odom.vt: 0.4f}")
+        
+        current_time = time.time()
+        if current_time - self.prev_recv_time > 1.0:
+            self.prev_recv_time = current_time
+            self.logger.info(f"recv odom: {odom.x: 0.4f}, {odom.y: 0.4f}, {odom.theta: 0.4f}, {odom.vx: 0.4f}, {odom.vy: 0.4f}, {odom.vt: 0.4f}")
+            # self.logger.info(f"recv odom: {odom.vx: 0.4f}, {odom.vy: 0.4f}, {odom.vt: 0.4f}")
 

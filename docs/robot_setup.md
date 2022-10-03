@@ -229,16 +229,20 @@ This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY
 - `git clone https://github.com/wjakob/tbb.git`
 - `cd tbb/build`
 - `cmake ..`
-- `make -j3`
+- `make -j4`
 - `sudo make install`
+
+### Install numpy
+- `sudo apt purge python3-numpy`
+- `MAKEFLAGS="-j4" sudo -H python3.8 -m pip install numpy`
 
 ### Install numba
 
 - `sudo apt install llvm-7*`
 - `sudo ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin`
-- `sudo -H pip3 install Cython`
-- `sudo -H pip3 install llvmlite==0.32.0`
-- `sudo -H pip3 install numba==0.49.0`
+- `sudo -H python3.8 -m pip install Cython`
+- `sudo -H python3.8 -m pip install llvmlite==0.32.0`
+- `sudo -H python3.8 -m pip install numba==0.49.0`
 
 ### Install PyKDL
 
@@ -251,19 +255,19 @@ This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY
 <br><br>
 - `cd orocos_kdl`
 - `mkdir build && cd build`
-- `cmake .. && make -j3`
+- `cmake .. && make -j4`
 - `sudo make install`
-- `python3 -m pip install psutil`
+- `sudo -H python3.8 -m pip install psutil`
 - `cd ../../python_orocos_kdl`
 - `mkdir build && cd build`
 - ```
-    cmake -D PYTHON_EXECUTABLE=/usr/bin/python3 \
-    -D PYTHON_INCLUDE_DIR=/usr/include/python3.6 \
-    -D PYTHON_LIBRARY=/usr/lib/aarch64-linux-gnu/libpython3.6m.so \
-    -D PYBIND11_PYTHON_VERSION=3 ..```
-- `make -j3`
+    cmake -D PYTHON_EXECUTABLE=/usr/bin/python3.8 \
+    -D PYTHON_INCLUDE_DIR=/usr/include/python3.8 \
+    -D PYTHON_LIBRARY=/usr/lib/aarch64-linux-gnu/libpython3.8.so \
+    -D PYBIND11_PYTHON_VERSION=3 ..
+  ```
+- `make -j4`
 - `sudo make install`
-- `sudo -H pip3 install psutil`
 - `sudo ldconfig`
 - `python3 ../tests/PyKDLtest.py`  The tests may fail. Make sure they at least run
 
@@ -273,10 +277,10 @@ This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY
 
 - `sudo apt-get install libjpeg-dev libpng-dev libtiff-dev libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev libgtk-3-dev libatlas-base-dev gfortran python3-dev -y`
 - cd ~/build_ws`
-- `wget -O opencv.zip https://github.com/opencv/opencv/archive/refs/tags/4.4.0.zip`
-- `wget -O opencv_contrib.zip https://github.com/opencv/opencv_contrib/archive/refs/tags/4.4.0.zip`
+- `wget -O opencv.zip https://github.com/opencv/opencv/archive/refs/tags/4.5.0.zip`
+- `wget -O opencv_contrib.zip https://github.com/opencv/opencv_contrib/archive/refs/tags/4.5.0.zip`
 - `unzip opencv.zip && unzip opencv_contrib.zip`
-- `mv opencv-4.4.0/ opencv && mv opencv_contrib-4.4.0/ opencv_contrib`
+- `mv opencv-4.5.0/ opencv && mv opencv_contrib-4.5.0/ opencv_contrib`
 - `cd opencv && mkdir build && cd build`
 - ```
   cmake -D CMAKE_BUILD_TYPE=RELEASE \
@@ -289,9 +293,9 @@ This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY
     -D ENABLE_CXX11=ON \
     -D OPENCV_ENABLE_NONFREE=ON \
     -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules \
-    -D PYTHON_EXECUTABLE=/usr/bin/python3 ..
+    -D PYTHON_EXECUTABLE=/usr/bin/python3.8 ..
   ```
-- `make -j3 && sudo make install` This will take several hours
+- `make -j4 && sudo make install` This will take several hours
 
 ### Block rosdep from installing apt’s opencv
 - `sudo nano /etc/apt/preferences`
@@ -311,24 +315,25 @@ This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY
 - `cd ~/build_ws`
 - `git clone https://github.com/AprilRobotics/apriltag.git`
 - `cd apriltag && mkdir build && cd build`
-- `cmake .. && make -j3 && sudo make install`
+- `cmake .. && make -j4 && sudo make install`
 
 ### Install yolov5 dependencies
 
 #### Install pytorch dependencies
 
 - `cd ~/build_ws`
-- `pip3 install "seaborn>=0.11.0" "pandas>=1.1.4" "thop" "scipy>=1.4.1" "matplotlib>=3.2.2" "tqdm"`
+- `sudo -H python3.8 -m pip install future`
+- `sudo -H python3.8 -m pip install -U wheel mock pillow`
+- `sudo -H python3.8 -m pip install testresources`
+- `sudo -H python3.8 -m pip install pybind11`
+- `sudo -H python3.8 -m pip install cppy`
+- `sudo -H python3.8 -m pip install setuptools==58.3.0`
+- `sudo -H python3.8 -m pip install "seaborn>=0.11.0" "pandas>=1.1.4" "scipy>=1.4.1" "matplotlib>=3.2.2" "tqdm"`
 - `sudo apt-get install python3-pip libjpeg-dev libopenblas-dev libopenmpi-dev libomp-dev -y`
-- `sudo -H pip3 install future`
-- `sudo pip3 install -U --user wheel mock pillow`
-- `sudo -H pip3 install testresources`
-- `sudo -H pip3 install setuptools==58.3.0`
-- `sudo -H pip3 install Cython`
 
 #### Install pytorch from wheel
 - `wget -O torch-1.10.0-cp36-cp36m-linux_aarch64.whl https://nvidia.box.com/shared/static/fjtbno0vpo676a25cgvuqc1wty0fkkg6.whl`
-- `sudo -H pip3 install torch-1.10.0-cp36-cp36m-linux_aarch64.whl`
+- `sudo -H python3.8 -m pip install torch-1.10.0-cp36-cp36m-linux_aarch64.whl`
 
 #### Install pytorch from source
 

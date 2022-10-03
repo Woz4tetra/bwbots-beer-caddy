@@ -142,10 +142,13 @@ double odom_x = 0.0, odom_y = 0.0, odom_t = 0.0;
 
 float shunt_voltage = 0.0f;
 float bus_voltage = 0.0f;
-float current_mA = 0.0f;
+float current_A = 0.0f;
 float load_voltage = 0.0f;
 
-const float DISABLE_THRESHOLD = -12.0;  // TODO: put back eventually
+bool was_charging = false;
+
+const float DISABLE_THRESHOLD = 7.0;
+const float CHARGE_CURRENT_THRESHOLD = 0.5;  // amps
 Adafruit_INA219 charge_ina(0x40 + 0b01);
 
 // ---
@@ -373,8 +376,26 @@ void loop()
 
     shunt_voltage = charge_ina.getShuntVoltage_mV();
     bus_voltage = charge_ina.getBusVoltage_V();
-    current_mA = charge_ina.getCurrent_mA();
+    current_A = charge_ina.getCurrent_mA() / 1000.0;
     load_voltage = bus_voltage + (shunt_voltage / 1000);
+
+    bool is_charging = current_A > CHARGE_CURRENT_THRESHOLD;
+    if (was_charging != is_charging) {
+        was_charging = is_charging;
+        if (current_A > CHARGE_CURRENT_THRESHOLD) {
+            for (int i = 0; i < NUM_PIXELS; i++) {
+                led_ring.setPixelColor(i, led_ring.Color(150, 0, 0, 0));
+            }
+            Serial.println("Charging");
+        }
+        else {
+            for (int i = 0; i < NUM_PIXELS; i++) {
+                led_ring.setPixelColor(i, led_ring.Color(0, 0, 0, 0));
+            }
+            Serial.println("Unplugged");
+        }
+        led_ring.show();
+    }
 
     if (load_voltage < DISABLE_THRESHOLD) {
         drive->set_enable(false);
@@ -392,8 +413,8 @@ void loop()
             drive->drive(vx_command, vy_command, vt_command);
         }
         
-        drive->get_position(odom_x, odom_y, odom_t);
         drive->get_velocity(odom_vx, odom_vy, odom_vt);
+        drive->get_position(odom_x, odom_y, odom_t, odom_vx, odom_vy, odom_vt);
         tunnel_writePacket("od", "eeefff",
             odom_x, odom_y, odom_t,
             odom_vx, odom_vy, odom_vt
@@ -418,7 +439,7 @@ void loop()
 
         tunnel_writePacket("power", "ff",
             load_voltage,
-            current_mA
+            current_A
         );
     }
 }

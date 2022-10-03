@@ -31,7 +31,9 @@ private:
     static const unsigned int CHASSIS_STATE_LEN = 3;
     unsigned int kinematics_channels_len;
 
-    double dt();
+    uint32_t prev_drive_time;
+    uint32_t prev_odom_time;
+    double dt(uint32_t& prev_time);
 
 public:
     BwDriveTrain(
@@ -59,7 +61,7 @@ public:
     double get_wheel_velocity(unsigned int channel);
     double get_wheel_position(unsigned int channel);
     double get_azimuth(unsigned int channel);
-    void get_position(double& x, double& y, double& theta);
+    void get_position(double& x, double& y, double& theta, double vx, double vy, double vt);
     void get_velocity(double& vx, double& vy, double& vt);
     static double wrap_angle(double angle);
     void set_limits(

@@ -24,7 +24,8 @@ BwDriveTrain::BwDriveTrain(
     max_strafe_angle = M_PI;
     reverse_min_strafe_angle = -M_PI;
     reverse_max_strafe_angle = M_PI;
-    prev_time = 0;
+    prev_drive_time = 0;
+    prev_odom_time = 0;
 
     if (this->num_motors > BwDriveTrain::MAX_CHANNELS) {
         this->num_motors = BwDriveTrain::MAX_CHANNELS;
@@ -173,7 +174,7 @@ void BwDriveTrain::set(unsigned int channel, double azimuth, double wheel_veloci
 
 void BwDriveTrain::drive(double vx, double vy, double vt)
 {
-    double delta_time = dt();
+    double delta_time = dt(prev_drive_time);
     double v_theta = atan2(vy, vx);
 
     if ((v_theta > max_strafe_angle && v_theta < reverse_max_strafe_angle) || (v_theta < min_strafe_angle && v_theta > reverse_min_strafe_angle)) {
@@ -199,11 +200,34 @@ void BwDriveTrain::drive(double vx, double vy, double vt)
     }
 }
 
-void BwDriveTrain::get_position(double& x, double& y, double& theta)
+void BwDriveTrain::get_position(double& x, double& y, double& theta, double vx, double vy, double vt)
 {
-    x = 0.0;
-    y = 0.0;
-    theta = 0.0;
+    double delta_time = dt(prev_odom_time);
+    double dx = vx * delta_time;
+    double dy = vy * delta_time;
+    double dtheta = vt * delta_time;
+    double sin_theta = sin(dtheta);
+    double cos_theta = cos(dtheta);
+
+    double s, c;
+    if (abs(dtheta) < 1E-9) {  // if angle is too small, use taylor series linear approximation
+        s = 1.0 - 1.0 / 6.0 * dtheta * dtheta;
+        c = 0.5 * dtheta;
+    }
+    else {
+        s = sin_theta / dtheta;
+        c = (1.0 - cos_theta) / dtheta;
+    }
+
+    double tx = dx * s - dy * c;
+    double ty = dx * c + dy * s;
+
+    double rotated_tx = tx * cos(theta) - ty * sin(theta);
+    double rotated_ty = tx * sin(theta) + ty * cos(theta);
+
+    x += rotated_tx;
+    y += rotated_ty;
+    theta += dtheta;
 }
 
 void BwDriveTrain::get_velocity(double& vx, double& vy, double& vt)
@@ -313,7 +337,7 @@ double BwDriveTrain::wrap_angle(double angle)
     return angle;
 }
 
-double BwDriveTrain::dt()
+double BwDriveTrain::dt(uint32_t& prev_time)
 {
     uint32_t current_time = millis();
     uint32_t delta_time = current_time - prev_time;
