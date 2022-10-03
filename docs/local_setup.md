@@ -110,7 +110,7 @@ This is optional. Use this for training off the robot. Run all these commands on
 - `cd ~/build_ws`
 - `wget -O libtorch.zip https://download.pytorch.org/libtorch/cu116/libtorch-cxx11-abi-shared-with-deps-1.12.0%2Bcu116.zip`
 - `unzip libtorch.zip`
-- `mv libtorch /usr/local/`
+- `sudo mv libtorch /usr/local/`
 - `echo 'export CMAKE_PREFIX_PATH=/usr/local/libtorch/share/cmake/Torch/${CMAKE_PREFIX_PATH:+:${CMAKE_PREFIX_PATH}}' >> ~/.bashrc`
 - `echo 'export CUDACXX=/usr/local/cuda/bin/nvcc' >> ~/.bashrc`
 - Open a new terminal before building any cuda projects
@@ -121,6 +121,23 @@ This is optional. Use this for training off the robot. Run all these commands on
 - `git clone git@github.com:frc-88/yolov5.git`
 - `cd yolov5`
 - `sudo -H python3 setup.py install`
+
+### ZED SDK
+- go to https://www.stereolabs.com/developers/release/
+- Click SDK Downloads
+- Find latest release for CUDA 11.X (11.0*->11.7), ZED SDK for Ubuntu 20
+- Copy the link
+- `wget https://download.stereolabs.com/zedsdk/3.7/cu117/ubuntu20`  Replace with your link
+- `chmod +x ubuntu20`
+- `./ubuntu20`
+- Prompts:
+  `Do you want to also install the static version of the ZED SDK (AI module will still require libsl_ai.so)` -> `y`
+  `Do you want to install the AI module (required for Object detection and Neural Depth, recommended)` -> `y`
+  `Install samples (recommended)` -> `y`
+  `Installation path: ` -> `/usr/local/zed/samples/`
+  `Do you want to auto-install dependencies (recommended)` -> Press enter
+  `Do you want to install the Python API (recommended)` -> `y`
+  `Please specify your python executable: ` -> `python3`
 
 # Build workspace
 - `cd ~/ros_ws`
