@@ -148,7 +148,7 @@ float load_voltage = 0.0f;
 bool was_charging = false;
 
 const float DISABLE_THRESHOLD = 7.0;
-const float CHARGE_CURRENT_THRESHOLD = 0.5;  // amps
+const float CHARGE_CURRENT_THRESHOLD = 0.1;  // amps
 Adafruit_INA219 charge_ina(0x40 + 0b01);
 
 // ---
@@ -384,7 +384,7 @@ void loop()
         was_charging = is_charging;
         if (current_A > CHARGE_CURRENT_THRESHOLD) {
             for (int i = 0; i < NUM_PIXELS; i++) {
-                led_ring.setPixelColor(i, led_ring.Color(150, 0, 0, 0));
+                led_ring.setPixelColor(i, led_ring.Color(2, 0, 0, 0));
             }
             Serial.println("Charging");
         }

@@ -1,16 +1,17 @@
 import time
 import math
-import asyncio
 import logging
-import aiopubsub
 import numpy as np
+from lib.blackboard import Blackboard
 from beer_caddy.messages import BwModuleStates, Odometry
 
 
 class ChassisKinematics:
-    def __init__(self, logger: logging.Logger, hub: aiopubsub.Hub) -> None:
+    def __init__(self, logger: logging.Logger, blackboard: Blackboard) -> None:
         self.logger = logger
-        self.tunnel_sub = aiopubsub.Subscriber(hub, 'kinematics-tunnel')
+        self.blackboard = blackboard
+        self.blackboard.add_listener("odom", self.on_odom)
+        self.blackboard.add_listener("module", self.on_module)
 
         self.width = 0.115  # meters
         self.length = 0.160  # meters
@@ -37,11 +38,6 @@ class ChassisKinematics:
         ik = np.array(ik)
         fk = np.linalg.pinv(ik)
         return fk
-
-    async def start_listeners(self):
-        self.tunnel_sub.add_async_listener(aiopubsub.Key('tunnel', 'module'), self.on_module)
-        self.tunnel_sub.add_async_listener(aiopubsub.Key('tunnel', 'odom'), self.on_odom)
-        await asyncio.sleep(0.0)
 
     def dt(self):
         current_time = time.monotonic()
@@ -113,12 +109,10 @@ class ChassisKinematics:
 
         return self.odom
 
-    async def on_module(self, key: aiopubsub.Key, states: BwModuleStates):
+    def on_module(self, states: BwModuleStates):
         self.to_chassis(states)
-        await asyncio.sleep(0.0)
     
-    async def on_odom(self, key: aiopubsub.Key, odom: Odometry):
-        
+    def on_odom(self, odom: Odometry):
         current_time = time.time()
         if current_time - self.prev_recv_time > 1.0:
             self.prev_recv_time = current_time

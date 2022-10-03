@@ -125,6 +125,18 @@ wifi.powersave = 2
 - Log in and try `sudo su`
 - If no password prompt appears, these steps worked
 
+## Increase memory security limit
+- `sudo nano /etc/security/limits.conf`
+- File should look like this (increase all limits to 8GB):
+  ```
+  nvidia hard stack 8192
+  nvidia soft stack 8192
+  ubuntu hard stack 8192
+  ubuntu soft stack 8192
+  root hard stack 8192
+  root soft stack 8192
+  ```
+
 ## Upload code
 
 Run this command on your local machine:
@@ -133,13 +145,11 @@ Run this command on your local machine:
 
 ## Python dependencies
 
-- `sudo apt-get install python3.8-dev`
-- `sudo rm /usr/bin/python3`
-- `sudo rm /usr/bin/python`
-- `sudo ln -s /usr/bin/python3.8 /usr/bin/python3`
-- `sudo ln -s /usr/bin/python3.8 /usr/bin/python`
-- `pip3 install --upgrade cython`
-- `pip3 install --upgrade --force-reinstall numpy`
+- `export MAX_JOBS=4`
+- `sudo -H python3 -m pip install --upgrade cython`
+- `sudo -H python3 -m pip install --upgrade --force-reinstall numpy`
+- `sudo -H python3 -m pip install setuptools --upgrade`
+- `sudo -H python3 -m pip install --upgrade pip`
 
 ## Upload firmware
 
@@ -212,7 +222,11 @@ Download all packages to a home based directory:
 
 Tip: list all CMake options: `cmake -LA | awk '{if(f)print} /-- Cache values/{f=1}'`
 
-#### Upgrade CMake
+### Install g++
+- `sudo apt update`
+- `sudo apt-get install g++-8`
+
+### Upgrade CMake
 This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY-NOTFOUND issue:
 - https://github.com/clab/dynet/issues/1457
 - Install CMake version 3.12.2 or higher
@@ -234,15 +248,15 @@ This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY
 
 ### Install numpy
 - `sudo apt purge python3-numpy`
-- `MAKEFLAGS="-j4" sudo -H python3.8 -m pip install numpy`
+- `MAKEFLAGS="-j4" sudo -H python3 -m pip install numpy`
 
 ### Install numba
 
 - `sudo apt install llvm-7*`
 - `sudo ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin`
-- `sudo -H python3.8 -m pip install Cython`
-- `sudo -H python3.8 -m pip install llvmlite==0.32.0`
-- `sudo -H python3.8 -m pip install numba==0.49.0`
+- `sudo -H python3 -m pip install Cython`
+- `sudo -H python3 -m pip install llvmlite==0.32.0`
+- `sudo -H python3 -m pip install numba==0.49.0`
 
 ### Install PyKDL
 
@@ -257,13 +271,13 @@ This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY
 - `mkdir build && cd build`
 - `cmake .. && make -j4`
 - `sudo make install`
-- `sudo -H python3.8 -m pip install psutil`
+- `sudo -H python3 -m pip install psutil`
 - `cd ../../python_orocos_kdl`
 - `mkdir build && cd build`
 - ```
-    cmake -D PYTHON_EXECUTABLE=/usr/bin/python3.8 \
-    -D PYTHON_INCLUDE_DIR=/usr/include/python3.8 \
-    -D PYTHON_LIBRARY=/usr/lib/aarch64-linux-gnu/libpython3.8.so \
+    cmake -D PYTHON_EXECUTABLE=/usr/bin/python3 \
+    -D PYTHON_INCLUDE_DIR=/usr/include/python3 \
+    -D PYTHON_LIBRARY=/usr/lib/aarch64-linux-gnu/libpython3.so \
     -D PYBIND11_PYTHON_VERSION=3 ..
   ```
 - `make -j4`
@@ -293,7 +307,7 @@ This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY
     -D ENABLE_CXX11=ON \
     -D OPENCV_ENABLE_NONFREE=ON \
     -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules \
-    -D PYTHON_EXECUTABLE=/usr/bin/python3.8 ..
+    -D PYTHON_EXECUTABLE=/usr/bin/python3 ..
   ```
 - `make -j4 && sudo make install` This will take several hours
 
@@ -322,18 +336,17 @@ This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY
 #### Install pytorch dependencies
 
 - `cd ~/build_ws`
-- `sudo -H python3.8 -m pip install future`
-- `sudo -H python3.8 -m pip install -U wheel mock pillow`
-- `sudo -H python3.8 -m pip install testresources`
-- `sudo -H python3.8 -m pip install pybind11`
-- `sudo -H python3.8 -m pip install cppy`
-- `sudo -H python3.8 -m pip install setuptools==58.3.0`
-- `sudo -H python3.8 -m pip install "seaborn>=0.11.0" "pandas>=1.1.4" "scipy>=1.4.1" "matplotlib>=3.2.2" "tqdm"`
+- `sudo -H python3 -m pip install future`
+- `sudo -H python3 -m pip install -U wheel mock pillow`
+- `sudo -H python3 -m pip install testresources`
+- `sudo -H python3 -m pip install pybind11`
+- `sudo -H python3 -m pip install cppy`
+- `sudo -H python3 -m pip install "seaborn>=0.11.0" "pandas>=1.1.4" "scipy>=1.4.1" "matplotlib>=3.2.2" "tqdm"`
 - `sudo apt-get install python3-pip libjpeg-dev libopenblas-dev libopenmpi-dev libomp-dev -y`
 
 #### Install pytorch from wheel
 - `wget -O torch-1.10.0-cp36-cp36m-linux_aarch64.whl https://nvidia.box.com/shared/static/fjtbno0vpo676a25cgvuqc1wty0fkkg6.whl`
-- `sudo -H python3.8 -m pip install torch-1.10.0-cp36-cp36m-linux_aarch64.whl`
+- `sudo -H python3 -m pip install torch-1.10.0-cp36-cp36m-linux_aarch64.whl`
 
 #### Install pytorch from source
 
@@ -359,6 +372,9 @@ This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY
 - `sudo python3 setup.py install`
 - `echo "export CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:${HOME}/.local/lib/python3.6/site-packages/torch/share/cmake/Torch" >> ~/.bashrc`
 - `sudo apt-get install python3-dev`
+
+### ZED SDK
+
 
 ## ROS Installation
 

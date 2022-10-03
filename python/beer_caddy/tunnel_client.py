@@ -2,31 +2,29 @@ import time
 import asyncio
 import logging
 from typing import Optional
-import aiopubsub
 from lib.tunnel.serial.client import TunnelSerialClient
 from lib.tunnel.result import PacketResult
+from lib.blackboard import Blackboard
 from beer_caddy.messages import ModuleState, Odometry, BwModuleStates
 
 
 class RobotTunnelClient(TunnelSerialClient):
     """Wrapper class for TunnelSerialClient adds functionality specific to the hopper swapper"""
 
-    def __init__(self, logger: logging.Logger, hub: aiopubsub.Hub, path, baud=1000000):
+    def __init__(self, logger: logging.Logger, blackboard: Blackboard, path, baud=1000000):
         """
         :param logger: logger object generated from LoggerManager
         :param path: path to arduino device. ex: "/dev/ttyACM0"
         :param baud: communication rate. Must match value defined on the arduino
         """
         super().__init__(path, baud, debug=False)
-        self.hub = hub
+        self.blackboard = blackboard
         self.logger = logger
         self.protocol.use_double_precision = True
         self.start_time = time.monotonic()  # timer for ping
         self.odom_state = Odometry()
         self.module_states = BwModuleStates()
 
-        self.parsed_pub = aiopubsub.Publisher(self.hub, prefix=aiopubsub.Key('tunnel'))
-    
     async def packet_callback(self, result: PacketResult):
         """
         Callback for when a new packet is received
@@ -54,7 +52,7 @@ class RobotTunnelClient(TunnelSerialClient):
             self.odom_state.vy = vy
             self.odom_state.vt = vt
 
-            self.parsed_pub.publish(aiopubsub.Key('odom'), self.odom_state)
+            self.blackboard.publish('odom', self.odom_state)
             # self.logger.info(f"{x}, {y}, {theta}, {vx}, {vy}, {vt}")
         elif result.category == "ms":
             num_channels = result.get_int(1, signed=False)
@@ -73,8 +71,8 @@ class RobotTunnelClient(TunnelSerialClient):
                 state.wheel_position = result.get_double()
                 state.wheel_velocity = result.get_float()
                 if channel + 1 == len(self.module_states.states):
-                    self.parsed_pub.publish(aiopubsub.Key('module'), self.module_states)
-        
+                    self.blackboard.publish('module', self.module_states)
+
         elif result.category == "power":
             voltage = result.get_float()
             current = result.get_float()
