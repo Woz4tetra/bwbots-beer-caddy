@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-    
+    <include file="$(find bw_description)/launch/bw_description.launch"/>
+    <include file="$(find bw_tunnel)/launch/bw_tunnel.launch"/>
 </launch>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <arg name="map_name" default="map-{date}"/>
+    <arg name="mode" default="mapping"/> <!-- "mapping", "localize" -->
+    <node pkg="bw_laser_slam" type="bw_laser_slam_node.py" name="bw_laser_slam" output="screen">
+        <param name="mode" value="$(arg mode)"/>
+        <param name="map_name" value="$(arg map_name)"/>
+    </node>
+</launch>

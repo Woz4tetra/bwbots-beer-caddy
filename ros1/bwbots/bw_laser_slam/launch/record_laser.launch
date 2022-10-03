@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <node pkg="rosbag" type="record" name="rosbag_record_laser"
+       args="record -o ~/bags/laser            
+            /bw/odom
+
+            /laser/scan
+            /zed/imu/data
+
+            /bw/modules/1
+            /bw/modules/2
+            /bw/modules/3
+            /bw/modules/4
+
+            /bw/ping
+            /bw/robot_status
+            /bw/cmd_vel
+            " />
+</launch>

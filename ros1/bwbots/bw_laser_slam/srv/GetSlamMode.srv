@@ -1,0 +1,6 @@
+string MAPPING = "mapping"
+string LOCALIZE = "localize"
+string IDLE = "idle"
+---
+string mode
+bool is_publishing

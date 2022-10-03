@@ -334,6 +334,8 @@ This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY
 ### Install g2o
 - `cd ~/build_ws`
 - `git clone https://github.com/RainerKuemmerle/g2o.git`
+- `cd g2o`
+- `git checkout 20201223_git`
 - `mkdir build && cd build`
 - `/snap/bin/cmake ..`  Higher version of cmake
 - `make -j4`

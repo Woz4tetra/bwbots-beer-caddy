@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <arg name="robot_address" default="/dev/ttyTHS0"/>
+
+    <group ns="bw">
+        <node name="bw_tunnel" pkg="bw_tunnel" type="bw_tunnel_node" output="screen" required="true">
+            <rosparam param="joint_names" file="$(find bw_description)/config/robeert_joints.yaml" command="load"/>
+            <param name="device_path" value="$(arg robot_address)"/>
+            <param name="device_baud" value="1000000"/>
+            <param name="cmd_vel_timeout" value="1.0"/>
+            <param name="write_rate" value="30.0"/>
+            <param name="publish_odom_tf" value="true"/>
+        </node>
+    </group>
+
+    <include file="$(find bw_tunnel)/launch/twist_mux.launch"/>
+</launch>
