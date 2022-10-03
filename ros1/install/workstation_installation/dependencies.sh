@@ -8,6 +8,8 @@ ROS_WS=$HOME/ros_ws
 ROS_WS_SRC=${ROS_WS}/src
 BUILD_WS=$HOME/build_ws
 
+bash ${BASE_DIR}/prep_ros_ws.sh ${BASE_DIR}
+
 bash ${BASE_DIR}/install_apt_packages.sh ${BASE_DIR}
 
 bash ${BASE_DIR}/install_ros_git_packages.sh ${BASE_DIR}

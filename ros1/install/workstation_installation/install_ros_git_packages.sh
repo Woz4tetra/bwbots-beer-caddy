@@ -39,10 +39,10 @@ rosdep install --from-paths src --ignore-src --rosdistro=noetic -y -r
 
 if sudo lshw -C display | grep -i nvidia; then
     echo "\n\nNVidia GPU detected. Assuming cuda libraries are installed\n\n"
-    catkin_make 
+    /opt/ros/noetic/bin/catkin_make -DPYTHON_EXECUTABLE=/usr/bin/python3
 else 
     echo "\n\nNVidia GPU not detected. Skipping cuda packages\n\n"
-    catkin_make -DCATKIN_BLACKLIST_PACKAGES="bw_yolo;zed_nodelets;zed_ros;zed_wrapper"
+    /opt/ros/noetic/bin/catkin_make -DCATKIN_BLACKLIST_PACKAGES="bw_yolo;zed_nodelets;zed_ros;zed_wrapper" -DPYTHON_EXECUTABLE=/usr/bin/python3
 fi
 
 

@@ -1,0 +1,4 @@
+string module_index
+float64 azimuth_position
+float64 azimuth_velocity
+float64 wheel_velocity

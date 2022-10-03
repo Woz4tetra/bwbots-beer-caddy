@@ -147,9 +147,13 @@ Run this command on your local machine:
 
 - `export MAX_JOBS=4`
 - `sudo -H python3 -m pip install --upgrade cython`
-- `sudo -H python3 -m pip install --upgrade --force-reinstall numpy`
+- `MAKEFLAGS="-j4" sudo -H python3 -m pip install --upgrade --force-reinstall numpy`
 - `sudo -H python3 -m pip install setuptools --upgrade`
 - `sudo -H python3 -m pip install --upgrade pip`
+- Add this to `~/.bashrc`. This prevents `Illegal instruction (core dumped)` error when importing numpy:
+  ```
+  export OPENBLAS_CORETYPE=ARMV8
+  ```
 
 ## Upload firmware
 
@@ -233,9 +237,9 @@ This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY
 <br>
 <br>
 
-- `sudo apt remove --purge cmake`
 - `sudo snap install cmake --classic`
-- `echo "export PATH=${PATH}:/snap/bin" >> ~/.bashrc`
+- `sudo mv /usr/bin/cmake /usr/bin/cmake-old`
+- `sudo ln -s /snap/bin/cmake /usr/bin`
 - Close and reopen terminal for this to take effect
 
 ### Install TBB
@@ -245,10 +249,6 @@ This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY
 - `cmake ..`
 - `make -j4`
 - `sudo make install`
-
-### Install numpy
-- `sudo apt purge python3-numpy`
-- `MAKEFLAGS="-j4" sudo -H python3 -m pip install numpy`
 
 ### Install numba
 
@@ -331,6 +331,14 @@ This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY
 - `cd apriltag && mkdir build && cd build`
 - `cmake .. && make -j4 && sudo make install`
 
+### Install g2o
+- `cd ~/build_ws`
+- `git clone https://github.com/RainerKuemmerle/g2o.git`
+- `mkdir build && cd build`
+- `/snap/bin/cmake ..`  Higher version of cmake
+- `make -j4`
+- `sudo make install`
+
 ### Install yolov5 dependencies
 
 #### Install pytorch dependencies
@@ -348,20 +356,6 @@ This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY
 - `wget -O torch-1.10.0-cp36-cp36m-linux_aarch64.whl https://nvidia.box.com/shared/static/fjtbno0vpo676a25cgvuqc1wty0fkkg6.whl`
 - `sudo -H python3 -m pip install torch-1.10.0-cp36-cp36m-linux_aarch64.whl`
 
-#### Install pytorch from source
-
-- `git clone --recursive https://github.com/pytorch/pytorch`
-- `cd pytorch`
-- `git checkout v1.10.2`
-- `git submodule update`
-- `mkdir build && cd build`
-- `export MAX_JOBS=2`
-  - cmake pulls this value into build commands run by make
-- `cmake -DGLIBCXX_USE_CXX11_ABI=1 -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_BUILD_TYPE:STRING=Release -DPYTHON_EXECUTABLE:PATH=`\`which python3\` `..`
-    - If you get this error: “No CMAKE_CUDA_COMPILER could be found.” add nvcc to your path:
-    - `echo "export CUDACXX=/usr/local/cuda/bin/nvcc" >> ~/.bashrc`
-- `make -j2 && sudo make -j2 install`
-
 #### Install pytorch vision
 - `cd ~/build_ws`
 - `git clone https://github.com/pytorch/vision`
@@ -370,10 +364,25 @@ This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY
     - if an error like this appears during the build: <br>`‘cached_cast’ is not a member of ‘at::autocast’` <br> checkout v0.7.0 instead
 - `export MAKEFLAGS="-j2"`
 - `sudo python3 setup.py install`
-- `echo "export CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:${HOME}/.local/lib/python3.6/site-packages/torch/share/cmake/Torch" >> ~/.bashrc`
-- `sudo apt-get install python3-dev`
+- `echo "export CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/usr/local/lib/python3.6/dist-packages/torch/share/cmake/Torch" >> ~/.bashrc`
 
 ### ZED SDK
+- go to https://www.stereolabs.com/developers/release/
+- Click SDK Downloads
+- Find latest release for Jetpack 4.6/Jetson Xavier NX
+- Copy the link
+- `wget https://download.stereolabs.com/zedsdk/3.7/l4t32.6/jetsons`  Replace with your link
+- `chmod +x jetsons`
+- `./jetsons`
+- Prompts:
+  `Do you want to also install the static version of the ZED SDK (AI module will still require libsl_ai.so)` -> `y`
+  `Do you want to install the AI module (required for Object detection and Neural Depth, recommended)` -> `y`
+  `Do you want to enable maximum performance mode (recommended)? It provides optimal performance but increases power draw.` -> `n`  Do this manually later
+  `Install samples (recommended)` -> `y`
+  `Installation path: ` -> `/usr/local/zed/samples/`
+  `Do you want to auto-install dependencies (recommended)` -> Press enter
+  `Do you want to install the Python API (recommended)` -> `y`
+  `Please specify your python executable: ` -> `python3`
 
 
 ## ROS Installation

@@ -64,46 +64,17 @@ EOF
 # Setup workspace
 
 - `mkdir -p ~/ros_ws/src`
-- `ln -s ~/dodobot-ros ~/ros_ws/src`
+- `ln -s ~/bwbots-beer-caddy/ros1/bwbots/ ~/ros_ws/src`
 - Install dependencies:
-  - `cd ~/dodobot-ros/install/apt_installation`
+  - `cd ~/bwbots-beer-caddy/ros1/install/workstation_installation`
   - `sudo ./dependencies.sh`
-- Build workspace:
-  - `cd ~/ros_ws`
-  - `catkin_make -DCATKIN_BLACKLIST_PACKAGES="db_yolo"`
-  - If you install CUDA and pytorch, run with no blacklist: `catkin_make -DCATKIN_BLACKLIST_PACKAGES=""`
 
-# Connect to Dodobot via SSH
+# Connect to the robot via SSH
 
-- Obtain the ssh keys `chansey` and `chansey.pub` (ping repo authors)
-- `mv chansey ~/.ssh/`
-- `mv chansey.pub ~/.ssh/`
-- Connect to the `dodobot` network. See [networking/hostapd.conf](../networking/hostapd.conf) for password
-- Log in: `ssh -i ~/.ssh/chansey ben@192.168.4.1`
-  - I recommend mapping this command to an alias under `~/.bashrc`: `alias dodobot="ssh -i ~/.ssh/chansey ben@192.168.4.1"`
-
-# Link rviz
-
-- Open new terminal window
-- Point local ROS session to Dodobot master: `source ~/dodobot-ros/scripts/set_client.sh 192.168.4.1`
-- Open rviz: `rviz -d ~/dodobot-ros/src/db_viz/rviz/standard.rviz`
-- Make sure to run the `set_client.sh` script in every terminal you want to link to dodobot. Feel free to create an alias for this command.
-
-# Connect joystick
-
-- Open new terminal window
-- Point local ROS session to Dodobot master: `source ~/dodobot-ros/scripts/set_client.sh 192.168.4.1`
-- Run local joystick node: `roslaunch db_debug_joystick db_debug_joystick.launch topic_name:=joy_remote device:=/dev/input/js0`
-- Controls:
-  - Left joystick up and down: forwards and backwards
-  - Left joystick left and right: spin left and right
-  - A: Home linear axis
-  - B: open and close gripper
-  - X: tilt camera up and down
-  - Y: Enable motors
-  - Right joystick up and down: move linear axis (enabled after homing)
-  - Left trigger + Right joystick up and down: move camera tilter up and down
-  - D-pad: sound board
+- Obtain the ssh keys `robeert` and `robeert.pub` (ping repo authors)
+- `mv robeert ~/.ssh/`
+- `mv robeert.pub ~/.ssh/`
+- Log in: `ssh -i ~/.ssh/robeert nvidia@<your IP>`
 
 # yolov5 installation for x86 linux systems
 
@@ -150,3 +121,26 @@ This is optional. Use this for training off the robot. Run all these commands on
 - `git clone git@github.com:frc-88/yolov5.git`
 - `cd yolov5`
 - `sudo -H python3 setup.py install`
+
+# Build workspace
+- `cd ~/ros_ws`
+- `catkin_make`
+
+# Link rviz
+
+- Open new terminal window
+- Point local ROS session to remote master: `source ~/bwbots-beer-caddy/ros1/scripts/set_client.sh <your IP>`
+- Open rviz: `rviz -d ~/bwbots-beer-caddy/ros1/src/bw_viz/rviz/standard.rviz`
+- Make sure to run the `set_client.sh` script in every terminal you want to link to dodobot. Feel free to create an alias for this command.
+
+# Connect joystick
+
+- Open new terminal window
+- Point local ROS session to remote master: `source ~/bwbots-beer-caddy/ros1/scripts/set_client.sh <your IP>`
+- Run local joystick node: `roslaunch bw_joystick bw_joystick.launch topic_name:=joy_remote device:=/dev/input/js0`
+- Controls:
+  - Left joystick up and down: forwards and backwards
+  - Left joystick left and right: strafe left and right
+  - Right joystick left and right: spin left and right
+  - start + Right trigger: Enable motors
+  - Left or Right trigger: Disable motors

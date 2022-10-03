@@ -10,7 +10,7 @@ if ! grep -qz "$SOURCE_COMMAND" ~/.bashrc; then
     echo "$SOURCE_COMMAND" | sudo tee -a ~/.bashrc > /dev/null
 fi
 
-WS_DIR=${HOME}/ros_ws/src/bwbots
+WS_DIR=${HOME}/ros_ws/src/
 mkdir -p ${WS_DIR}
 SOURCE_DIR=$(realpath ${BASE_DIR}/../../bwbots)
 ln -s ${SOURCE_DIR} ${WS_DIR}

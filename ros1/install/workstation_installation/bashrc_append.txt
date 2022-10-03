@@ -1,0 +1,4 @@
+source /opt/ros/noetic/setup.bash
+source ${HOME}/ros_ws/devel/setup.bash
+
+alias rm="rm -I"

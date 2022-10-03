@@ -12,7 +12,7 @@ if [ -z ${REMOTE_KEY} ]; then
     exit
 fi
 
-SSH_COMMAND="ssh -i ${REMOTE_KEY} -p 5810 tj2@${DESTINATION_NAME}"
+SSH_COMMAND="ssh -i ${REMOTE_KEY} nvidia@${DESTINATION_NAME}"
 
 # restart systemd
 if [ -z $RESTART_ROSLAUNCH ]; then
@@ -20,12 +20,12 @@ if [ -z $RESTART_ROSLAUNCH ]; then
     read response
     case $response in
       ([Nn])     echo "Skipping restart";;
-      (*)        echo "Restarting roslaunch." && ${SSH_COMMAND} -t "sudo systemctl restart ros2.service";;
+      (*)        echo "Restarting roslaunch." && ${SSH_COMMAND} -t "sudo systemctl restart roslaunch.service";;
     esac
 else
     if [[ $RESTART_ROSLAUNCH == "n" ]]; then
         echo "Skipping restart"
     else
-        echo "Restarting roslaunch." && ${SSH_COMMAND} -t "sudo systemctl restart ros2.service"
+        echo "Restarting roslaunch." && ${SSH_COMMAND} -t "sudo systemctl restart roslaunch.service"
     fi
 fi
