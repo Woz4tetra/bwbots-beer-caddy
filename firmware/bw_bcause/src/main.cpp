@@ -6,10 +6,24 @@
 #include <Adafruit_NeoPixel.h>
 #include <MotorControllerMC33926.h>
 #include <BwDriveTrain.h>
-#include "tunnel/serial.h"
+#include "tunnel_serial.h"
 
 #define I2C_BUS_1 Wire
 
+// ---
+// Serial
+// ---
+
+#define DEBUG_SERIAL Serial
+#define DEBUG_BAUD 9600
+
+#define PROTOCOL_SERIAL Serial2
+#define PROTOCOL_BAUD 1000000
+
+// ---
+// Tunnel
+// ---
+TunnelSerial* tunnel;
 
 // ---
 // Status LEDs
@@ -181,7 +195,7 @@ bool read_button() {
 }
 
 void write_button_state() {
-    tunnel_writePacket("bu", "b", prev_button_state);
+    tunnel->writePacket("bu", "b", prev_button_state);
 }
 
 bool did_button_press(bool comparison_state) {
@@ -209,7 +223,7 @@ void set_button_led(bool state) {
 }
 
 void write_enable_state() {
-    tunnel_writePacket("en", "b", drive->get_enable());
+    tunnel->writePacket("en", "b", drive->get_enable());
 }
 
 void set_motor_enable(bool enabled)
@@ -227,8 +241,12 @@ void set_motor_enable(bool enabled)
 
 void setup()
 {
-    tunnel_begin();
-    Serial.println("setup");
+    DEBUG_SERIAL.begin(DEBUG_BAUD);
+    DEBUG_SERIAL.println("setup");
+
+    PROTOCOL_SERIAL.begin(PROTOCOL_BAUD);
+
+    tunnel = new TunnelSerial(&DEBUG_SERIAL, &PROTOCOL_SERIAL);
 
     drive = new BwDriveTrain(
         servos, motors, encoders,
@@ -335,7 +353,7 @@ void setup()
         delay(10);
     }
 
-    Serial.println("setup complete");
+    DEBUG_SERIAL.println("setup complete");
 }
 
 void packetCallback(PacketResult* result)
@@ -347,15 +365,15 @@ void packetCallback(PacketResult* result)
 
     // Extract category and check which event it maps to
     String category = result->getCategory();
-    // Serial.print("Received packet: ");
-    // Serial.println(category);
+    // DEBUG_SERIAL.print("Received packet: ");
+    // DEBUG_SERIAL.println(category);
     if (category.equals("ping")) {
         // Respond to ping by writing back the same value
         float value;
         if (!result->getFloat(value)) { DEBUG_SERIAL.println(F("Failed to get ping")); return; }
-        tunnel_writePacket("ping", "f", value);
-        Serial.print("Received ping: ");
-        Serial.println(value);
+        tunnel->writePacket("ping", "f", value);
+        DEBUG_SERIAL.print("Received ping: ");
+        DEBUG_SERIAL.println(value);
     }
     else if (category.equals("d")) {
         float vx, vy, vt;
@@ -373,14 +391,14 @@ void packetCallback(PacketResult* result)
         set_motor_enable(enabled);
     }
     else if (category.equals("?en")) {
-        tunnel_writePacket("en", "b", drive->get_enable());
+        tunnel->writePacket("en", "b", drive->get_enable());
     }
 }
 
 void loop()
 {
     current_time = millis();
-    packetCallback(tunnel_readPacket());
+    packetCallback(tunnel->readPacket());
     if (did_button_press(true)) {
         set_motor_enable(!drive->get_enable());
         vx_command = 0.0;
@@ -401,13 +419,13 @@ void loop()
             for (int i = 0; i < NUM_PIXELS; i++) {
                 led_ring.setPixelColor(i, led_ring.Color(2, 0, 0, 0));
             }
-            Serial.println("Charging");
+            DEBUG_SERIAL.println("Charging");
         }
         else {
             for (int i = 0; i < NUM_PIXELS; i++) {
                 led_ring.setPixelColor(i, led_ring.Color(0, 0, 0, 0));
             }
-            Serial.println("Unplugged");
+            DEBUG_SERIAL.println("Unplugged");
         }
         led_ring.show();
     }
@@ -430,12 +448,12 @@ void loop()
         
         drive->get_velocity(odom_vx, odom_vy, odom_vt);
         drive->get_position(odom_x, odom_y, odom_t, odom_vx, odom_vy, odom_vt);
-        tunnel_writePacket("od", "eeefff",
+        tunnel->writePacket("od", "eeefff",
             odom_x, odom_y, odom_t,
             odom_vx, odom_vy, odom_vt
         );
         for (unsigned int channel = 0; channel < drive->get_num_motors(); channel++) {
-            tunnel_writePacket(
+            tunnel->writePacket(
                 "mo",
                 "cfef",
                 channel,
@@ -450,7 +468,7 @@ void loop()
 
         write_button_state();
         write_enable_state();
-        tunnel_writePacket("power", "ffb",
+        tunnel->writePacket("power", "ffb",
             load_voltage,
             current_A,
             is_charging

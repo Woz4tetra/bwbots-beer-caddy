@@ -1,0 +1,6 @@
+[submodule "firmware/firmware/tunnel"]
+	path = firmware/firmware/tunnel
+	url = git@github.com:Woz4tetra/tunnel.git
+[submodule "firmware/tunnel"]
+	path = firmware/tunnel
+	url = git@github.com:Woz4tetra/tunnel.git
