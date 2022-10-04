@@ -93,7 +93,13 @@ BwTunnel::BwTunnel(ros::NodeHandle* nodehandle) :
     _packet_count_pub = nh.advertise<std_msgs::Int32>("packet_count", 10);
     _packet_rate_pub = nh.advertise<std_msgs::Float64>("packet_rate", 10);
 
+    _charge_pub = nh.advertise<bw_interfaces::ChargeState>("charger", 10);
+    _button_pub = nh.advertise<std_msgs::Bool>("button_pressed", 10);
+    _is_enabled_pub = nh.advertise<std_msgs::Bool>("are_motors_enabled", 10);
+
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &BwTunnel::twistCallback, this);
+
+    _set_enabled_sub = nh.subscribe<std_msgs::Bool>("set_motors_enabled", 10, &BwTunnel::setEnabledCallback, this);
 
     _prev_twist_timestamp = ros::Time(0);
     _twist_cmd_vx = 0.0;
@@ -217,6 +223,35 @@ void BwTunnel::packetCallback(PacketResult* result)
             (int)channel, azimuth
         );
     }
+    else if (category.compare("power") == 0) {
+        float voltage, current;
+        bool is_charging;
+        if (!result->getFloat(voltage))  { ROS_ERROR("Failed to get voltage"); return; }
+        if (!result->getFloat(current))  { ROS_ERROR("Failed to get current"); return; }
+        if (!result->getBool(is_charging))  { ROS_ERROR("Failed to get is_charging"); return; }
+
+        bw_interfaces::ChargeState msg;
+        msg.battery_voltage = voltage;
+        msg.charge_current = current;
+        msg.is_charging = is_charging;
+        _charge_pub.publish(msg);
+    }
+    else if (category.compare("bu") == 0) {
+        bool button_state;
+        if (!result->getBool(button_state))  { ROS_ERROR("Failed to get button_state"); return; }
+
+        std_msgs::Bool msg;
+        msg.data = button_state;
+        _button_pub.publish(msg);
+    }
+    else if (category.compare("en") == 0) {
+        bool enable_state;
+        if (!result->getBool(enable_state))  { ROS_ERROR("Failed to get button_state"); return; }
+
+        std_msgs::Bool msg;
+        msg.data = enable_state;
+        _is_enabled_pub.publish(msg);
+    }
 }
 
 double BwTunnel::getLocalTime() {
@@ -306,6 +341,12 @@ void BwTunnel::twistCallback(const geometry_msgs::TwistConstPtr& msg)
     _twist_cmd_vy = msg->linear.y;
     _twist_cmd_vt = msg->angular.z;
     _prev_twist_timestamp = ros::Time::now();
+}
+
+void BwTunnel::setEnabledCallback(const std_msgs::BoolConstPtr& msg)
+{
+    ROS_INFO("Setting motor enable to %d", msg->data);
+    writePacket("en", "b", msg->data);
 }
 
 void BwTunnel::publishCmdVel()

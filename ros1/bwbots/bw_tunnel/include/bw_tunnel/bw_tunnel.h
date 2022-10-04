@@ -36,6 +36,7 @@
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
 
 #include "bw_interfaces/OdomReset.h"
+#include "bw_interfaces/ChargeState.h"
 
 #include "tunnel_protocol.h"
 
@@ -116,9 +117,13 @@ private:
     vector<ros::Publisher>* _raw_joint_pubs;
     ros::Publisher _packet_count_pub;
     ros::Publisher _packet_rate_pub;
+    ros::Publisher _charge_pub;
+    ros::Publisher _button_pub;
+    ros::Publisher _is_enabled_pub;
 
     // Subscribers
     ros::Subscriber _twist_sub;
+    ros::Subscriber _set_enabled_sub;
     tf::TransformListener _tf_listener;
 
     // Service Servers
@@ -147,6 +152,7 @@ private:
     void publishStatusMessages(float ping);
 
     void twistCallback(const geometry_msgs::TwistConstPtr& msg);
+    void setEnabledCallback(const std_msgs::BoolConstPtr& msg);
 
     void pollDeviceTask();
     void writeDeviceTask();

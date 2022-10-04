@@ -237,8 +237,16 @@ void BwDriveTrain::get_velocity(double& vx, double& vy, double& vt)
     vt = 0.0;
     for (unsigned int channel = 0; channel < get_num_motors(); channel++) {
         double azimuth = get_azimuth(channel);
-        double x = drive_modules[channel]->get_x_location() + this->armature_length * cos(azimuth);
-        double y = drive_modules[channel]->get_y_location() + this->armature_length * sin(azimuth);
+        double x = drive_modules[channel]->get_x_location() + this->armature_length * cos(-azimuth);
+        double y = drive_modules[channel]->get_y_location() + this->armature_length * sin(-azimuth);
+        //  0  1  2 -- channel 0, -y0
+        //  3  4  5 -- channel 0, x0
+        //  6  7  8 -- channel 1, -y1
+        //  9 10 11 -- channel 1, x1
+        // 12 13 14 -- channel 2, -y2
+        // 15 16 17 -- channel 2, x2
+        // 18 19 20 -- channel 3, -y3
+        // 21 22 23 -- channel 3, x3
         unsigned int y_index = CHASSIS_STATE_LEN * (2 * channel) + 2;
         unsigned int x_index = CHASSIS_STATE_LEN * (2 * channel + 1) + 2;
         inverse_kinematics[y_index] = -y;

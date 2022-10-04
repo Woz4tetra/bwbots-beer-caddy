@@ -24,6 +24,7 @@ class RobotTunnelClient(TunnelSerialClient):
         self.start_time = time.monotonic()  # timer for ping
         self.odom_state = Odometry()
         self.module_states = BwModuleStates()
+        self.module_states.states = [ModuleState() for _ in range(4)]
 
     async def packet_callback(self, result: PacketResult):
         """
@@ -53,14 +54,6 @@ class RobotTunnelClient(TunnelSerialClient):
             self.odom_state.vt = vt
 
             self.blackboard.publish('odom', self.odom_state)
-            # self.logger.info(f"{x}, {y}, {theta}, {vx}, {vy}, {vt}")
-        elif result.category == "ms":
-            num_channels = result.get_int(1, signed=False)
-            while len(self.module_states.states) != num_channels:
-                if len(self.module_states.states) < num_channels:
-                    self.module_states.states.append(ModuleState())
-                elif len(self.module_states.states) > num_channels:
-                    self.module_states.states = [ModuleState() for _ in range(num_channels)]
 
         elif result.category == "mo":
             channel = result.get_int(1, signed=False)
