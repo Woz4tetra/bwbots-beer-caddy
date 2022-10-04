@@ -3,4 +3,11 @@
     <include file="$(find bw_description)/launch/bw_description.launch"/>
     <include file="$(find bw_tunnel)/launch/bw_tunnel.launch"/>
     <include file="$(find bw_rplidar)/launch/robeert_laser.launch"/>
+
+    <arg name="map_name" default="$(env ROS_MAP_NAME)"/>
+    <include file="$(find bw_laser_slam)/launch/bw_laser_slam.launch">
+        <arg name="mode" value="localize"/>
+        <!-- <arg name="mode" value="idle"/> -->
+        <arg name="map_name" value="$(arg map_name)"/>
+    </include>
 </launch>

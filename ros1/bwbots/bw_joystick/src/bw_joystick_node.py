@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import rospy
-import random
+
+from std_msgs.msg import Bool
 
 from sensor_msgs.msg import Joy
 
@@ -21,6 +22,8 @@ class BwJoystick:
         self.twist_command.linear.x = 0.0
         self.twist_command.linear.y = 0.0
         self.twist_command.angular.z = 0.0
+
+        self.are_motors_enabled = False
 
         self.cmd_vel_timer = rospy.Time.now()
 
@@ -50,9 +53,11 @@ class BwJoystick:
 
         # publishing topics
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=10)
+        self.set_enabled_pub = rospy.Publisher("set_motors_enabled", Bool, queue_size=10)
 
         # subscription topics
         self.joy_sub = rospy.Subscriber(self.joystick_topic, Joy, self.joystick_msg_callback, queue_size=5)
+        self.is_enabled_sub = rospy.Subscriber("are_motors_enabled", Bool, self.are_motors_enabled_callback, queue_size=10)
 
         rospy.loginfo("Joystick is ready!")
 
@@ -75,8 +80,24 @@ class BwJoystick:
             linear_x_val = self.joystick.deadband_axis(self.linear_x_axis, self.deadzone_joy_val, self.linear_scale)
             linear_y_val = self.joystick.deadband_axis(self.linear_y_axis, self.deadzone_joy_val, self.linear_scale)
             angular_val = self.joystick.deadband_axis(self.angular_axis, self.deadzone_joy_val, self.angular_scale)
-
             self.set_twist(linear_x_val, linear_y_val, angular_val)
+        
+        if all(self.joystick.check_list(self.joystick.is_button_down, "triggers/L1", "menu/Start")):
+            self.set_enable(True)
+            rospy.loginfo("Enabling")
+        elif any(self.joystick.check_list(self.joystick.did_button_down, "triggers/L1", "triggers/R1")):
+            self.set_enable(False)
+            rospy.loginfo("Disabling")
+
+    def are_motors_enabled_callback(self, msg):
+        if self.are_motors_enabled != msg.data:
+            self.are_motors_enabled = msg.data
+            rospy.loginfo("Motors are " + ("enabled" if self.are_motors_enabled else "disabled"))
+
+    def set_enable(self, state):
+        msg = Bool()
+        msg.data = state
+        self.set_enabled_pub.publish(msg)
 
     def set_twist(self, linear_x_val, linear_y_val, angular_val):
         self.twist_command.linear.x = linear_x_val

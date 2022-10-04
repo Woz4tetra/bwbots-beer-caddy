@@ -9,11 +9,8 @@ echo "---"
 packages=(
 joy
 geometry2
-teb-local-planner
 vision-msgs
-move-base-flex
 perception-pcl
-octomap-msgs
 pcl-msgs
 apriltag-ros
 costmap-converter
