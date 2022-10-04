@@ -16,14 +16,14 @@ This guide assumes you're using a linux machine to run all these commands. You'l
   - GUI version: open "Disks"
 - `umount /dev/sdd1`
   - Replace /dev/sdd1 with the partition that the OS auto mounts.
-- `gunzip -c ./dodobot.img.gz | dd of=/dev/sdd bs=64K status=progress`
+- `gunzip -c ./robeert.img.gz | dd of=/dev/sdd bs=64K status=progress`
   - Replace /dev/sdd with the top level disk name
   - WARNING: you can very easily destroy your disk if you select the wrong one. Please use caution here.
 
 
 ### Creating a backup
 
-- `sudo dd if=/dev/sdd conv=sync,noerror bs=64K status=progress | gzip -c > ./dodobot.img.gz`
+- `sudo dd if=/dev/sdd conv=sync,noerror bs=64K status=progress | gzip -c > ./robeert.img.gz`
   - Replace `/dev/sdd` with the top level disk name
   - WARNING: you can very easily destroy your disk if you select the wrong one. Please use caution here.
 
@@ -87,7 +87,8 @@ If you already have a key generated:
   - Change to `PasswordAuthentication no`
   - Save and exit (ctrl-S ctrl-X)
 - `sudo service ssh restart`
-- Try to login with `ssh -i ~/.ssh/chansey ben@chansey.local` (use the Jetson's IP address instead of chansey.local if that doesn't work)
+- Find the Jetson's IP with `ifconfig`
+- Try to login with `ssh -i ~/.ssh/robeert nvidia@<your ip>`
 
 ## Disable wifi power saving 
 

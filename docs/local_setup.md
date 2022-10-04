@@ -52,8 +52,8 @@ EOF
 - Click `Add SSH key`
 
 - `cd ~`
-- Clone repository: `git clone git@github.com:Woz4tetra/dodobot-ros.git`
-- `cd ./dodobot-ros`
+- Clone repository: `git clone git@github.com:Woz4tetra/bwbots-beer-caddy.git --recursive`
+- `cd ./bwbots-beer-caddy`
 - `git config pull.rebase false`
 
 # Install ROS Noetic
@@ -148,7 +148,7 @@ This is optional. Use this for training off the robot. Run all these commands on
 - Open new terminal window
 - Point local ROS session to remote master: `source ~/bwbots-beer-caddy/ros1/scripts/set_client.sh <your IP>`
 - Open rviz: `rviz -d ~/bwbots-beer-caddy/ros1/src/bw_viz/rviz/standard.rviz`
-- Make sure to run the `set_client.sh` script in every terminal you want to link to dodobot. Feel free to create an alias for this command.
+- Make sure to run the `set_client.sh` script in every terminal you want to link to the robot. Feel free to create an alias for this command.
 
 # Connect joystick
 
