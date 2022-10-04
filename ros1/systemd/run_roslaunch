@@ -10,7 +10,6 @@ if [ $? != 0 ]; then
 fi
 
 tmux send -t $SESSION "export OPENBLAS_CORETYPE=ARMV8" ENTER
-tmux send -t $SESSION "source /home/${USER}/packages_ros_ws/devel/setup.bash" ENTER
 tmux send -t $SESSION "source /home/${USER}/noetic_ws/install_isolated/setup.bash" ENTER
 tmux send -t $SESSION "source /home/${USER}/ros_ws/devel/setup.bash" ENTER
 tmux send -t $SESSION "source /home/${USER}/bwbots-beer-caddy/ros1/scripts/startup.sh" ENTER

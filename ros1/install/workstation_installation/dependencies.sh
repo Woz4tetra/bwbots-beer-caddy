@@ -13,3 +13,5 @@ bash ${BASE_DIR}/prep_ros_ws.sh ${BASE_DIR}
 bash ${BASE_DIR}/install_apt_packages.sh ${BASE_DIR}
 
 bash ${BASE_DIR}/install_ros_git_packages.sh ${BASE_DIR}
+
+bash ${BASE_DIR}/install_python_packages.sh ${BASE_DIR}

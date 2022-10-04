@@ -119,7 +119,7 @@ BwTunnel::BwTunnel(ros::NodeHandle* nodehandle) :
 void BwTunnel::addJointPub(string name)
 {
     ROS_INFO("Subscribing to joint topic: %s", name.c_str());
-    _raw_joint_pubs->push_back(nh.advertise<std_msgs::Float64>(name, 50));
+    _raw_joint_pubs->push_back(nh.advertise<std_msgs::Float64>("joint/" + name, 50));
     _raw_joint_msgs->push_back(new std_msgs::Float64);
 }
 
@@ -316,7 +316,7 @@ void BwTunnel::publishCmdVel()
         return;
     }
 
-    writePacket("cmd", "fff", _twist_cmd_vx, _twist_cmd_vy, _twist_cmd_vt);
+    writePacket("d", "fff", _twist_cmd_vx, _twist_cmd_vy, _twist_cmd_vt);
 }
 
 

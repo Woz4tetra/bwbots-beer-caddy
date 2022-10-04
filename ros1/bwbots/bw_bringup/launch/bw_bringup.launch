@@ -2,4 +2,5 @@
 <launch>
     <include file="$(find bw_description)/launch/bw_description.launch"/>
     <include file="$(find bw_tunnel)/launch/bw_tunnel.launch"/>
+    <include file="$(find bw_rplidar)/launch/robeert_laser.launch"/>
 </launch>

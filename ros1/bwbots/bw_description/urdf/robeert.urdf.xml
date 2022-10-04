@@ -25,7 +25,7 @@
 
     <link name="module_1">  <!-- back left -->
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <origin xyz="0 0 0" rpy="0 0 3.1415"/>
             <geometry>
                 <mesh filename="package://bw_description/meshes/module.stl"/>
             </geometry>
@@ -35,7 +35,7 @@
 
     <link name="module_2">  <!-- back right -->
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 3.1415"/>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
                 <mesh filename="package://bw_description/meshes/module.stl"/>
             </geometry>

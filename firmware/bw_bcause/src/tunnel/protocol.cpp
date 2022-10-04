@@ -202,7 +202,7 @@ int TunnelProtocol::makePacket(packet_type_t packet_type, char* write_buffer, co
             uint16_union_data.byte[1] = s[0];
             uint16_union_data.byte[0] = s[1];
             if (uint16_union_data.integer > MAX_SEGMENT_LEN) {
-                ROS_ERROR("Packet segment is too long. Category: %s", category.c_str());
+                REPORT_ERROR("Packet segment is too long. Category: %s", category);
                 va_end(args);
                 return -1;
             }
@@ -225,7 +225,7 @@ int TunnelProtocol::makePacket(packet_type_t packet_type, char* write_buffer, co
             }
         }
         else {
-            REPORT_ERROR("Invalid format type. Category: %s", category.c_str());
+            REPORT_ERROR("Invalid format type. Category: %s", category);
             va_end(args);
             return -1;
         }
