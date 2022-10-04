@@ -264,8 +264,8 @@ void setup()
     for (unsigned int channel = 0; channel < drive->get_num_motors(); channel++) {
         SpeedPID* pid = drive->get_pid(channel);
         pid->Kp = 4.0;
-        pid->Ki = 0.0001;
-        pid->Kd = 0.0005;
+        pid->Ki = 0.0;
+        pid->Kd = 0.001;
         pid->K_ff = SPEED_TO_COMMAND;
         pid->deadzone_command = DEADZONE_COMMAND;
         pid->error_sum_clamp = 100.0;
