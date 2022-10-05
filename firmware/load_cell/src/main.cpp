@@ -3,7 +3,7 @@
 
 // HX711 circuit wiring
 const int LOADCELL_DOUT_PIN = 2;
-const int LOADCELL_SCK_PIN = 12;
+const int LOADCELL_SCK_PIN = 3;
 
 HX711 scale;
 
@@ -12,7 +12,7 @@ uint32_t read_timer = 0;
 const uint32_t READ_INTERVAL_MS = 1000;
 
 #define PROTOCOL_SERIAL Serial
-#define PROTOCOL_BAUD 9600
+#define PROTOCOL_BAUD 115200
 
 TunnelSerial* tunnel;
 
@@ -35,7 +35,7 @@ void packetCallback(PacketResult* result)
 }
 
 void setup() {
-    PROTOCOL_SERIAL.begin(9600);
+    PROTOCOL_SERIAL.begin(PROTOCOL_BAUD);
     tunnel = new TunnelSerial(NULL, &PROTOCOL_SERIAL);
     
     scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);

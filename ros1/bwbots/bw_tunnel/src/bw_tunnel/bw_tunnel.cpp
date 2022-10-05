@@ -35,7 +35,7 @@ BwTunnel::BwTunnel(ros::NodeHandle* nodehandle) :
     _protocol = new TunnelProtocol();
 
     if (!reOpenDevice()) {
-        return;
+        throw std::runtime_error("Failed to open device");
     }
 
     _unparsed_index = 0;
@@ -169,6 +169,7 @@ bool BwTunnel::openDevice()
 
     _initialized = true;
     ROS_INFO("Device initialized");
+    _last_read_time = ros::Time::now();
 
     return true;
 }
@@ -278,7 +279,6 @@ void BwTunnel::publishStatusMessages(float ping)
 
     _status_prev_count = _packet_count;
     _status_prev_time = ros::Time::now();
-    
 }
 
 void BwTunnel::publishOdom(ros::Time recv_time, double x, double y, double t, double vx, double vy, double vt)

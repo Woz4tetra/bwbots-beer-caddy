@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>bw_tunnel</name>
+  <name>bw_load_cell</name>
   <version>0.0.0</version>
-  <description>The bw_tunnel package</description>
+  <description>The bw_load_cell package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/bw_tunnel</url> -->
+  <!-- <url type="website">http://wiki.ros.org/bw_load_cell</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
@@ -51,30 +51,18 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>serial</build_depend>
   <build_depend>std_msgs</build_depend>
-  <build_depend>sensor_msgs</build_depend>
-  <build_depend>geometry_msgs</build_depend>
-  <build_depend>tf</build_depend>
-  <build_depend>tf2</build_depend>
-  <build_depend>nav_msgs</build_depend>
   <build_depend>bw_interfaces</build_depend>
+  <build_depend>bw_tunnel</build_depend>
 
   <build_export_depend>serial</build_export_depend>
   <build_export_depend>std_msgs</build_export_depend>
-  <build_export_depend>sensor_msgs</build_export_depend>
-  <build_export_depend>geometry_msgs</build_export_depend>
-  <build_export_depend>tf</build_export_depend>
-  <build_export_depend>tf2</build_export_depend>
-  <build_export_depend>nav_msgs</build_export_depend>
   <build_export_depend>bw_interfaces</build_export_depend>
+  <build_export_depend>bw_tunnel</build_export_depend>
 
   <exec_depend>serial</exec_depend>
   <exec_depend>std_msgs</exec_depend>
-  <exec_depend>sensor_msgs</exec_depend>
-  <exec_depend>geometry_msgs</exec_depend>
-  <exec_depend>tf</exec_depend>
-  <exec_depend>tf2</exec_depend>
-  <exec_depend>nav_msgs</exec_depend>
   <exec_depend>bw_interfaces</exec_depend>
+  <exec_depend>bw_tunnel</exec_depend>
 
 
 
