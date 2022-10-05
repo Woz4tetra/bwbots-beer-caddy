@@ -7,7 +7,8 @@ const int LOADCELL_SCK_PIN = 3;
 
 HX711 scale;
 
-long reading;
+float reading;
+int average_window = 5;
 uint32_t read_timer = 0;
 const uint32_t READ_INTERVAL_MS = 1000;
 
@@ -32,6 +33,15 @@ void packetCallback(PacketResult* result)
         if (!result->getFloat(value)) { return; }
         tunnel->writePacket("ping", "f", value);
     }
+    else if (category.equals("tare")) {
+        float calibration;
+        if (!result->getFloat(calibration)) { return; }
+        scale.set_scale(calibration);
+        scale.tare();
+    }
+    else if (category.equals("window")) {
+        if (!result->getInt16(average_window)) { return; }
+    }
 }
 
 void setup() {
@@ -39,6 +49,8 @@ void setup() {
     tunnel = new TunnelSerial(NULL, &PROTOCOL_SERIAL);
     
     scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
+    scale.set_scale();
+    scale.tare();
 }
 
 void loop()
@@ -46,11 +58,11 @@ void loop()
     packetCallback(tunnel->readPacket());
     uint32_t current_time = millis();
     if (current_time - read_timer > READ_INTERVAL_MS) {
-        read_timer = current_time;
-        bool is_ready = scale.is_ready();
-        if (is_ready) {
-            reading = scale.read();
+        if (scale.wait_ready_timeout(1000)) {
+            read_timer = current_time;
+            // reading = (float)scale.read();
+            reading = scale.get_units(average_window);
+            tunnel->writePacket("g", "f", reading);
         }
-        tunnel->writePacket("g", "bd", is_ready, reading);
     }
 }

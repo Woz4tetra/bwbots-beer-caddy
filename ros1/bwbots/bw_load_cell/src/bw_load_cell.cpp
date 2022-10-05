@@ -224,8 +224,8 @@ void BwLoadCell::packetCallback(PacketResult* result)
     _packet_count++;
     string category = result->getCategory();
     if (category.compare("g") == 0) {
-        int32_t load_cell_value;
-        if (!result->getInt32(load_cell_value))  { ROS_ERROR("Failed to get load_cell_value"); return; }
+        float load_cell_value;
+        if (!result->getFloat(load_cell_value))  { ROS_ERROR("Failed to get load_cell_value"); return; }
 
         bw_interfaces::LoadCell lc_msg;
         lc_msg.force = (double)load_cell_value;

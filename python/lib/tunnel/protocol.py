@@ -123,6 +123,8 @@ class TunnelProtocol:
         :param formats: str, how to parse each of the provided arguments. Keys:
             d - signed 32 bit int
             u - unsigned 32 bit int
+            l - signed 4 bit int
+            m - unsigned 64 bit int
             b - signed 8 bit int
             c - unsigned 8 bit int
             h - signed 16 bit int
@@ -145,6 +147,10 @@ class TunnelProtocol:
                     packet += to_int_bytes(arg, 4)
                 elif key == "u":
                     packet += to_int_bytes(arg, 4, signed=False)
+                elif key == "l":
+                    packet += to_int_bytes(arg, 8)
+                elif key == "m":
+                    packet += to_int_bytes(arg, 8, signed=False)
                 elif key == "b":
                     packet += to_int_bytes(arg, 1)
                 elif key == "c":
