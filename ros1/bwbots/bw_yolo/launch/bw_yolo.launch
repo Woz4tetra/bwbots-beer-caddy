@@ -1,0 +1,22 @@
+<launch>
+    <group ns="bw" >
+        <node name="bw_yolo" pkg="bw_yolo" type="bw_yolo" output="screen" required="false">
+            <param name="model_path" value="$(find bw_yolo)/models/powercell_2021-01-30.torchscript"/>
+            <param name="classes_path" value="$(find bw_yolo)/models/$(env OBJECT_MODEL_NAMES)"/>
+            <rosparam param="yolo_z_depth_estimations" file="$(find bw_yolo)/config/power_cell_depth_estimations.yaml" command="load"/>
+
+            <param name="confidence_threshold" value="0.5"/>
+            <param name="nms_iou_threshold" value="0.4"/>
+
+            <param name="publish_overlay" value="true"/>
+            <param name="report_loop_times" value="false"/>
+            <param name="marker_persistance" value="0.1"/>
+            <param name="circle_mask_border_offset_px" value="0"/>
+            <param name="camera_z_unit_conversion" value="1.0"/>
+
+            <remap from="color/image_raw" to="/zed/rgb/image_rect_color"/>
+            <remap from="depth/image_raw" to="/zed/depth/depth_registered"/>
+            <remap from="color/camera_info" to="/zed/rgb/camera_info"/>            
+        </node>
+    </group>
+</launch>

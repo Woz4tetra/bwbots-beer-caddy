@@ -28,7 +28,7 @@ void BwImuJoint::base_callback(tf2::Quaternion quat)
             _static_imu_to_base_tf = _tf_buffer.lookupTransform(_base_imu_frame, _base_child_frame, ros::Time(0));
         }
         catch (tf2::TransformException &ex) {
-            ROS_WARN("%s", ex.what());
+            ROS_WARN_THROTTLE(1.0, "%s", ex.what());
             return;
         }
         tf2::convert(_static_imu_to_base_tf.transform.rotation, _static_imu_to_base_quat);

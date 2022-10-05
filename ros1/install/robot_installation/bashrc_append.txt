@@ -1,3 +1,4 @@
+source ${HOME}/bwbots-beer-caddy/ros1/scripts/startup.sh
 source ${HOME}/bwbots-beer-caddy/ros1/scripts/set_master.sh wlan0
 source ${HOME}/noetic_ws/install_isolated/setup.bash
 source ${HOME}/ros_ws/devel/setup.bash

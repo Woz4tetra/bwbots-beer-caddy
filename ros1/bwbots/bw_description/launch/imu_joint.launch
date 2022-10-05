@@ -3,6 +3,7 @@
     <node pkg="bw_description" type="bw_imu_joint" name="camera_imu_joint" output="screen" required="false">
         <param name="base_parent_frame" value="base_link"/>
         <param name="base_child_frame" value="base_tilt_link"/>
+        <param name="base_imu_frame" value="zed2_imu_link"/>
         <param name="publish_rate" value="10.0"/>
         <remap from="imu" to="/zed/imu/data"/>
     </node>

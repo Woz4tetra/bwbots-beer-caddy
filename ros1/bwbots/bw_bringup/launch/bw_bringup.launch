@@ -4,6 +4,7 @@
     <include file="$(find bw_tunnel)/launch/bw_tunnel.launch"/>
     <include file="$(find bw_load_cell)/launch/bw_load_cell.launch"/>
     <include file="$(find bw_rplidar)/launch/robeert_laser.launch"/>
+    <include file="$(find bw_zed)/launch/zed2.launch"/>
 
     <arg name="map_name" default="$(env ROS_MAP_NAME)"/>
     <include file="$(find bw_laser_slam)/launch/bw_laser_slam.launch">
