@@ -2,13 +2,12 @@
 # this dockerfile roughly follows the 'Install ROS From Source' procedures from:
 #   https://docs.ros.org/en/humble/Installation/Alternatives/Ubuntu-Development-Setup.html
 #
-ENV L4T_BASE_IMAGE=l4t-base
-ENV L4T_MAJOR_VERSION=r32
-ENV L4T_MINOR_VERSION=4
-ENV L4T_PATCH_VERSION=4
+ARG L4T_BASE_IMAGE=l4t-base
+ARG L4T_MAJOR_VERSION=32
+ARG L4T_MINOR_VERSION=6
+ARG L4T_PATCH_VERSION=1
 
-ARG BASE_IMAGE=nvcr.io/nvidia/${L4T_BASE_IMAGE}:r${L4T_MAJOR_VERSION}.${L4T_MINOR_VERSION}.${L4T_PATCH_VERSION}
-FROM ${BASE_IMAGE}
+FROM nvcr.io/nvidia/${L4T_BASE_IMAGE}:r${L4T_MAJOR_VERSION}.${L4T_MINOR_VERSION}.${L4T_PATCH_VERSION}
 
 ARG ROS_PKG=ros_base
 ENV ROS_DISTRO=humble
@@ -44,8 +43,9 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 # 
 # add the ROS deb repo to the apt sources list
 #
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends apt-utils
+
+RUN apt-get install -y --no-install-recommends \
         curl \
         wget \
         gnupg2 \
@@ -84,6 +84,7 @@ RUN apt-get update && \
     && apt-get clean
 
 # install some pip packages needed for testing
+RUN python3 -m pip install -U wheel
 RUN python3 -m pip install -U \
         argcomplete \
         flake8-blind-except \
@@ -98,6 +99,22 @@ RUN python3 -m pip install -U \
         pytest-rerunfailures \
         pytest
 
+
+# 
+# install OpenCV (with CUDA)
+#
+
+#
+# setup environment
+#
+ENV DEBIAN_FRONTEND=noninteractive
+ENV CUDA_HOME="/usr/local/cuda"
+ENV PATH="/usr/local/cuda/bin:${PATH}"
+ENV LD_LIBRARY_PATH="/usr/local/cuda/lib64:${LD_LIBRARY_PATH}"
+
+WORKDIR /opt
+
+
 # 
 # install OpenCV (with CUDA)
 #
@@ -106,8 +123,7 @@ ARG OPENCV_DEB=OpenCV-4.5.0-aarch64.tar.gz
 
 COPY scripts/opencv_install.sh /tmp/opencv_install.sh
 RUN cd /tmp && ./opencv_install.sh ${OPENCV_URL} ${OPENCV_DEB}
-    
-    
+
 # 
 # upgrade cmake - https://stackoverflow.com/a/56690743
 # this is needed to build some of the ROS2 packages
@@ -126,7 +142,7 @@ RUN wget -qO - https://apt.kitware.com/keys/kitware-archive-latest.asc | apt-key
     apt-add-repository "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" && \
     apt-get update && \
     apt-get install -y --no-install-recommends --only-upgrade \
-            cmake==3.22.3 \
+            cmake \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
     
@@ -137,16 +153,15 @@ RUN cmake --version
 # remove other versions of Python3
 # workaround for 'Could NOT find Python3 (missing: Python3_NumPy_INCLUDE_DIRS Development'
 #
-RUN apt purge -y python3.9 libpython3.9* || echo "python3.9 not found, skipping removal" && \
+RUN apt-get purge -y python3.9 libpython3.9* || echo "python3.9 not found, skipping removal" && \
     ls -ll /usr/bin/python*
-    
-    
+
+
 # 
 # download/build ROS from source
 #
 RUN mkdir -p ${ROS_ROOT}/src && \
     cd ${ROS_ROOT} && \
-    
     # https://answers.ros.org/question/325245/minimal-ros2-installation/?answer=325249#post-id-325249
     rosinstall_generator --deps --rosdistro ${ROS_DISTRO} ${ROS_PKG} \
         launch_xml \
@@ -170,29 +185,25 @@ RUN mkdir -p ${ROS_ROOT}/src && \
         > ros2.${ROS_DISTRO}.${ROS_PKG}.rosinstall && \
     cat ros2.${ROS_DISTRO}.${ROS_PKG}.rosinstall && \
     vcs import src < ros2.${ROS_DISTRO}.${ROS_PKG}.rosinstall && \
-    
     # https://github.com/dusty-nv/jetson-containers/issues/181
     rm -r ${ROS_ROOT}/src/ament_cmake && \
     git -C ${ROS_ROOT}/src/ clone https://github.com/ament/ament_cmake -b ${ROS_DISTRO} && \
-
     # install dependencies using rosdep
     apt-get update && \
     cd ${ROS_ROOT} && \
     rosdep init && \
     rosdep update && \
-    rosdep install -y \
+    rosdep install -y -r \
           --ignore-src \
        --from-paths src \
       --rosdistro ${ROS_DISTRO} \
       --skip-keys "libopencv-dev libopencv-contrib-dev libopencv-imgproc-dev python-opencv python3-opencv" && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean && \
-
     # build it!
     colcon build \
         --merge-install \
         --cmake-args -DCMAKE_BUILD_TYPE=Release && \
-    
     # remove build files
     rm -rf ${ROS_ROOT}/src && \
     rm -rf ${ROS_ROOT}/logs && \
