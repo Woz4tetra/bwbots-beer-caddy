@@ -161,3 +161,8 @@ This is optional. Use this for training off the robot. Run all these commands on
   - Right joystick left and right: spin left and right
   - start + Right trigger: Enable motors
   - Left or Right trigger: Disable motors
+
+# Build Jetson docker containers
+- `sudo apt-get install qemu binfmt-support qemu-user-static`
+- `docker run --rm --privileged multiarch/qemu-user-static --reset -p yes`
+- 

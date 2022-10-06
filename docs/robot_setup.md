@@ -224,11 +224,12 @@ Run this command on your local machine:
         "nvidia": {
             "path": "/usr/bin/nvidia-container-runtime",
             "runtimeArgs": []
-         } 
+         }
     },
-    "default-runtime": "nvidia" 
+    "default-runtime": "nvidia"
 }
 ```
+- `sudo apt-get install nvidia-container-runtime`
 - `sudo systemctl restart docker`
 - `cd ~/bwbots-beer-caddy/ros2`
 - `docker build -t bwbots:latest .`
