@@ -34,6 +34,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends apt-utils
 # 
 COPY ./packages/cyclone-interface.xml /tmp/cyclone-interface.xml
 RUN sed "s/INTERFACENAME/${ROS_NET_INTERFACE}/g" /tmp/cyclone-interface.xml > /cyclone-interface.xml
+# ENV CYCLONEDDS_URI=file:///tmp/cyclone-interface.xml
 
 #This environment variable is needed to use the streaming features on Jetson inside a container
 ENV LOGNAME root
@@ -82,15 +83,16 @@ WORKDIR ${BW_ROS_SRC}
 # RUN git clone https://github.com/ros-planning/navigation2.git -b humble
 # RUN git clone https://github.com/ros-perception/laser_filters.git -b ros2
 # RUN git clone https://github.com/ros-perception/vision_msgs.git -b ros2
-# RUN git clone https://github.com/ros/joint_state_publisher.git -b ros2
-# RUN git clone https://github.com/ros/xacro.git -b ros2
+RUN git clone https://github.com/ros2/common_interfaces.git -b humble
+RUN git clone https://github.com/ros/joint_state_publisher.git -b ros2
+RUN git clone https://github.com/ros/xacro.git -b ros2
 # RUN git clone https://github.com/ros/bond_core.git -b ros2
 # RUN git clone https://github.com/BehaviorTree/BehaviorTree.CPP.git
 # RUN git clone https://github.com/SteveMacenski/slam_toolbox.git -b humble
 # RUN git clone https://github.com/ros-perception/vision_opencv.git -b humble
 # RUN git clone https://github.com/ros-teleop/twist_mux -b rolling
 # RUN git clone https://github.com/ros/diagnostics.git -b ros2-devel
-# RUN git clone https://github.com/RoverRobotics-forks/serial-ros2.git -b master
+RUN git clone https://github.com/RoverRobotics-forks/serial-ros2.git -b master
 # RUN git clone https://github.com/ros-drivers/joystick_drivers.git -b ros2
 # RUN git clone https://github.com/ros-tooling/topic_tools.git -b main
 # RUN git clone https://github.com/ros-perception/image_transport_plugins.git -b humble
@@ -98,20 +100,31 @@ WORKDIR ${BW_ROS_SRC}
 # RUN git clone https://github.com/rst-tu-dortmund/costmap_converter -b ros2
 # RUN git clone https://github.com/rst-tu-dortmund/teb_local_planner.git -b ros2-master
 
-# ENV CYCLONEDDS_URI=file:///tmp/cyclone-interface.xml
-
-RUN rm /ros_entrypoint.sh
-COPY ./packages/ros_entrypoint.sh /ros_entrypoint.sh
-
 WORKDIR ${BW_ROS_ROOT}
-
-COPY ./bwbots ${BW_ROS_SRC}/bwbots
 
 RUN export CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/usr/local/lib/python3.8/dist-packages/torch/share/cmake/Torch
 
 RUN source /opt/ros/humble/install/local_setup.bash && \
     source /opt/ros/$ROS_DISTRO/install/setup.bash && \
     colcon build
+
+#
+# build bwbots ROS
+#
+COPY ./bwbots ${BW_ROS_SRC}/bwbots
+
+RUN source /opt/ros/humble/install/local_setup.bash && \
+    source /opt/ros/$ROS_DISTRO/install/setup.bash && \
+    source ${HOME}/ros_ws/install/local_setup.bash && \
+    source ${HOME}/ros_ws/install/setup.bash && \
+    colcon build --packages-select-regex bw_*
+
+#
+# setup entry point
+#
+
+RUN rm /ros_entrypoint.sh
+COPY ./packages/ros_entrypoint.sh /ros_entrypoint.sh
 
 ENTRYPOINT ["/ros_entrypoint.sh"]
 CMD ["bash"]
