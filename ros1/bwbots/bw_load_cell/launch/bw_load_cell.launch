@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <group ns="bw">
-        <node name="bw_load_cell" pkg="bw_load_cell" type="bw_load_cell" output="screen" required="false" respawn="true">
-            <param name="device_path" value="/dev/serial/by-id/usb-Silicon_Labs_CP2104_USB_to_UART_Bridge_Controller_018D31F7-if00-port0"/>
-            <param name="device_baud" value="115200"/>
-        </node>
+        <group ns="load_cell">
+            <node name="bw_load_cell" pkg="bw_load_cell" type="bw_load_cell" output="screen" required="false" respawn="true">
+                <param name="device_path" value="/dev/serial/by-id/usb-Silicon_Labs_CP2104_USB_to_UART_Bridge_Controller_018D31F7-if00-port0"/>
+                <param name="device_baud" value="115200"/>
+                <param name="calibration_value" value="-33393.6015625"/>
+            </node>
+        </group>
     </group>
 </launch>

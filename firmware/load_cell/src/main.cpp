@@ -34,10 +34,12 @@ void packetCallback(PacketResult* result)
         tunnel->writePacket("ping", "f", value);
     }
     else if (category.equals("tare")) {
+        scale.tare();
+    }
+    else if (category.equals("calibrate")) {
         float calibration;
         if (!result->getFloat(calibration)) { return; }
         scale.set_scale(calibration);
-        scale.tare();
     }
     else if (category.equals("window")) {
         if (!result->getInt16(average_window)) { return; }

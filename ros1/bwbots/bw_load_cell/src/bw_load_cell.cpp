@@ -9,6 +9,8 @@ BwLoadCell::BwLoadCell(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~tunnel_rate", _tunnel_rate, 200.0);
     ros::param::param<double>("~write_rate", _write_rate, 15.0);
 
+    ros::param::param<double>("~calibration_value", _calibration_value, 0.0);
+
     ros::param::param<int>("~open_attempts", _open_attempts, 50);
 
     _write_buffer = new char[TunnelProtocol::MAX_PACKET_LEN];
@@ -34,12 +36,17 @@ BwLoadCell::BwLoadCell(ros::NodeHandle* nodehandle) :
     _packet_count = 0;
 
     _start_time = ros::Time::now();
+    _is_calibrated = false;
+    _last_mass = 0.0;
 
-    _ping_pub = nh.advertise<std_msgs::Float64>("load_cell/ping", 50);
-    _packet_count_pub = nh.advertise<std_msgs::Int32>("load_cell/packet_count", 10);
-    _packet_rate_pub = nh.advertise<std_msgs::Float64>("load_cell/packet_rate", 10);
-    _load_cell_pub = nh.advertise<bw_interfaces::LoadCell>("load_cell", 50);
+    _ping_pub = nh.advertise<std_msgs::Float64>("ping", 50);
+    _packet_count_pub = nh.advertise<std_msgs::Int32>("packet_count", 10);
+    _packet_rate_pub = nh.advertise<std_msgs::Float64>("packet_rate", 10);
+    _load_cell_pub = nh.advertise<bw_interfaces::LoadCell>("mass", 50);
 
+    _tare_srv = nh.advertiseService("tare", &BwLoadCell::tareCallback, this);
+    _calibrate_srv = nh.advertiseService("calibrate", &BwLoadCell::calibrateCallback, this);
+    _reset_srv = nh.advertiseService("reset", &BwLoadCell::resetCallback, this);
     _ping_timer = nh.createTimer(ros::Duration(0.5), &BwLoadCell::pingCallback, this);
     _poll_thread = new boost::thread(&BwLoadCell::pollDeviceTask, this);
 
@@ -109,6 +116,7 @@ void BwLoadCell::closeDevice()
 {
     _device.close();
     _initialized = false;
+    _is_calibrated = false;
 }
 
 
@@ -141,7 +149,7 @@ bool BwLoadCell::pollDevice()
         return true;
     }
 
-    // int num_chars_read = _device.available();
+    // int num_chars_read = _device.available();  // available isn't working for the metro...
     // if (num_chars_read <= 0) {
     //     if (didDeviceTimeout()) {
     //         reOpenDevice();
@@ -217,8 +225,45 @@ void BwLoadCell::publishStatusMessages(float ping)
 
     _status_prev_count = _packet_count;
     _status_prev_time = ros::Time::now();
-    
 }
+
+bool BwLoadCell::writeCalibration(double calibration_value)
+{
+    if (calibration_value == 0.0) {
+        ROS_WARN("Invalid calibration value! %f", calibration_value);
+        return false;
+    }
+    else {
+        ROS_INFO("Writing calibration value: %f", calibration_value);
+        writePacket("calibrate", "f", (float)calibration_value);
+        _is_calibrated = true;
+        return true;
+    }
+}
+
+bool BwLoadCell::tareCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &resp)
+{
+    writePacket("tare", "");
+    resp.success = true;
+    return true;
+}
+
+bool BwLoadCell::calibrateCallback(bw_interfaces::CalibrateScale::Request &req, bw_interfaces::CalibrateScale::Response &resp)
+{
+    _calibration_value = _last_mass / req.mass;
+    bool result = writeCalibration(_calibration_value);
+    resp.calibration_value = _calibration_value;
+    return result;
+}
+
+bool BwLoadCell::resetCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &resp)
+{
+    resp.success = writeCalibration(1.0);
+    _calibration_value = 0.0;
+    _is_calibrated = false;
+    return resp.success;
+}
+
 void BwLoadCell::packetCallback(PacketResult* result)
 {
     _packet_count++;
@@ -227,9 +272,19 @@ void BwLoadCell::packetCallback(PacketResult* result)
         float load_cell_value;
         if (!result->getFloat(load_cell_value))  { ROS_ERROR("Failed to get load_cell_value"); return; }
 
-        bw_interfaces::LoadCell lc_msg;
-        lc_msg.force = (double)load_cell_value;
-        _load_cell_pub.publish(lc_msg);
+        _last_mass = (double)load_cell_value;
+
+        if (_is_calibrated) {
+            bw_interfaces::LoadCell lc_msg;
+            lc_msg.mass = (double)load_cell_value;
+            _load_cell_pub.publish(lc_msg);
+        }
+        else {
+            ROS_DEBUG("Load cell isn't calibrated! Not publishing.");
+            if (_calibration_value != 0.0 && _last_mass != 0.0) {
+                writeCalibration(_calibration_value);
+            }
+        }
     }
     else if (category.compare("ping") == 0) {
         float ping_time;

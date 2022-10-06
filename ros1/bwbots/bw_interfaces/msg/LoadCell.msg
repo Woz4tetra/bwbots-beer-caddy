@@ -1,1 +1,1 @@
-float32 force  # newtons
+float32 mass  # kilograms
