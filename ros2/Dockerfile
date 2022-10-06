@@ -98,6 +98,8 @@ WORKDIR ${BW_ROS_SRC}
 # RUN git clone https://github.com/rst-tu-dortmund/costmap_converter -b ros2
 # RUN git clone https://github.com/rst-tu-dortmund/teb_local_planner.git -b ros2-master
 
+# ENV CYCLONEDDS_URI=file:///tmp/cyclone-interface.xml
+
 RUN rm /ros_entrypoint.sh
 COPY ./packages/ros_entrypoint.sh /ros_entrypoint.sh
 
