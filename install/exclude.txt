@@ -5,3 +5,5 @@ __pycache__/
 pcb/
 matlab/
 python/logs/
+.egg-info/
+ros1/playground/module_tuning/bags/

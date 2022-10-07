@@ -107,7 +107,7 @@ Adafruit_PWMServoDriver* servos = new Adafruit_PWMServoDriver(0x40 + 0b000010, I
 const double SPEED_TO_COMMAND = 255.0 / 1.0;  // calculated max speed: 0.843 m/s @ 12V
 const double MAX_SERVO_SPEED = 5.950;  // rad/s
 
-const int DEADZONE_COMMAND = 20;
+const int DEADZONE_COMMAND = 0;
 const int MAX_SPEED_COMMAND = 255;
 
 const double ALCOVE_ANGLE = 0.5236;  // 30 degrees
@@ -128,7 +128,7 @@ const double ARMATURE = 0.037;  // meters, pivot to wheel center dimension
 double MODULE_X_LOCATIONS[NUM_CHANNELS] = {-LENGTH / 2.0, -LENGTH / 2.0, LENGTH / 2.0, LENGTH / 2.0};
 double MODULE_Y_LOCATIONS[NUM_CHANNELS] = {WIDTH / 2.0, -WIDTH / 2.0, WIDTH / 2.0, -WIDTH / 2.0};
 
-const double MIN_RADIUS_OF_CURVATURE = 0.1;
+const double MIN_RADIUS_OF_CURVATURE = 0.2;
 
 const int FRONT_LEFT = 2;  // module 3
 const int BACK_LEFT = 0;  // module 1
@@ -144,6 +144,8 @@ const int BACK_RIGHT_ALCOVE = 235;
 const int BACK_RIGHT_STRAIGHT = 125;
 const int FRONT_RIGHT_ALCOVE = 405;
 const int FRONT_RIGHT_STRAIGHT = 515;
+
+bool enable_individual_control = false;
 
 BwDriveTrain* drive;
 double vx_command = 0.0, vy_command = 0.0, vt_command = 0.0;
@@ -187,6 +189,9 @@ const uint32_t CONTROL_UPDATE_INTERVAL_MS = 20;
 
 uint32_t prev_slow_time = 0;
 const uint32_t SLOW_UPDATE_INTERVAL_MS = 100;
+
+uint32_t prev_individual_time = 0;
+const uint32_t INDIVIDUAL_CONTROL_TIMEOUT_MS = 500;
 
 bool prev_button_state = false;
 
@@ -239,6 +244,14 @@ void set_motor_enable(bool enabled)
     write_enable_state();
 }
 
+void stop_motors()
+{
+    vx_command = 0.0;
+    vy_command = 0.0;
+    vt_command = 0.0;
+    drive->stop();
+}
+
 void setup()
 {
     DEBUG_SERIAL.begin(DEBUG_BAUD);
@@ -281,9 +294,9 @@ void setup()
 
     for (unsigned int channel = 0; channel < drive->get_num_motors(); channel++) {
         SpeedPID* pid = drive->get_pid(channel);
-        pid->Kp = 4.0;
+        pid->Kp = 10.0;
         pid->Ki = 0.0;
-        pid->Kd = 0.001;
+        pid->Kd = 0.0;
         pid->K_ff = SPEED_TO_COMMAND;
         pid->deadzone_command = DEADZONE_COMMAND;
         pid->error_sum_clamp = 100.0;
@@ -393,6 +406,21 @@ void packetCallback(PacketResult* result)
     else if (category.equals("?en")) {
         tunnel->writePacket("en", "b", drive->get_enable());
     }
+    else if (category.equals("mo")) {
+        uint8_t channel;
+        float azimuth_position;
+        double wheel_position;
+        float wheel_velocity;
+        if (!result->getUInt8(channel)) { DEBUG_SERIAL.println(F("Failed to get channel")); return; }
+        if (!result->getFloat(azimuth_position)) { DEBUG_SERIAL.println(F("Failed to get azimuth_position")); return; }
+        if (!result->getDouble(wheel_position)) { DEBUG_SERIAL.println(F("Failed to get wheel_position")); return; }
+        if (!result->getFloat(wheel_velocity)) { DEBUG_SERIAL.println(F("Failed to get wheel_velocity")); return; }
+
+        enable_individual_control = true;
+        prev_individual_time = current_time;
+
+        drive->set(channel, azimuth_position, wheel_velocity);
+    }
 }
 
 void loop()
@@ -401,10 +429,7 @@ void loop()
     packetCallback(tunnel->readPacket());
     if (did_button_press(true)) {
         set_motor_enable(!drive->get_enable());
-        vx_command = 0.0;
-        vy_command = 0.0;
-        vt_command = 0.0;
-        drive->drive(vx_command, vy_command, vt_command);
+        stop_motors();
     }
 
     shunt_voltage = charge_ina.getShuntVoltage_mV();
@@ -434,24 +459,30 @@ void loop()
         drive->set_enable(false);
     }
     
+    if (enable_individual_control && current_time - prev_individual_time > INDIVIDUAL_CONTROL_TIMEOUT_MS) {
+        enable_individual_control = false;
+        stop_motors();
+    }
+
     if (current_time - prev_control_time > CONTROL_UPDATE_INTERVAL_MS) {
         prev_control_time = current_time;
-        if (current_time - prev_command_time > COMMAND_TIMEOUT_MS) {
-            vx_command = 0.0;
-            vy_command = 0.0;
-            vt_command = 0.0;
-            drive->stop();
+
+        if (!enable_individual_control) {
+            if (current_time - prev_command_time > COMMAND_TIMEOUT_MS) {
+                stop_motors();
+            }
+            else {
+                drive->drive(vx_command, vy_command, vt_command);
+            }
         }
-        else {
-            drive->drive(vx_command, vy_command, vt_command);
-        }
-        
+
         drive->get_velocity(odom_vx, odom_vy, odom_vt);
         drive->get_position(odom_x, odom_y, odom_t, odom_vx, odom_vy, odom_vt);
         tunnel->writePacket("od", "eeefff",
             odom_x, odom_y, odom_t,
             odom_vx, odom_vy, odom_vt
         );
+
         for (unsigned int channel = 0; channel < drive->get_num_motors(); channel++) {
             tunnel->writePacket(
                 "mo",

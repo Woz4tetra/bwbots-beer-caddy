@@ -26,6 +26,7 @@ public:
     void reset();
     int limit(double value);
     int compute(double measurement);
+    double get_last_command()  { return out; };
 
     static double sign(double x);
     static int sign(int x);

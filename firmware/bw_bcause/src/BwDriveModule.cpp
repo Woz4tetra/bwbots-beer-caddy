@@ -145,9 +145,22 @@ void BwDriveModule::update_predicted_azimuth() {
     // predicted_angle += servo_delta;
 }
 
+double BwDriveModule::adjust_wheel_velocity_setpoint(double setpoint)
+{
+    // double x = setpoint * 1.4505;
+    // if (x > M_PI / 2.0) {
+    //     x = M_PI / 2.0;
+    // }
+    // else if (x < -M_PI / 2.0) {
+    //     x = -M_PI / 2.0;
+    // }
+    // return 0.09737 * tan(x) + 0.05528;
+    return setpoint;
+}
+
 void BwDriveModule::set_wheel_velocity(double velocity)
 {
-    speed_pid->set_target(velocity);
+    speed_pid->set_target(adjust_wheel_velocity_setpoint(velocity));
     update_wheel_position();
     update_wheel_velocity();
     int command = speed_pid->compute(speed_filter->get_velocity());
@@ -193,15 +206,15 @@ void BwDriveModule::compute_state(double vx, double vy, double vt, double dt, do
         double d_mag = v_mag * dt;
         double radius_of_curvature = d_mag / tan(theta_mag);
         if (radius_of_curvature != radius_of_curvature || isinf(radius_of_curvature)) {
-            module_vx = vx + vt * -y_location;
-            module_vy = vy + vt * x_location;
+            module_vx = vx;
+            module_vy = vy;
         }
         else if (abs(radius_of_curvature) < min_radius_of_curvature) {
             module_vx = vt * -y_location;
             module_vy = vt * x_location;
         }
         else {
-            double module_angle = atan2(x_location, radius_of_curvature + y_location);
+            double module_angle = atan2(x_location, radius_of_curvature - y_location);
             double module_radc = x_location / sin(module_angle) - armature_length;
 
             module_vx = vx * module_radc / radius_of_curvature * cos(module_angle);

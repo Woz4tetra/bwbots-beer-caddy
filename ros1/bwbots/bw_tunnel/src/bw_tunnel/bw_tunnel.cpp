@@ -96,8 +96,10 @@ BwTunnel::BwTunnel(ros::NodeHandle* nodehandle) :
     _charge_pub = nh.advertise<bw_interfaces::ChargeState>("charger", 10);
     _button_pub = nh.advertise<std_msgs::Bool>("button_pressed", 10);
     _is_enabled_pub = nh.advertise<std_msgs::Bool>("are_motors_enabled", 10);
+    _module_pub = nh.advertise<bw_interfaces::BwDriveModule>("module", 50);
 
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &BwTunnel::twistCallback, this);
+    _module_sub = nh.subscribe<bw_interfaces::BwDriveModule>("module_command", 50, &BwTunnel::moduleCommandCallback, this);
 
     _set_enabled_sub = nh.subscribe<std_msgs::Bool>("set_motors_enabled", 10, &BwTunnel::setEnabledCallback, this);
 
@@ -223,6 +225,13 @@ void BwTunnel::packetCallback(PacketResult* result)
             result->getRecvTime(),
             (int)channel, azimuth
         );
+
+        bw_interfaces::BwDriveModule msg;
+        msg.module_index = std::to_string(channel);
+        msg.azimuth_position = (double)azimuth;
+        msg.wheel_position = wheel_position;
+        msg.wheel_velocity = (double)wheel_velocity;
+        _module_pub.publish(msg);
     }
     else if (category.compare("power") == 0) {
         float voltage, current;
@@ -341,6 +350,15 @@ void BwTunnel::twistCallback(const geometry_msgs::TwistConstPtr& msg)
     _twist_cmd_vy = msg->linear.y;
     _twist_cmd_vt = msg->angular.z;
     _prev_twist_timestamp = ros::Time::now();
+}
+
+void BwTunnel::moduleCommandCallback(const bw_interfaces::BwDriveModuleConstPtr& msg)
+{
+    uint8_t channel = (uint8_t)stoi(msg->module_index);
+    float azimuth_position = msg->azimuth_position;
+    double wheel_position = msg->wheel_position;
+    float wheel_velocity = msg->wheel_velocity;
+    writePacket("mo", "cfef", channel, azimuth_position, wheel_position, wheel_velocity);
 }
 
 void BwTunnel::setEnabledCallback(const std_msgs::BoolConstPtr& msg)

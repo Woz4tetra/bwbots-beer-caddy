@@ -7,6 +7,8 @@ from sensor_msgs.msg import Joy
 
 from geometry_msgs.msg import Twist
 
+from bw_interfaces.msg import BwDriveModule
+
 from bw_tools.joystick import Joystick
 
 
@@ -54,6 +56,7 @@ class BwJoystick:
         # publishing topics
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=10)
         self.set_enabled_pub = rospy.Publisher("set_motors_enabled", Bool, queue_size=10)
+        self.module_pub = rospy.Publisher("module_command", BwDriveModule, queue_size=10)
 
         # subscription topics
         self.joy_sub = rospy.Subscriber(self.joystick_topic, Joy, self.joystick_msg_callback, queue_size=5)
@@ -88,6 +91,27 @@ class BwJoystick:
         elif any(self.joystick.check_list(self.joystick.did_button_down, "triggers/L1", "triggers/R1")):
             self.set_enable(False)
             rospy.loginfo("Disabling")
+        
+        if any(self.joystick.check_list(self.joystick.is_button_down, "main/A", "main/B", "main/X", "main/Y")):
+            velocity = self.joystick.deadband_axis(self.linear_x_axis, self.deadzone_joy_val, self.linear_scale)
+            channel = 0
+            if self.joystick.is_button_down("main/A"):
+                channel = 0
+            elif self.joystick.is_button_down("main/B"):
+                channel = 1
+            elif self.joystick.is_button_down("main/X"):
+                channel = 2
+            elif self.joystick.is_button_down("main/Y"):
+                channel = 3
+            self.set_wheel_velocity(channel, velocity)
+    
+    def set_wheel_velocity(self, channel, velocity):
+        msg = BwDriveModule()
+        msg.module_index = str(channel)
+        msg.azimuth_position = 0.0
+        msg.wheel_position = 0.0
+        msg.wheel_velocity = velocity
+        self.module_pub.publish(msg)
 
     def are_motors_enabled_callback(self, msg):
         if self.are_motors_enabled != msg.data:

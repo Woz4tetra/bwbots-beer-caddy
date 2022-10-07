@@ -53,7 +53,7 @@ int SpeedPID::limit(double command) {
         return 0;
     }
 
-    int value = command;
+    int value = (int)command;
     if (value > command_max) {
         return command_max;
     }

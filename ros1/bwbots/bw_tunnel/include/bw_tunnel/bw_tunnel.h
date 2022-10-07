@@ -35,6 +35,7 @@
 #include "sensor_msgs/Imu.h"
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
 
+#include "bw_interfaces/BwDriveModule.h"
 #include "bw_interfaces/OdomReset.h"
 #include "bw_interfaces/ChargeState.h"
 
@@ -112,11 +113,13 @@ private:
     ros::Publisher _charge_pub;
     ros::Publisher _button_pub;
     ros::Publisher _is_enabled_pub;
+    ros::Publisher _module_pub;
 
     // Subscribers
     ros::Subscriber _twist_sub;
     ros::Subscriber _set_enabled_sub;
     tf::TransformListener _tf_listener;
+    ros::Subscriber _module_sub;
 
     // Service Servers
     ros::ServiceServer _odom_reset_srv;
@@ -145,6 +148,7 @@ private:
 
     void twistCallback(const geometry_msgs::TwistConstPtr& msg);
     void setEnabledCallback(const std_msgs::BoolConstPtr& msg);
+    void moduleCommandCallback(const bw_interfaces::BwDriveModuleConstPtr& msg);
 
     void pollDeviceTask();
     void writeDeviceTask();
