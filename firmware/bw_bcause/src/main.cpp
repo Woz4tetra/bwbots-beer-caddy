@@ -108,7 +108,7 @@ const double SPEED_TO_COMMAND = 255.0 / 1.0;  // calculated max speed: 0.843 m/s
 const double MAX_SERVO_SPEED = 5.950;  // rad/s
 
 const int DEADZONE_COMMAND = 55;
-const int STANDSTILL_DEADZONE_COMMAND = 100;
+const int STANDSTILL_DEADZONE_COMMAND = 150;
 const int MAX_SPEED_COMMAND = 255;
 
 const double ALCOVE_ANGLE = 0.5236;  // 30 degrees
