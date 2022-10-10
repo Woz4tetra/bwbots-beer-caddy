@@ -35,7 +35,6 @@ private:
     void compute_state(double vx, double vy, double vt, double dt, double& azimuth, double& wheel_velocity);
     void update_wheel_velocity();
     void update_wheel_position();
-    double adjust_wheel_velocity_setpoint(double setpoint);
 public:
     BwDriveModule(
         int channel,

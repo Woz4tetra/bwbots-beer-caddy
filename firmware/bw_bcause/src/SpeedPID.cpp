@@ -13,10 +13,11 @@ SpeedPID::SpeedPID()
     out = 0.0;
     command_min = -255;
     command_max = 255;
-    epsilon = 1E-4;
+    epsilon = 1E-3;
 
     K_ff = 0.0;
     deadzone_command = 0;
+    standstill_deadzone_command = 0;
     error_sum_clamp = 0.0;
     Kp = 1.0;
     Ki = 0.0;
@@ -34,6 +35,9 @@ int SpeedPID::sign(int x) {
 
 void SpeedPID::set_target(double target) {
     feedforward = K_ff * target;
+    if (sign(target) != this->target) {
+        error_sum = 0.0;
+    }
     this->target = target;
     prev_update_time = 0;
 }
@@ -101,6 +105,10 @@ int SpeedPID::compute(double measurement)
         }
     }
     out += feedforward;
+
+    if (abs(target) > epsilon && abs(measurement) < epsilon) {
+        out = sign(target) * standstill_deadzone_command;
+    }
 
     return limit(out);
 }

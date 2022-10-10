@@ -15,6 +15,7 @@ public:
     double Kp, Ki, Kd;
     double K_ff;  // feedforward constant
     int deadzone_command;
+    int standstill_deadzone_command;
     double error_sum_clamp;
     int command_min, command_max;
     double epsilon;  // values that are basically zero

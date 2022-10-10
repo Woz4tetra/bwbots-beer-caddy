@@ -17,7 +17,12 @@ void MotorControllerMC33926::begin()
     pinMode(DIR_N, OUTPUT);
     pinMode(SF, INPUT);
     pinMode(FB, INPUT);
-    analogWriteFrequency(SPEED, 500);  // Set PWM frequency of the speed pin to 500 Hz
+    // Set PWM frequency of the speed pin to X Hz.
+    // Default for pin 36, 37 on Teensy 4.1: 4.482 kHz
+    // https://www.pjrc.com/teensy/td_pulse.html
+    // Setting this to 500 Hz causes a weird exponential response
+    // Setting above 5000 Hz creates poor low speed performance
+    // analogWriteFrequency(SPEED, 4000);
 }
 
 void MotorControllerMC33926::set(int speed)

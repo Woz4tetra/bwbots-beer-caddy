@@ -107,7 +107,8 @@ Adafruit_PWMServoDriver* servos = new Adafruit_PWMServoDriver(0x40 + 0b000010, I
 const double SPEED_TO_COMMAND = 255.0 / 1.0;  // calculated max speed: 0.843 m/s @ 12V
 const double MAX_SERVO_SPEED = 5.950;  // rad/s
 
-const int DEADZONE_COMMAND = 0;
+const int DEADZONE_COMMAND = 55;
+const int STANDSTILL_DEADZONE_COMMAND = 100;
 const int MAX_SPEED_COMMAND = 255;
 
 const double ALCOVE_ANGLE = 0.5236;  // 30 degrees
@@ -128,7 +129,7 @@ const double ARMATURE = 0.037;  // meters, pivot to wheel center dimension
 double MODULE_X_LOCATIONS[NUM_CHANNELS] = {-LENGTH / 2.0, -LENGTH / 2.0, LENGTH / 2.0, LENGTH / 2.0};
 double MODULE_Y_LOCATIONS[NUM_CHANNELS] = {WIDTH / 2.0, -WIDTH / 2.0, WIDTH / 2.0, -WIDTH / 2.0};
 
-const double MIN_RADIUS_OF_CURVATURE = 0.2;
+const double MIN_RADIUS_OF_CURVATURE = 0.05;
 
 const int FRONT_LEFT = 2;  // module 3
 const int BACK_LEFT = 0;  // module 1
@@ -195,26 +196,6 @@ const uint32_t INDIVIDUAL_CONTROL_TIMEOUT_MS = 500;
 
 bool prev_button_state = false;
 
-bool read_button() {
-    return !digitalRead(BUTTON_IN);
-}
-
-void write_button_state() {
-    tunnel->writePacket("bu", "b", prev_button_state);
-}
-
-bool did_button_press(bool comparison_state) {
-    bool state = read_button();
-    if (state != prev_button_state) {
-        prev_button_state = state;
-        write_button_state();
-        return state == comparison_state;
-    }
-    else {
-        return false;
-    }
-}
-
 void set_status_led(bool state) {
     digitalWrite(STATUS_LED, state);
 }
@@ -225,6 +206,27 @@ void set_builtin_led(bool state) {
 
 void set_button_led(bool state) {
     digitalWrite(BUTTON_LED, state);
+}
+
+bool read_button() {
+    return !digitalRead(BUTTON_IN);
+}
+
+void write_button_state() {
+    tunnel->writePacket("bu", "b", prev_button_state);
+}
+
+bool did_button_press(bool comparison_state) {
+    bool state = read_button();
+    set_button_led(!state);
+    if (state != prev_button_state) {
+        prev_button_state = state;
+        write_button_state();
+        return state == comparison_state;
+    }
+    else {
+        return false;
+    }
 }
 
 void write_enable_state() {
@@ -294,16 +296,17 @@ void setup()
 
     for (unsigned int channel = 0; channel < drive->get_num_motors(); channel++) {
         SpeedPID* pid = drive->get_pid(channel);
-        pid->Kp = 10.0;
-        pid->Ki = 0.0;
-        pid->Kd = 0.0;
+        pid->Kp = 100.0;
+        pid->Ki = 0.001;
+        pid->Kd = 0.01;
         pid->K_ff = SPEED_TO_COMMAND;
         pid->deadzone_command = DEADZONE_COMMAND;
+        pid->standstill_deadzone_command = STANDSTILL_DEADZONE_COMMAND;
         pid->error_sum_clamp = 100.0;
         pid->command_min = -MAX_SPEED_COMMAND;
         pid->command_max = MAX_SPEED_COMMAND;
         SpeedFilter* filter = drive->get_filter(channel);
-        filter->Kf = 0.9;
+        filter->Kf = 0.99;
     }
     
     drive->set_limits(
@@ -342,7 +345,7 @@ void setup()
     
     drive->set_limits(
         FRONT_RIGHT,
-        -ALCOVE_ANGLE,  // 30 deg
+        -ALCOVE_ANGLE,  // -30 deg
         -FRONT_ANGLE,  // 75 deg
         STRAIGHT_ANGLE,
         -ALCOVE_ANGLE,
@@ -430,6 +433,7 @@ void loop()
     if (did_button_press(true)) {
         set_motor_enable(!drive->get_enable());
         stop_motors();
+        drive->drive(vx_command, vy_command, vt_command);
     }
 
     shunt_voltage = charge_ina.getShuntVoltage_mV();
