@@ -1,0 +1,15 @@
+### Common costmap parameters ###
+robot_radius: 0.0
+footprint_padding: 0.0
+
+footprint: [[-0.1375, -0.105], [-0.1375, 0.105], [0.1375, 0.105], [0.1375, -0.105]]
+
+inflation:
+    enabled: true
+    cost_scaling_factor: 3.0
+    inflation_radius: 0.5
+
+# obstacle_range: 2.0
+# raytrace_range: 4.0
+
+transform_tolerance: 0.1  # 0.2

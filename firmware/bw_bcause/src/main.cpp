@@ -129,7 +129,7 @@ const double ARMATURE = 0.037;  // meters, pivot to wheel center dimension
 double MODULE_X_LOCATIONS[NUM_CHANNELS] = {-LENGTH / 2.0, -LENGTH / 2.0, LENGTH / 2.0, LENGTH / 2.0};
 double MODULE_Y_LOCATIONS[NUM_CHANNELS] = {WIDTH / 2.0, -WIDTH / 2.0, WIDTH / 2.0, -WIDTH / 2.0};
 
-const double MIN_RADIUS_OF_CURVATURE = 0.05;
+const double MIN_RADIUS_OF_CURVATURE = 0.1;
 
 const int FRONT_LEFT = 2;  // module 3
 const int BACK_LEFT = 0;  // module 1
