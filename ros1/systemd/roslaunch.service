@@ -1,6 +1,6 @@
 [Unit]
 Wants=roscore.service
-After=NetworkManager.service time-sync.target
+After=roscore.service
 Description=BWBots roslaunch
 
 [Service]
