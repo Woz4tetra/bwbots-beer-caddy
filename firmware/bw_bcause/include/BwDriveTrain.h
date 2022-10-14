@@ -57,6 +57,7 @@ public:
     void set(unsigned int channel, double angle, double velocity);
     SpeedPID* get_pid(unsigned int channel);
     SpeedFilter* get_filter(unsigned int channel);
+    BwDriveModule* get_module(unsigned int channel);
     unsigned int get_num_motors();
     double get_wheel_velocity(unsigned int channel);
     double get_wheel_position(unsigned int channel);

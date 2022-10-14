@@ -29,4 +29,6 @@ SSH_COMMAND="ssh -i ${REMOTE_KEY} ${USERNAME}@${DESTINATION_NAME}"
 # flash firmware
 ${SSH_COMMAND} -t "cd ${DEST_FULL_PATH}/firmware/bw_bcause && ./upload.sh"
 
+${SSH_COMMAND} -t "${DEST_FULL_PATH}/firmware/bw_bcause/monitor.sh"
+
 ${BASE_DIR}/restart.sh ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART_ROSLAUNCH}

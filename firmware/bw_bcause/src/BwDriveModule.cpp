@@ -156,8 +156,13 @@ void BwDriveModule::set_wheel_velocity(double velocity)
     if (flip_motor_commands) {
         command = -command;
     }
+    command_wheel_pwm(command);
+}
+
+void BwDriveModule::command_wheel_pwm(int command) {
     motor->set(command);
 }
+
 
 double BwDriveModule::wrap_angle(double angle)
 {
@@ -240,6 +245,10 @@ void BwDriveModule::set(double vx, double vy, double vt, double dt)
     set_wheel_velocity(wheel_velocity);
 }
 
+void BwDriveModule::set_pwm_frequency(int frequency)
+{
+    motor->set_frequency(frequency);
+}
 
 double BwDriveModule::dt()
 {

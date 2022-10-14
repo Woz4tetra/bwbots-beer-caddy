@@ -100,6 +100,7 @@ BwTunnel::BwTunnel(ros::NodeHandle* nodehandle) :
 
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &BwTunnel::twistCallback, this);
     _module_sub = nh.subscribe<bw_interfaces::BwDriveModule>("module_command", 50, &BwTunnel::moduleCommandCallback, this);
+    _tone_sub = nh.subscribe<bw_interfaces::BwDriveTone>("module_tone", 50, &BwTunnel::moduleToneCallback, this);
 
     _set_enabled_sub = nh.subscribe<std_msgs::Bool>("set_motors_enabled", 10, &BwTunnel::setEnabledCallback, this);
 
@@ -360,6 +361,15 @@ void BwTunnel::moduleCommandCallback(const bw_interfaces::BwDriveModuleConstPtr&
     float wheel_velocity = msg->wheel_velocity;
     writePacket("mo", "cfef", channel, azimuth_position, wheel_position, wheel_velocity);
 }
+
+void BwTunnel::moduleToneCallback(const bw_interfaces::BwDriveToneConstPtr& msg)
+{
+    uint8_t channel = (uint8_t)stoi(msg->module_index);
+    uint16_t frequency = msg->frequency;
+    int16_t speed = msg->speed;
+    writePacket("tone", "cgh", channel, frequency, speed);
+}
+
 
 void BwTunnel::setEnabledCallback(const std_msgs::BoolConstPtr& msg)
 {

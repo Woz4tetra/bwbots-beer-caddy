@@ -403,3 +403,13 @@ SpeedFilter* BwDriveTrain::get_filter(unsigned int channel)
         return drive_modules[channel]->get_filter();
     }
 }
+
+BwDriveModule* BwDriveTrain::get_module(unsigned int channel)
+{
+    if (channel > get_num_motors()) {
+        return NULL;
+    }
+    else {
+        return drive_modules[channel];
+    }
+}

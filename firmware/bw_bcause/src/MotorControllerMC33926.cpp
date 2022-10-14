@@ -1,13 +1,14 @@
 #include <MotorControllerMC33926.h>
 
 
-MotorControllerMC33926::MotorControllerMC33926(int speed_pin, int dir_p_pin, int dir_n_pin, int sf_pin, int fb_pin)
+MotorControllerMC33926::MotorControllerMC33926(int speed_pin, int dir_p_pin, int dir_n_pin, int sf_pin, int fb_pin, int frequency)
 {
     SPEED = speed_pin;
     DIR_P = dir_p_pin;
     DIR_N = dir_n_pin;
     SF = sf_pin;
     FB = fb_pin;
+    this->frequency = frequency;
 }
 
 void MotorControllerMC33926::begin()
@@ -22,7 +23,15 @@ void MotorControllerMC33926::begin()
     // https://www.pjrc.com/teensy/td_pulse.html
     // Setting this to 500 Hz causes a weird exponential response
     // Setting above 5000 Hz creates poor low speed performance
-    // analogWriteFrequency(SPEED, 4000);
+    analogWriteFrequency(SPEED, frequency);
+}
+
+void MotorControllerMC33926::set_frequency(int frequency)
+{
+    if (this->frequency != frequency) {
+        this->frequency = frequency;
+        analogWriteFrequency(SPEED, this->frequency);
+    }
 }
 
 void MotorControllerMC33926::set(int speed)

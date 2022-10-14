@@ -44,35 +44,42 @@ const int BUTTON_IN = 15;
 const int MOTOR_EN = 1;
 const int NUM_CHANNELS = 4;
 
-const int M1_SPEED = 9;
+const int M1_SPEED = 9;  // FlexPWM2.2
 const int M1_DIR_P = 11;
 const int M1_DIR_N = 12;
 const int M1_SF = 32;
 const int M1_FB = 23;
 
-const int M2_SPEED = 10;
+const int M2_SPEED = 10;  // QuadTimer1.0	
 const int M2_DIR_P = 28;
 const int M2_DIR_N = 29;
 const int M2_SF = 17;
 const int M2_FB = 22;
 
-const int M3_SPEED = 37;
+const int M3_SPEED = 37;  // FlexPWM2.3
 const int M3_DIR_P = 30;
 const int M3_DIR_N = 31;
 const int M3_SF = 38;
 const int M3_FB = 21;
 
-const int M4_SPEED = 36;
+const int M4_SPEED = 36;  // FlexPWM2.3
 const int M4_DIR_P = 35;
 const int M4_DIR_N = 34;
 const int M4_SF = 33;
 const int M4_FB = 20;
 
+// Set PWM frequency of the speed pin to X Hz.
+// Default for pin 36, 37 on Teensy 4.1: 4.482 kHz
+// https://www.pjrc.com/teensy/td_pulse.html
+// Setting this to 500 Hz causes a weird exponential response
+// Setting above 5000 Hz creates poor low speed performance
+const int MOTOR_PWM_FREQUENCY = 3520;
+
 MotorControllerMC33926* motors[NUM_CHANNELS] = {
-    new MotorControllerMC33926(M1_SPEED, M1_DIR_P, M1_DIR_N, M1_SF, M1_FB),
-    new MotorControllerMC33926(M2_SPEED, M2_DIR_P, M2_DIR_N, M2_SF, M2_FB),
-    new MotorControllerMC33926(M3_SPEED, M3_DIR_P, M3_DIR_N, M3_SF, M3_FB),
-    new MotorControllerMC33926(M4_SPEED, M4_DIR_P, M4_DIR_N, M4_SF, M4_FB)
+    new MotorControllerMC33926(M1_SPEED, M1_DIR_P, M1_DIR_N, M1_SF, M1_FB, MOTOR_PWM_FREQUENCY),
+    new MotorControllerMC33926(M2_SPEED, M2_DIR_P, M2_DIR_N, M2_SF, M2_FB, MOTOR_PWM_FREQUENCY),
+    new MotorControllerMC33926(M3_SPEED, M3_DIR_P, M3_DIR_N, M3_SF, M3_FB, MOTOR_PWM_FREQUENCY),
+    new MotorControllerMC33926(M4_SPEED, M4_DIR_P, M4_DIR_N, M4_SF, M4_FB, MOTOR_PWM_FREQUENCY)
 };
 
 const int MOTOR1_ENCA = 3;
@@ -146,7 +153,13 @@ const int BACK_RIGHT_STRAIGHT = 125;
 const int FRONT_RIGHT_ALCOVE = 405;
 const int FRONT_RIGHT_STRAIGHT = 515;
 
-bool enable_individual_control = false;
+typedef enum CONTROL_MODE {
+    CONTROL_GLOBAL = 0,
+    CONTROL_INDIVIDUAL = 1,
+    CONTROL_TONE = 2
+} control_mode_t;
+
+control_mode_t control_mode = CONTROL_GLOBAL;
 
 BwDriveTrain* drive;
 double vx_command = 0.0, vy_command = 0.0, vt_command = 0.0;
@@ -191,8 +204,13 @@ const uint32_t CONTROL_UPDATE_INTERVAL_MS = 20;
 uint32_t prev_slow_time = 0;
 const uint32_t SLOW_UPDATE_INTERVAL_MS = 100;
 
-uint32_t prev_individual_time = 0;
-const uint32_t INDIVIDUAL_CONTROL_TIMEOUT_MS = 500;
+uint32_t prev_nonglobal_time = 0;
+const uint32_t NONGLOBAL_CONTROL_TIMEOUT_MS = 5000;
+
+bool was_disabled_by_command = true;
+const double MOVEMENT_EPSILON = 1E-4;
+uint32_t prev_movement_time = 0;
+const uint32_t MOVEMENT_DISABLE_TIMEOUT_MS = 3000;
 
 bool prev_button_state = false;
 
@@ -244,6 +262,12 @@ void set_motor_enable(bool enabled)
         DEBUG_SERIAL.println(enabled);
     }
     write_enable_state();
+    if (!enabled) {
+        was_disabled_by_command = true;
+    }
+    else {
+        prev_movement_time = current_time;
+    }
 }
 
 void stop_motors()
@@ -252,6 +276,24 @@ void stop_motors()
     vy_command = 0.0;
     vt_command = 0.0;
     drive->stop();
+
+    for (unsigned int channel = 0; channel < drive->get_num_motors(); channel++) {
+        drive->get_module(channel)->get_motor()->set_frequency(MOTOR_PWM_FREQUENCY);
+    }
+}
+
+bool is_moving(
+    double vx_command, double vy_command, double vt_command,
+    double odom_vx, double odom_vy, double odom_vt)
+{
+    return (
+        abs(vx_command) > MOVEMENT_EPSILON ||
+        abs(vy_command) > MOVEMENT_EPSILON ||
+        abs(vt_command) > MOVEMENT_EPSILON ||
+        abs(odom_vx) > MOVEMENT_EPSILON ||
+        abs(odom_vy) > MOVEMENT_EPSILON ||
+        abs(odom_vt) > MOVEMENT_EPSILON
+    );
 }
 
 void setup()
@@ -396,6 +438,7 @@ void packetCallback(PacketResult* result)
         if (!result->getFloat(vx)) { DEBUG_SERIAL.println(F("Failed to get vx")); return; }
         if (!result->getFloat(vy)) { DEBUG_SERIAL.println(F("Failed to get vy")); return; }
         if (!result->getFloat(vt)) { DEBUG_SERIAL.println(F("Failed to get vt")); return; }
+
         vx_command = (double)vx;
         vy_command = (double)vy;
         vt_command = (double)vt;
@@ -419,10 +462,35 @@ void packetCallback(PacketResult* result)
         if (!result->getDouble(wheel_position)) { DEBUG_SERIAL.println(F("Failed to get wheel_position")); return; }
         if (!result->getFloat(wheel_velocity)) { DEBUG_SERIAL.println(F("Failed to get wheel_velocity")); return; }
 
-        enable_individual_control = true;
-        prev_individual_time = current_time;
+        control_mode = CONTROL_INDIVIDUAL;
+        prev_nonglobal_time = current_time;
 
         drive->set(channel, azimuth_position, wheel_velocity);
+    }
+    else if (category.equals("tone")) {
+        uint8_t channel;
+        uint16_t frequency;
+        int16_t speed;
+        if (!result->getUInt8(channel)) { DEBUG_SERIAL.println(F("Failed to get channel")); return; }
+        if (!result->getUInt16(frequency)) { DEBUG_SERIAL.println(F("Failed to get frequency")); return; }
+        if (!result->getInt16(speed)) { DEBUG_SERIAL.println(F("Failed to get speed")); return; }
+
+        if (frequency == 0) {
+            control_mode = CONTROL_GLOBAL;
+            stop_motors();
+            Serial.println("Stopping tone");
+        }
+        else {
+            control_mode = CONTROL_TONE;
+            prev_nonglobal_time = current_time;
+
+            Serial.print("Playing tone @ ");
+            Serial.print(frequency);
+            Serial.println(" Hz");
+            set_motor_enable(true);
+            drive->get_module(channel)->get_motor()->set_frequency((int)frequency);
+            drive->get_module(channel)->command_wheel_pwm(speed);
+        }
     }
 }
 
@@ -463,20 +531,34 @@ void loop()
         drive->set_enable(false);
     }
     
-    if (enable_individual_control && current_time - prev_individual_time > INDIVIDUAL_CONTROL_TIMEOUT_MS) {
-        enable_individual_control = false;
+    if (control_mode != CONTROL_GLOBAL && current_time - prev_nonglobal_time > NONGLOBAL_CONTROL_TIMEOUT_MS) {
+        control_mode = CONTROL_GLOBAL;
         stop_motors();
     }
 
     if (current_time - prev_control_time > CONTROL_UPDATE_INTERVAL_MS) {
         prev_control_time = current_time;
 
-        if (!enable_individual_control) {
+        if (control_mode == CONTROL_GLOBAL) {
             if (current_time - prev_command_time > COMMAND_TIMEOUT_MS) {
                 stop_motors();
             }
             else {
                 drive->drive(vx_command, vy_command, vt_command);
+            }
+
+            if (is_moving(vx_command, vy_command, vt_command, odom_vx, odom_vy, odom_vt)) {
+                prev_movement_time = current_time;
+                if (!drive->get_enable() && !was_disabled_by_command) {
+                    DEBUG_SERIAL.println("Re-enabling because robot started moving");
+                    set_motor_enable(true);
+                }
+            }
+            else if (drive->get_enable() && 
+                    current_time - prev_movement_time > MOVEMENT_DISABLE_TIMEOUT_MS) {
+                DEBUG_SERIAL.println("Disabling because robot isn't moving");
+                set_motor_enable(false);
+                was_disabled_by_command = false;
             }
         }
 

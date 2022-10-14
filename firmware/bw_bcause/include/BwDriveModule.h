@@ -69,6 +69,9 @@ public:
     void set(double vx, double vy, double vt, double dt);
     void set_azimuth(double setpoint);
     void set_wheel_velocity(double velocity);
+    void set_pwm_frequency(int frequency);
+    void command_wheel_pwm(int command);
     SpeedPID* get_pid()  { return speed_pid; }
     SpeedFilter* get_filter()  { return speed_filter; }
+    MotorControllerMC33926* get_motor()  { return motor; }
 };
