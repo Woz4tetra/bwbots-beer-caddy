@@ -131,6 +131,7 @@ add_library(${PROJECT_NAME}
 
 add_library(bw_tunnel_protocol
   src/tunnel_protocol.cpp
+  src/bw_serial_tunnel.cpp
 )
 
 ## Add cmake target dependencies of the library

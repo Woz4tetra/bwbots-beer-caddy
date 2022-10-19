@@ -50,9 +50,10 @@ find_package(catkin  REQUIRED COMPONENTS
 add_message_files(
   FILES
   BwDriveModule.msg
-  BwDriveTone.msg
   ChargeState.msg
   LoadCell.msg
+  BwSequence.msg
+  BwSequenceElement.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -60,6 +61,8 @@ add_service_files(
   FILES
   OdomReset.srv
   CalibrateScale.srv
+  PlaySequence.srv
+  StopSequence.srv
 )
 
 ## Generate actions in the 'action' folder

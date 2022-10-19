@@ -2,7 +2,11 @@
 import time
 import rospy
 
-from bw_interfaces.msg import BwDriveTone
+from bw_interfaces.msg import BwSequence
+from bw_interfaces.srv import PlaySequence
+
+from sequence_generator import SequenceGenerator
+
 
 class ToneGenerator:
     def __init__(self):
@@ -13,7 +17,10 @@ class ToneGenerator:
             # log_level=rospy.DEBUG
         )
 
-        self.tone_pub = rospy.Publisher("/bw/module_tone", BwDriveTone, queue_size=10)
+        self.sequence_pub = rospy.Publisher("/bw/sequence", BwSequence, queue_size=10)
+        self.start_seq_srv = rospy.ServiceProxy("/bw/play_sequence", PlaySequence)
+
+        self.gen = SequenceGenerator()
 
         self.semitone_table = {
             "C3": 131,
@@ -52,33 +59,26 @@ class ToneGenerator:
 
         rospy.loginfo("%s init complete" % self.node_name)
 
-    def publish_tone(self, channel, frequency, volume):
-        msg = BwDriveTone()
-        msg.module_index = str(int(channel))
-        msg.frequency = int(frequency)
-        msg.speed = int(volume)
-        self.tone_pub.publish(msg)
-    
-    def stop_tone(self):
-        self.publish_tone(0, 0, 0)
-    
-    def play_song(self, channel, volume, song: str):
+    def play_song(self, volume, song: str):
         song = song.strip()
-        try:
-            for note in song.split(" "):
-                name, duration = note.split(",")
-                duration = int(duration) / 1000.0
-                frequency = self.semitone_table[name]
 
-                self.publish_tone(channel, frequency, volume)
-                time.sleep(duration)
-        finally:
-            self.stop_tone()
+        for index, note in enumerate(song.split(" ")):
+            name, duration = note.split(",")
+            duration = int(duration)
+            frequency = self.semitone_table[name]
+
+            self.gen.add(*self.gen.make_tone(frequency, volume, duration))
+            self.gen.add(self.gen.make_led(index % 24, 0, 0, 0, 255))
+            self.gen.add(self.gen.make_show())
+        for index in range(24):
+            self.gen.add(self.gen.make_led(index % 24, 0, 0, 0, 0))
+        self.gen.add(self.gen.make_show())
+        self.sequence_pub.publish(self.gen.msg)
+        print(self.start_seq_srv(self.gen.serial, False))
 
     def run(self):
-        time.sleep(2.0)
-        # self.play_song(0, 30, "G3,250 A3,250 B3,250 C4,250 D4,250 E4,250 F4,250 G4,500 F4,250 E4,250 D4,250 C4,250 B3,250 A3,250 G3,500")
-        self.play_song(0, 30, "Eb3,250 G3,250 F3,250 Eb3,250 F3,250 G3,250 Ab3,250 Bb3,250 C4,250 D4,250 Eb4,250 D4,250 C4,250 Bb3,250 Ab3,250 G3,250 F3,250 Eb3,250 G3,250 F3,250 Eb3,500")
+        time.sleep(1.0)
+        self.play_song(30, "Eb3,250 G3,250 F3,250 Eb3,250 F3,250 G3,250 Ab3,250 Bb3,250 C4,250 D4,250 Eb4,250 D4,250 C4,250 Bb3,250 Ab3,250 G3,250 F3,250 Eb3,250 G3,250 F3,250 Eb3,500")
 
 
 if __name__ == "__main__":

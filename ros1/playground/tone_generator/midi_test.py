@@ -13,8 +13,10 @@ with mido.open_output(portname) as output:
     try:
         midifile = MidiFile(filename)
         t0 = time.time()
-        for message in midifile.play():
-            print(message)
+        for track in midifile.tracks:
+            print(len(track))
+        for index, message in enumerate(midifile.play()):
+            print(index, message)
             output.send(message)
         print('play time: {:.2f} s (expected {:.2f})'.format(
                 time.time() - t0, midifile.length))

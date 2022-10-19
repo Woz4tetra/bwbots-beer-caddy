@@ -92,144 +92,74 @@ private:
     packet_type_t _packet_type;
     uint32_t _packet_num;
     
-    bool checkIndex() {
-        if (_current_index >= _stop_index) {
-            ROS_WARN("Index exceeds buffer limits. %d >= %d", _current_index, _stop_index);
-            return false;
-        }
-        return true;
-    }
+    bool checkIndex();
 public:
-    PacketResult(int error_code, ros::Time recv_time) {
-        _category = "";
-        _recv_time = recv_time;
-        _error_code = error_code;
-        _packet_type = PACKET_TYPE_NORMAL;
-        _packet_num = 0;
-    }
+    PacketResult(int error_code, ros::Time recv_time);
+    PacketResult(PacketResult* result);
+    ~PacketResult();
 
-    ~PacketResult() {
-        
-    }
-
-    void setCategory(string category) {
-        _category = category;
-    }
-    string getCategory() {
-        return _category;
-    }
-    void setPacketType(packet_type_t packet_type) {
-        _packet_type = packet_type;
-    }
-    packet_type_t getPacketType() {
-        return _packet_type;
-    }
-    void setPacketNum(uint32_t packet_num) {
-        _packet_num = packet_num;
-    }
-    uint32_t getPacketNum() {
-        return _packet_num;
-    }
-    void setErrorCode(int error_code) {
-        _error_code = error_code;
-    }
-    int getErrorCode() {
-        return _error_code;
-    }
-    void setRecvTime(ros::Time recv_time) {
-        _recv_time = recv_time;
-    }
-    ros::Time getRecvTime() {
-        return _recv_time;
-    }
-    void setBuffer(char* buffer) {
-        _buffer = buffer;
-    }
-    char* getBuffer() {
-        return _buffer;
-    }
-    void setStart(int index) {
-        _start_index = index;
-        _current_index = _start_index;
-    }
-    int getStart() {
-        return _start_index;
-    }
-    void setStop(int index) {
-        _stop_index = index;
-    }
-    int getStop() {
-        return _stop_index;
-    }
-    bool getInt64(int64_t& result) {
-        result = to_int64(_buffer + _current_index);
-        _current_index += sizeof(int64_t);
-        return checkIndex();
-    }
-    bool getUInt64(uint64_t& result) {
-        result = to_uint64(_buffer + _current_index);
-        _current_index += sizeof(uint64_t);
-        return checkIndex();
-    }
-    bool getInt32(int32_t& result) {
-        result = to_int32(_buffer + _current_index);
-        _current_index += sizeof(int32_t);
-        return checkIndex();
-    }
-    bool getUInt32(uint32_t& result) {
-        result = to_uint32(_buffer + _current_index);
-        _current_index += sizeof(uint32_t);
-        return checkIndex();
-    }
-    bool getInt16(int16_t& result) {
-        result = to_int16(_buffer + _current_index);
-        _current_index += sizeof(int16_t);
-        return checkIndex();
-    }
-    bool getUInt16(uint16_t& result) {
-        result = to_uint16(_buffer + _current_index);
-        _current_index += sizeof(uint16_t);
-        return checkIndex();
-    }
-    bool getInt8(int8_t& result) {
-        result = (int8_t)_buffer[_current_index];
-        _current_index += sizeof(int8_t);
-        return checkIndex();
-    }
-    bool getUInt8(uint8_t& result) {
-        result = (uint8_t)_buffer[_current_index];
-        _current_index += sizeof(uint8_t);
-        return checkIndex();
-    }
-    bool getBool(bool& result) {
-        result = (bool)_buffer[_current_index];
-        _current_index += sizeof(uint8_t);
-        return checkIndex();
-    }
-    bool getFloat(float& result) {
-        result = to_float(_buffer + _current_index);
-        _current_index += sizeof(float);
-        return checkIndex();
-    }
-    bool getDouble(double& result) {
-        result = to_double(_buffer + _current_index);
-        _current_index += sizeof(double);
-        return checkIndex();
-    }
-    bool getString(string& result) {
-        int length = to_uint16(_buffer + _current_index);
-        _current_index += sizeof(uint16_t);
-        getString(result, length);
-        return checkIndex();
-    }
-    bool getString(string& result, int length) {
-        result = to_string(_buffer + _current_index, length);
-        _current_index += length;
-        return checkIndex();
-    }
+    void setFrom(PacketResult* result);
+    void setCategory(string category);
+    string getCategory();
+    void setPacketType(packet_type_t packet_type);
+    packet_type_t getPacketType();
+    void setPacketNum(uint32_t packet_num);
+    uint32_t getPacketNum();
+    void setErrorCode(int error_code);
+    int getErrorCode();
+    void setRecvTime(ros::Time recv_time);
+    ros::Time getRecvTime();
+    void setBuffer(char* buffer);
+    char* getBuffer();
+    void setStart(int index);
+    int getStart();
+    void setStop(int index);
+    int getStop();
+    bool getInt64(int64_t& result);
+    bool getUInt64(uint64_t& result);
+    bool getInt32(int32_t& result);
+    bool getUInt32(uint32_t& result);
+    bool getInt16(int16_t& result);
+    bool getUInt16(uint16_t& result);
+    bool getInt8(int8_t& result);
+    bool getUInt8(uint8_t& result);
+    bool getBool(bool& result);
+    bool getFloat(float& result);
+    bool getDouble(double& result);
+    bool getString(string& result);
+    bool getString(string& result, int length);
 };
 
+class Handshake
+{
+private:
+    char* _packet;
+    string _category;
+    unsigned int _length;
+    double _write_interval;
+    double _timeout;
+    int _error_code;
+    uint32_t _packet_num;
 
+    ros::Time _prev_write_time;
+    ros::Time _initial_write_time;
+
+public:
+    Handshake(string category, char* buffer, unsigned int length, uint32_t packet_num, double write_interval, double timeout);
+    Handshake(PacketResult* result);
+
+    string getCategory();
+    int getErrorCode();
+
+    bool isEqual(Handshake* other);
+    uint32_t getPacketNum();
+    bool shouldWriteAgain();
+    bool didFail();
+
+    unsigned int getPacket(char* buffer);
+
+    ~Handshake();
+};
 
 class TunnelProtocol
 {
@@ -279,5 +209,7 @@ public:
     int parseBuffer(char* buffer, int start_index, int stop_index);
     PacketResult* popResult();
     bool isCodeError(int error_code);
-    int makePacket(packet_type_t packet_type, char* write_buffer, string category, const char *formats, va_list args);
+    unsigned int makePacket(packet_type_t packet_type, char* write_buffer, string category, const char *formats, va_list args);
+    uint32_t getWritePacketNum() { return _write_packet_num; }
+    uint32_t getReadPacketNum() { return _read_packet_num; }
 };

@@ -1,22 +1,14 @@
 #include "bw_tunnel/bw_tunnel.h"
 
 BwTunnel::BwTunnel(ros::NodeHandle* nodehandle) :
-    nh(*nodehandle)
+    BwSerialTunnel(nodehandle)
 {
-    ros::param::param<string>("~device_path", _device_path, "/dev/ttyTHS0");
-    ros::param::param<int>("~device_baud", _device_baud, 115200);
-
-    ros::param::param<double>("~tunnel_rate", _tunnel_rate, 200.0);
-    ros::param::param<double>("~write_rate", _write_rate, 15.0);
-
     ros::param::param<bool>("~publish_odom_tf", _publish_odom_tf, true);
     ros::param::param<string>("~base_frame", _base_frame, "base_link");
     ros::param::param<string>("~odom_frame", _odom_frame, "odom");
     ros::param::param<string>("~map_frame", _map_frame, "map");
 
     ros::param::param<double>("~cmd_vel_timeout", _cmd_vel_timeout_param, 0.5);
-
-    ros::param::param<int>("~open_attempts", _open_attempts, 50);
 
     string key;
     if (!ros::param::search("joint_names", key)) {
@@ -27,26 +19,6 @@ BwTunnel::BwTunnel(ros::NodeHandle* nodehandle) :
     nh.getParam(key, _joint_names);
 
     _cmd_vel_timeout = ros::Duration(_cmd_vel_timeout_param);
-
-    _write_buffer = new char[TunnelProtocol::MAX_PACKET_LEN];
-    _read_buffer = new char[READ_BUFFER_LEN];
-    _initialized = false;
-
-    _protocol = new TunnelProtocol();
-
-    if (!reOpenDevice()) {
-        throw std::runtime_error("Failed to open device");
-    }
-
-    _unparsed_index = 0;
-
-    _prev_ping_time = ros::Time(0);
-    _ping_interval = ros::Duration(1.0);
-
-    _last_read_time = ros::Time(0);
-    _last_read_threshold = ros::Duration(5.0);
-
-    _ping_pub = nh.advertise<std_msgs::Float64>("ping", 50);
 
     _odom_pub = nh.advertise<nav_msgs::Odometry>("odom", 50);
     _odom_msg.header.frame_id = _odom_frame;
@@ -90,9 +62,6 @@ BwTunnel::BwTunnel(ros::NodeHandle* nodehandle) :
         addJointPub(_joint_names.at(index));
     }
 
-    _packet_count_pub = nh.advertise<std_msgs::Int32>("packet_count", 10);
-    _packet_rate_pub = nh.advertise<std_msgs::Float64>("packet_rate", 10);
-
     _charge_pub = nh.advertise<bw_interfaces::ChargeState>("charger", 10);
     _button_pub = nh.advertise<std_msgs::Bool>("button_pressed", 10);
     _is_enabled_pub = nh.advertise<std_msgs::Bool>("are_motors_enabled", 10);
@@ -100,7 +69,7 @@ BwTunnel::BwTunnel(ros::NodeHandle* nodehandle) :
 
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &BwTunnel::twistCallback, this);
     _module_sub = nh.subscribe<bw_interfaces::BwDriveModule>("module_command", 50, &BwTunnel::moduleCommandCallback, this);
-    _tone_sub = nh.subscribe<bw_interfaces::BwDriveTone>("module_tone", 50, &BwTunnel::moduleToneCallback, this);
+    _sequence_sub = nh.subscribe<bw_interfaces::BwSequence>("sequence", 50, &BwTunnel::loadSequenceCallback, this);
 
     _set_enabled_sub = nh.subscribe<std_msgs::Bool>("set_motors_enabled", 10, &BwTunnel::setEnabledCallback, this);
 
@@ -109,18 +78,11 @@ BwTunnel::BwTunnel(ros::NodeHandle* nodehandle) :
     _twist_cmd_vy = 0.0;
     _twist_cmd_vt = 0.0;
 
-    _status_prev_time = ros::Time::now();
-    _status_prev_count = 0;
-    _packet_count = 0;
+    _odom_reset_srv = nh.advertiseService("odom_reset_service", &BwTunnel::odomResetCallback, this);
+    _play_sequence_srv = nh.advertiseService("play_sequence", &BwTunnel::playSequenceCallback, this);
+    _stop_sequence_srv = nh.advertiseService("stop_sequence", &BwTunnel::stopSequenceCallback, this);
 
-    _start_time = ros::Time::now();
-
-    _odom_reset_srv = nh.advertiseService("odom_reset_service", &BwTunnel::odom_reset_callback, this);
-
-    _ping_timer = nh.createTimer(ros::Duration(0.5), &BwTunnel::pingCallback, this);
-
-    _poll_thread = new boost::thread(&BwTunnel::pollDeviceTask, this);
-    _write_thread = new boost::thread(&BwTunnel::writeDeviceTask, this);
+    begin();
 
     ROS_INFO("bw_tunnel init complete");
 }
@@ -132,66 +94,9 @@ void BwTunnel::addJointPub(string name)
     _raw_joint_msgs->push_back(new std_msgs::Float64);
 }
 
-bool BwTunnel::reOpenDevice()
-{
-    for (int attempt = 0; attempt < _open_attempts; attempt++)
-    {
-        if (!ros::ok()) {
-            ROS_INFO("Exiting reopen");
-            break;
-        }
-        ros::Duration(2.0).sleep();
-        if (attempt > 0) {
-            ROS_INFO("Open device attempt #%d", attempt + 1);
-        }
-        closeDevice();
-        if (openDevice()) {
-            break;
-        }
-        ROS_INFO("Connection attempt failed");
-    }
-    if (!_initialized) {
-        ROS_ERROR("Maximum number of attempts reached");
-    }
-    return _initialized;
-}
-
-bool BwTunnel::openDevice()
-{
-    ROS_INFO("Initializing device");
-
-    _device.setPort(_device_path);
-    _device.setBaudrate(_device_baud);
-    serial::Timeout timeout = serial::Timeout::simpleTimeout(1000);
-    _device.setTimeout(timeout);
-    _device.open();
-
-    if (!_device.isOpen()) {
-        return false;
-    }
-
-    _initialized = true;
-    ROS_INFO("Device initialized");
-    _last_read_time = ros::Time::now();
-
-    return true;
-}
-bool BwTunnel::didDeviceTimeout()
-{
-    if (ros::Time::now() - _last_read_time > _last_read_threshold) {
-        ROS_INFO("Device timed out while waiting for data");
-        _last_read_time = ros::Time::now();
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-
-
 void BwTunnel::packetCallback(PacketResult* result)
 {
-    _packet_count++;
+    BwSerialTunnel::packetCallback(result);
     string category = result->getCategory();
     if (category.compare("od") == 0) {
         double x, y, t;
@@ -206,13 +111,6 @@ void BwTunnel::packetCallback(PacketResult* result)
             result->getRecvTime(),
             x, y, t, vx, vy, vt
         );
-    }
-    else if (category.compare("ping") == 0) {
-        float ping_time;
-        if (!result->getFloat(ping_time))  { ROS_ERROR("Failed to get ping_time"); return; }
-        double dt = getLocalTime() - (double)ping_time;
-        ROS_DEBUG("Publishing ping time: %f. (Return time: %f)", dt, ping_time);
-        publishStatusMessages(dt);
     }
     else if (category.compare("mo") == 0) {
         uint8_t channel;
@@ -263,32 +161,6 @@ void BwTunnel::packetCallback(PacketResult* result)
         msg.data = enable_state;
         _is_enabled_pub.publish(msg);
     }
-}
-
-double BwTunnel::getLocalTime() {
-    return (ros::Time::now() - _start_time).toSec();
-}
-
-void BwTunnel::publishStatusMessages(float ping)
-{
-    std_msgs::Float64 ping_msg;
-    ping_msg.data = ping;
-    _ping_pub.publish(ping_msg);
-
-    int num_messages = _packet_count - _status_prev_count;
-    ros::Duration status_interval = ros::Time::now() - _status_prev_time;
-    double rate = (double)num_messages / status_interval.toSec();
-
-    std_msgs::Int32 count_msg;
-    count_msg.data = _packet_count;
-    _packet_count_pub.publish(count_msg);
-
-    std_msgs::Float64 rate_msg;
-    rate_msg.data = rate;
-    _packet_rate_pub.publish(rate_msg);
-
-    _status_prev_count = _packet_count;
-    _status_prev_time = ros::Time::now();
 }
 
 void BwTunnel::publishOdom(ros::Time recv_time, double x, double y, double t, double vx, double vy, double vt)
@@ -362,14 +234,25 @@ void BwTunnel::moduleCommandCallback(const bw_interfaces::BwDriveModuleConstPtr&
     writePacket("mo", "cfef", channel, azimuth_position, wheel_position, wheel_velocity);
 }
 
-void BwTunnel::moduleToneCallback(const bw_interfaces::BwDriveToneConstPtr& msg)
+void BwTunnel::loadSequenceCallback(const bw_interfaces::BwSequenceConstPtr& msg)
 {
-    uint8_t channel = (uint8_t)stoi(msg->module_index);
-    uint16_t frequency = msg->frequency;
-    int16_t speed = msg->speed;
-    writePacket("tone", "cgh", channel, frequency, speed);
+    uint16_t length = 0;
+    if (msg->sequence.size() >= 0xffff) {
+        ROS_WARN("Sequence length (%lu) exceeds max length. Ignoring the rest.", msg->sequence.size());
+        length = 0xffff;
+    }
+    else {
+        length = (uint16_t)msg->sequence.size();
+    }
+    writePacket("lseq", "cg", msg->serial, length);
+    for (size_t index = 0; index < length; index++) {
+        bw_interfaces::BwSequenceElement element = msg->sequence.at(index);
+        if (getResult("seq", "cgm", 0.0, 1.0, msg->serial, index, element.parameters) == NULL) {
+            ROS_WARN("Failed to write entire sequence!");
+            break;
+        }
+    }
 }
-
 
 void BwTunnel::setEnabledCallback(const std_msgs::BoolConstPtr& msg)
 {
@@ -388,122 +271,11 @@ void BwTunnel::publishCmdVel()
     writePacket("d", "fff", _twist_cmd_vx, _twist_cmd_vy, _twist_cmd_vt);
 }
 
-
-void BwTunnel::pingCallback(const ros::TimerEvent& event) {
-    double ping_time = getLocalTime();
-    ROS_DEBUG("Writing ping time: %f", ping_time);
-    writePacket("ping", "f", ping_time);
+void BwTunnel::writeDeviceTick() {
+    publishCmdVel();
 }
 
-
-void BwTunnel::writePacket(string category, const char *formats, ...)
-{
-    if (!_initialized) {
-        ROS_DEBUG("Device is not initialized. Skipping write. Category: %s", category.c_str());
-        return;
-    }
-    va_list args;
-    va_start(args, formats);
-    int length = _protocol->makePacket(PACKET_TYPE_NORMAL, _write_buffer, category, formats, args);
-    // ROS_DEBUG("Writing packet: %s", packetToString(_write_buffer, 0, length).c_str());
-    if (length > 0) {
-        _write_lock.lock();
-        _device.write((uint8_t*)_write_buffer, length);
-        _write_lock.unlock();
-    }
-    else {
-        ROS_DEBUG("Skipping write for packet: %s. Length is %d", packetToString(_write_buffer, 0, length).c_str(), length);
-    }
-    va_end(args);
-}
-
-
-bool BwTunnel::pollDevice()
-{
-    if (!_initialized) {
-        ROS_WARN("Device is not initialized.");
-        reOpenDevice();
-        return true;
-    }
-
-    int num_chars_read = _device.available();
-    if (num_chars_read <= 0) {
-        if (didDeviceTimeout()) {
-            reOpenDevice();
-        }
-        return true;
-    }
-    if (_unparsed_index + num_chars_read >= READ_BUFFER_LEN) {
-        num_chars_read = READ_BUFFER_LEN - _unparsed_index - 1;
-    }
-    _device.read((uint8_t*)(_read_buffer + _unparsed_index), num_chars_read);
-
-    _last_read_time = ros::Time::now();
-    int read_stop_index = _unparsed_index + num_chars_read;
-    int last_parsed_index = _protocol->parseBuffer(_read_buffer, 0, read_stop_index);
-
-    PacketResult* result;
-    do {
-        result = _protocol->popResult();
-        if (result->getErrorCode() == TunnelProtocol::NULL_ERROR) {
-            continue;
-        }
-        if (_protocol->isCodeError(result->getErrorCode())) {
-            ROS_ERROR("Encountered error code %d.", result->getErrorCode());
-            continue;
-        }
-        string category = result->getCategory();
-        packetCallback(result);
-        delete result;
-    }
-    while (result->getErrorCode() != TunnelProtocol::NULL_ERROR);
-
-    _unparsed_index = read_stop_index - last_parsed_index;
-    if (_unparsed_index >= READ_BUFFER_LEN) {
-        _unparsed_index = 0;
-    }
-
-    if (last_parsed_index > 0) {
-        for (int index = last_parsed_index, shifted_index = 0; index < READ_BUFFER_LEN; index++, shifted_index++) {
-            _read_buffer[shifted_index] = _read_buffer[index];
-        }
-    }
-
-    return true;
-}
-
-void BwTunnel::pollDeviceTask()
-{ 
-    ros::Rate clock_rate(_tunnel_rate);  // Hz
-
-    while (ros::ok())
-    {
-        if (!pollDevice()) {
-            ROS_INFO("Exiting device poll thread");
-            break;
-        }
-        clock_rate.sleep();
-    }
-    closeDevice();
-}
-
-void BwTunnel::writeDeviceTask()
-{
-    ros::Rate clock_rate(_write_rate);  // Hz
-    while (ros::ok())
-    {
-        publishCmdVel();
-        clock_rate.sleep();
-    }
-}
-
-void BwTunnel::closeDevice()
-{
-    _device.close();
-    _initialized = false;
-}
-
-bool BwTunnel::odom_reset_callback(bw_interfaces::OdomReset::Request &req, bw_interfaces::OdomReset::Response &resp)
+bool BwTunnel::odomResetCallback(bw_interfaces::OdomReset::Request &req, bw_interfaces::OdomReset::Response &resp)
 {
     writePacket("reset", "fff", req.x, req.y, req.t);
     ROS_INFO("Resetting odometry to x: %0.3f, y: %0.3f, theta: %0.3f", req.x, req.y, req.t);
@@ -511,9 +283,37 @@ bool BwTunnel::odom_reset_callback(bw_interfaces::OdomReset::Request &req, bw_in
     return true;
 }
 
+bool BwTunnel::playSequenceCallback(bw_interfaces::PlaySequence::Request &req, bw_interfaces::PlaySequence::Response &resp)
+{
+    ROS_INFO("Playing sequence %d. Looping=%d", req.serial, req.loop);
+    PacketResult* result = getResult(">seq", "cb", 0.0, 1.0, req.serial, req.loop);
+    bool success;
+    if (result == NULL || !result->getBool(success)) {
+        resp.success = false;
+    }
+    else {
+        resp.success = success;
+    }
+    return true;
+}
+
+bool BwTunnel::stopSequenceCallback(bw_interfaces::StopSequence::Request &req, bw_interfaces::StopSequence::Response &resp)
+{
+    PacketResult* result = getResult("xseq", "", 0.0, 1.0);
+    bool success;
+    if (result == NULL || !result->getBool(success)) {
+        resp.success = false;
+    }
+    else {
+        resp.success = success;
+    }
+    return true;
+}
+
+
 int BwTunnel::run()
 {
     ros::spin();
-    _poll_thread->join();
+    this->join();
     return 0;
 }

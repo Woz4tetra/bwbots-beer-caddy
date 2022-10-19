@@ -6,7 +6,8 @@
 #include <Adafruit_NeoPixel.h>
 #include <MotorControllerMC33926.h>
 #include <BwDriveTrain.h>
-#include "tunnel_serial.h"
+#include <BwUISequencer.h>
+#include <tunnel_serial.h>
 
 #define I2C_BUS_1 Wire
 
@@ -37,6 +38,7 @@ const int BUILTIN_LED = 13;
 // ---
 
 const int BUTTON_IN = 15;
+bool prev_button_state = false;
 
 // ---
 // Drive controllers
@@ -212,7 +214,17 @@ const double MOVEMENT_EPSILON = 1E-4;
 uint32_t prev_movement_time = 0;
 const uint32_t MOVEMENT_DISABLE_TIMEOUT_MS = 3000;
 
-bool prev_button_state = false;
+// ---
+// Sequencer
+// ---
+
+bool was_sequencer_active = false;
+BwUISequencer* sequencer;
+
+
+// ---
+// Button functions
+// ---
 
 void set_status_led(bool state) {
     digitalWrite(STATUS_LED, state);
@@ -247,6 +259,10 @@ bool did_button_press(bool comparison_state) {
     }
 }
 
+// ---
+// Drive functions
+// ---
+
 void write_enable_state() {
     tunnel->writePacket("en", "b", drive->get_enable());
 }
@@ -262,12 +278,14 @@ void set_motor_enable(bool enabled)
         DEBUG_SERIAL.println(enabled);
     }
     write_enable_state();
-    if (!enabled) {
-        was_disabled_by_command = true;
-    }
-    else {
+    if (enabled) {
         prev_movement_time = current_time;
     }
+    else {
+        was_disabled_by_command = true;
+        sequencer->stop_sequence();
+    }
+    control_mode = CONTROL_GLOBAL;
 }
 
 void stop_motors()
@@ -296,6 +314,136 @@ bool is_moving(
     );
 }
 
+// ---
+// Power management functions
+// ---
+
+void update_ina()
+{
+    shunt_voltage = charge_ina.getShuntVoltage_mV();
+    bus_voltage = charge_ina.getBusVoltage_V();
+    current_A = charge_ina.getCurrent_mA() / 1000.0;
+    load_voltage = bus_voltage + (shunt_voltage / 1000);
+}
+
+// ---
+// Packet callback
+// ---
+
+void packetCallback(PacketResult* result)
+{
+    // if the result is not set for some reason, don't do anything
+    if (result == NULL) {
+        return;
+    }
+
+    // Extract category and check which event it maps to
+    String category = result->getCategory();
+    // DEBUG_SERIAL.print("Received packet: ");
+    // DEBUG_SERIAL.println(category);
+    if (category.equals("ping")) {
+        // Respond to ping by writing back the same value
+        float value;
+        if (!result->getFloat(value)) { DEBUG_SERIAL.println(F("Failed to get ping")); return; }
+        tunnel->writePacket("ping", "f", value);
+        DEBUG_SERIAL.print("Received ping: ");
+        DEBUG_SERIAL.println(value);
+    }
+    else if (category.equals("d")) {
+        float vx, vy, vt;
+        if (!result->getFloat(vx)) { DEBUG_SERIAL.println(F("Failed to get vx")); return; }
+        if (!result->getFloat(vy)) { DEBUG_SERIAL.println(F("Failed to get vy")); return; }
+        if (!result->getFloat(vt)) { DEBUG_SERIAL.println(F("Failed to get vt")); return; }
+
+        vx_command = (double)vx;
+        vy_command = (double)vy;
+        vt_command = (double)vt;
+        prev_command_time = current_time;
+    }
+    else if (category.equals("en")) {
+        bool enabled;
+        if (!result->getBool(enabled)) { DEBUG_SERIAL.println(F("Failed to get enable state")); return; }
+        set_motor_enable(enabled);
+    }
+    else if (category.equals("?en")) {
+        tunnel->writePacket("en", "b", drive->get_enable());
+    }
+    else if (category.equals("mo")) {
+        uint8_t channel;
+        float azimuth_position;
+        double wheel_position;
+        float wheel_velocity;
+        if (!result->getUInt8(channel)) { DEBUG_SERIAL.println(F("Failed to get channel")); return; }
+        if (!result->getFloat(azimuth_position)) { DEBUG_SERIAL.println(F("Failed to get azimuth_position")); return; }
+        if (!result->getDouble(wheel_position)) { DEBUG_SERIAL.println(F("Failed to get wheel_position")); return; }
+        if (!result->getFloat(wheel_velocity)) { DEBUG_SERIAL.println(F("Failed to get wheel_velocity")); return; }
+
+        control_mode = CONTROL_INDIVIDUAL;
+        prev_nonglobal_time = current_time;
+
+        drive->set(channel, azimuth_position, wheel_velocity);
+    }
+    else if (category.equals("seq")) {
+        uint8_t serial;
+        uint16_t index;
+        uint64_t parameters;
+        if (!result->getUInt8(serial)) { DEBUG_SERIAL.println(F("Failed to get serial")); return; }
+        if (!result->getUInt16(index)) { DEBUG_SERIAL.println(F("Failed to get index")); return; }
+        if (!result->getUInt64(parameters)) { DEBUG_SERIAL.println(F("Failed to get parameters")); return; }
+        bool success = sequencer->set_element(serial, index, parameters);
+        tunnel->writePacket("seq", "b", success);
+
+        if (success) {
+            DEBUG_SERIAL.print(index);
+            DEBUG_SERIAL.print(" set for sequence ");
+            DEBUG_SERIAL.print(serial);
+            DEBUG_SERIAL.print(". parameters=");
+            DEBUG_SERIAL.println(parameters);
+        }
+        else {
+            DEBUG_SERIAL.println(F("Failed to set sequence element"));
+        }
+    }
+    else if (category.equals("lseq")) {
+        uint8_t serial;
+        uint16_t length;
+        if (!result->getUInt8(serial)) { DEBUG_SERIAL.println(F("Failed to get serial")); return; }
+        if (!result->getUInt16(length)) { DEBUG_SERIAL.println(F("Failed to get length")); return; }
+        sequencer->allocate_sequence(serial, length);
+        tunnel->writePacket("lseq", "b", true);
+        DEBUG_SERIAL.print(length);
+        DEBUG_SERIAL.print(" bits allocated for sequence ");
+        DEBUG_SERIAL.println(serial);
+    }
+    else if (category.equals(">seq")) {
+        uint8_t serial;
+        bool should_loop;
+        if (!result->getUInt8(serial)) { DEBUG_SERIAL.println(F("Failed to get serial")); return; }
+        if (!result->getBool(should_loop)) { DEBUG_SERIAL.println(F("Failed to get should_loop")); return; }
+        bool success = sequencer->play_sequence(serial, should_loop);
+        tunnel->writePacket(">seq", "b", success);
+        if (success) {
+            DEBUG_SERIAL.print("Starting sequence ");
+            DEBUG_SERIAL.print(serial);
+            DEBUG_SERIAL.print(", should_loop=");
+            DEBUG_SERIAL.println(should_loop);
+            set_motor_enable(true);
+        }
+        else {
+            DEBUG_SERIAL.println(F("Failed to start sequence"));
+        }
+    }
+    else if (category.equals("xseq")) {
+        sequencer->stop_sequence();
+        tunnel->writePacket("xseq", "b", true);
+        DEBUG_SERIAL.println("Stopping current sequence");
+    }
+}
+
+// ---
+// Setup
+// ---
+
 void setup()
 {
     DEBUG_SERIAL.begin(DEBUG_BAUD);
@@ -312,7 +460,7 @@ void setup()
         MIN_RADIUS_OF_CURVATURE,
         MODULE_X_LOCATIONS, MODULE_Y_LOCATIONS
     );
-
+    sequencer = new BwUISequencer(drive, &led_ring, NUM_PIXELS);
     I2C_BUS_1.begin();
     I2C_BUS_1.setSDA(18);
     I2C_BUS_1.setSCL(19);
@@ -322,6 +470,7 @@ void setup()
     servos->setPWMFreq(SERVO_FREQ);
 
     charge_ina.begin();
+    update_ina();
 
     led_ring.begin();
 
@@ -414,85 +563,9 @@ void setup()
     DEBUG_SERIAL.println("setup complete");
 }
 
-void packetCallback(PacketResult* result)
-{
-    // if the result is not set for some reason, don't do anything
-    if (result == NULL) {
-        return;
-    }
-
-    // Extract category and check which event it maps to
-    String category = result->getCategory();
-    // DEBUG_SERIAL.print("Received packet: ");
-    // DEBUG_SERIAL.println(category);
-    if (category.equals("ping")) {
-        // Respond to ping by writing back the same value
-        float value;
-        if (!result->getFloat(value)) { DEBUG_SERIAL.println(F("Failed to get ping")); return; }
-        tunnel->writePacket("ping", "f", value);
-        DEBUG_SERIAL.print("Received ping: ");
-        DEBUG_SERIAL.println(value);
-    }
-    else if (category.equals("d")) {
-        float vx, vy, vt;
-        if (!result->getFloat(vx)) { DEBUG_SERIAL.println(F("Failed to get vx")); return; }
-        if (!result->getFloat(vy)) { DEBUG_SERIAL.println(F("Failed to get vy")); return; }
-        if (!result->getFloat(vt)) { DEBUG_SERIAL.println(F("Failed to get vt")); return; }
-
-        vx_command = (double)vx;
-        vy_command = (double)vy;
-        vt_command = (double)vt;
-        prev_command_time = current_time;
-    }
-    else if (category.equals("en")) {
-        bool enabled;
-        if (!result->getBool(enabled)) { DEBUG_SERIAL.println(F("Failed to get enable state")); return; }
-        set_motor_enable(enabled);
-    }
-    else if (category.equals("?en")) {
-        tunnel->writePacket("en", "b", drive->get_enable());
-    }
-    else if (category.equals("mo")) {
-        uint8_t channel;
-        float azimuth_position;
-        double wheel_position;
-        float wheel_velocity;
-        if (!result->getUInt8(channel)) { DEBUG_SERIAL.println(F("Failed to get channel")); return; }
-        if (!result->getFloat(azimuth_position)) { DEBUG_SERIAL.println(F("Failed to get azimuth_position")); return; }
-        if (!result->getDouble(wheel_position)) { DEBUG_SERIAL.println(F("Failed to get wheel_position")); return; }
-        if (!result->getFloat(wheel_velocity)) { DEBUG_SERIAL.println(F("Failed to get wheel_velocity")); return; }
-
-        control_mode = CONTROL_INDIVIDUAL;
-        prev_nonglobal_time = current_time;
-
-        drive->set(channel, azimuth_position, wheel_velocity);
-    }
-    else if (category.equals("tone")) {
-        uint8_t channel;
-        uint16_t frequency;
-        int16_t speed;
-        if (!result->getUInt8(channel)) { DEBUG_SERIAL.println(F("Failed to get channel")); return; }
-        if (!result->getUInt16(frequency)) { DEBUG_SERIAL.println(F("Failed to get frequency")); return; }
-        if (!result->getInt16(speed)) { DEBUG_SERIAL.println(F("Failed to get speed")); return; }
-
-        if (frequency == 0) {
-            control_mode = CONTROL_GLOBAL;
-            stop_motors();
-            Serial.println("Stopping tone");
-        }
-        else {
-            control_mode = CONTROL_TONE;
-            prev_nonglobal_time = current_time;
-
-            Serial.print("Playing tone @ ");
-            Serial.print(frequency);
-            Serial.println(" Hz");
-            set_motor_enable(true);
-            drive->get_module(channel)->get_motor()->set_frequency((int)frequency);
-            drive->get_module(channel)->command_wheel_pwm(speed);
-        }
-    }
-}
+// ---
+// Loop
+// ---
 
 void loop()
 {
@@ -504,27 +577,17 @@ void loop()
         drive->drive(vx_command, vy_command, vt_command);
     }
 
-    shunt_voltage = charge_ina.getShuntVoltage_mV();
-    bus_voltage = charge_ina.getBusVoltage_V();
-    current_A = charge_ina.getCurrent_mA() / 1000.0;
-    load_voltage = bus_voltage + (shunt_voltage / 1000);
+    update_ina();
 
     bool is_charging = current_A > CHARGE_CURRENT_THRESHOLD;
     if (was_charging != is_charging) {
         was_charging = is_charging;
         if (current_A > CHARGE_CURRENT_THRESHOLD) {
-            for (int i = 0; i < NUM_PIXELS; i++) {
-                led_ring.setPixelColor(i, led_ring.Color(2, 0, 0, 0));
-            }
             DEBUG_SERIAL.println("Charging");
         }
         else {
-            for (int i = 0; i < NUM_PIXELS; i++) {
-                led_ring.setPixelColor(i, led_ring.Color(0, 0, 0, 0));
-            }
             DEBUG_SERIAL.println("Unplugged");
         }
-        led_ring.show();
     }
 
     if (load_voltage < DISABLE_THRESHOLD) {
@@ -534,6 +597,25 @@ void loop()
     if (control_mode != CONTROL_GLOBAL && current_time - prev_nonglobal_time > NONGLOBAL_CONTROL_TIMEOUT_MS) {
         control_mode = CONTROL_GLOBAL;
         stop_motors();
+        Serial.println("Switching to global control mode");
+        sequencer->stop_sequence();
+    }
+
+    bool sequencer_state = sequencer->update();
+    if (sequencer_state) {
+        control_mode = CONTROL_TONE;
+        prev_nonglobal_time = current_time;
+    }
+    if (was_sequencer_active != sequencer_state) {
+        was_sequencer_active = sequencer_state;
+        if (sequencer_state) {
+            Serial.println("Sequence started");
+        }
+        else {
+            Serial.println("Sequence stopped");
+            control_mode = CONTROL_GLOBAL;
+            stop_motors();
+        }
     }
 
     if (current_time - prev_control_time > CONTROL_UPDATE_INTERVAL_MS) {

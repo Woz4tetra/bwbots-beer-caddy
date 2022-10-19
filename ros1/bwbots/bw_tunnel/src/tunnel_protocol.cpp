@@ -121,6 +121,258 @@ string packetToString(char* buffer, int start_index, int stop_index)
     return str;
 }
 
+// ---
+// PacketResult
+// ---
+
+bool PacketResult::checkIndex() {
+    if (_current_index >= _stop_index) {
+        ROS_WARN("Index exceeds buffer limits. %d >= %d", _current_index, _stop_index);
+        return false;
+    }
+    return true;
+}
+PacketResult::PacketResult(PacketResult* result)
+{
+    setFrom(result);
+}
+PacketResult::PacketResult(int error_code, ros::Time recv_time) {
+    _category = "";
+    _recv_time = recv_time;
+    _error_code = error_code;
+    _packet_type = PACKET_TYPE_NORMAL;
+    _packet_num = 0;
+    _buffer = NULL;
+}
+
+PacketResult::~PacketResult() {
+    if (_buffer != NULL) {
+        free(_buffer);
+    }
+}
+void PacketResult::setFrom(PacketResult* result) {
+    _category = result->getCategory();
+    _recv_time = result->getRecvTime();
+    _error_code = result->getErrorCode();
+    _packet_type = result->getPacketType();
+    _packet_num = result->getPacketNum();
+    _start_index = result->getStart();
+    _stop_index = result->getStop();
+    int length = _stop_index - _start_index;
+    if (length < 0) {
+        length = 0;
+    }
+    _buffer = (char*)malloc(sizeof(char) * length);
+    memcpy(_buffer, result->getBuffer() + _start_index, sizeof(char) * length);
+}
+
+void PacketResult::setCategory(string category) {
+    _category = category;
+}
+string PacketResult::getCategory() {
+    return _category;
+}
+void PacketResult::setPacketType(packet_type_t packet_type) {
+    _packet_type = packet_type;
+}
+packet_type_t PacketResult::getPacketType() {
+    return _packet_type;
+}
+void PacketResult::setPacketNum(uint32_t packet_num) {
+    _packet_num = packet_num;
+}
+uint32_t PacketResult::getPacketNum() {
+    return _packet_num;
+}
+void PacketResult::setErrorCode(int error_code) {
+    _error_code = error_code;
+}
+int PacketResult::getErrorCode() {
+    return _error_code;
+}
+void PacketResult::setRecvTime(ros::Time recv_time) {
+    _recv_time = recv_time;
+}
+ros::Time PacketResult::getRecvTime() {
+    return _recv_time;
+}
+void PacketResult::setBuffer(char* buffer) {
+    _buffer = buffer;
+}
+char* PacketResult::getBuffer() {
+    return _buffer;
+}
+void PacketResult::setStart(int index) {
+    _start_index = index;
+    _current_index = _start_index;
+}
+int PacketResult::getStart() {
+    return _start_index;
+}
+void PacketResult::setStop(int index) {
+    _stop_index = index;
+}
+int PacketResult::getStop() {
+    return _stop_index;
+}
+bool PacketResult::getInt64(int64_t& result) {
+    result = to_int64(_buffer + _current_index);
+    _current_index += sizeof(int64_t);
+    return checkIndex();
+}
+bool PacketResult::getUInt64(uint64_t& result) {
+    result = to_uint64(_buffer + _current_index);
+    _current_index += sizeof(uint64_t);
+    return checkIndex();
+}
+bool PacketResult::getInt32(int32_t& result) {
+    result = to_int32(_buffer + _current_index);
+    _current_index += sizeof(int32_t);
+    return checkIndex();
+}
+bool PacketResult::getUInt32(uint32_t& result) {
+    result = to_uint32(_buffer + _current_index);
+    _current_index += sizeof(uint32_t);
+    return checkIndex();
+}
+bool PacketResult::getInt16(int16_t& result) {
+    result = to_int16(_buffer + _current_index);
+    _current_index += sizeof(int16_t);
+    return checkIndex();
+}
+bool PacketResult::getUInt16(uint16_t& result) {
+    result = to_uint16(_buffer + _current_index);
+    _current_index += sizeof(uint16_t);
+    return checkIndex();
+}
+bool PacketResult::getInt8(int8_t& result) {
+    result = (int8_t)_buffer[_current_index];
+    _current_index += sizeof(int8_t);
+    return checkIndex();
+}
+bool PacketResult::getUInt8(uint8_t& result) {
+    result = (uint8_t)_buffer[_current_index];
+    _current_index += sizeof(uint8_t);
+    return checkIndex();
+}
+bool PacketResult::getBool(bool& result) {
+    result = (bool)_buffer[_current_index];
+    _current_index += sizeof(uint8_t);
+    return checkIndex();
+}
+bool PacketResult::getFloat(float& result) {
+    result = to_float(_buffer + _current_index);
+    _current_index += sizeof(float);
+    return checkIndex();
+}
+bool PacketResult::getDouble(double& result) {
+    result = to_double(_buffer + _current_index);
+    _current_index += sizeof(double);
+    return checkIndex();
+}
+bool PacketResult::getString(string& result) {
+    int length = to_uint16(_buffer + _current_index);
+    _current_index += sizeof(uint16_t);
+    getString(result, length);
+    return checkIndex();
+}
+bool PacketResult::getString(string& result, int length) {
+    result = to_string(_buffer + _current_index, length);
+    _current_index += length;
+    return checkIndex();
+}
+
+// ---
+// Handshake
+// ---
+
+
+Handshake::Handshake(string category, char* buffer, unsigned int length, uint32_t packet_num, double write_interval, double timeout) {
+    _category = category;
+    _length = length;
+    _write_interval = write_interval;
+    _timeout = timeout;
+    _error_code = TunnelProtocol::NULL_ERROR;
+    _packet_num = packet_num;
+
+    _packet = (char*)malloc(sizeof(char) * length);
+    memcpy(_packet, buffer, sizeof(char) * length);
+    _prev_write_time = ros::Time::now();
+    _initial_write_time = _prev_write_time;
+}
+Handshake::Handshake(PacketResult* result) {
+    int32_t packet_num;
+    if (!result->getInt32(packet_num)) {
+        packet_num = 0;
+    }
+    int32_t error_code;
+    if (!result->getInt32(error_code)) {
+        error_code = TunnelProtocol::NULL_ERROR;
+    }
+    _category = result->getCategory();
+    _error_code = result->getErrorCode();
+    _packet_num = (uint32_t)packet_num;
+    _packet = NULL;
+    _prev_write_time = ros::Time::now();
+    _initial_write_time = _prev_write_time;
+}
+
+string Handshake::getCategory() {
+    return _category;
+}
+
+int Handshake::getErrorCode() {
+    return _error_code;
+}
+
+uint32_t Handshake::getPacketNum() {
+    return _packet_num;
+}
+
+bool Handshake::isEqual(Handshake* other) {
+    return _category == other->getCategory() && _packet_num == other->getPacketNum();
+}
+
+bool Handshake::shouldWriteAgain() {
+    if (_write_interval <= 0.0) {
+        return false;
+    }
+    ros::Time current_time = ros::Time::now();
+    double dt = (current_time - _prev_write_time).toSec();
+    if (dt > _write_interval) {
+        _prev_write_time = current_time;
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+bool Handshake::didFail() {
+    if (_timeout > 0.0) {
+        return (ros::Time::now() - _prev_write_time).toSec() > _timeout;
+    }
+    else {
+        return false;
+    }
+}
+
+unsigned int Handshake::getPacket(char* buffer)
+{
+    memcpy(buffer, _packet, sizeof(char) * _length);
+    return _length;
+}
+
+Handshake::~Handshake() {
+    if (_packet != NULL) {
+        free(_packet);
+    }
+}
+
+// ---
+// TunnelProtocol
+// ---
+
 TunnelProtocol::TunnelProtocol()
 {
     _read_packet_num = -1;
@@ -133,9 +385,9 @@ TunnelProtocol::~TunnelProtocol()
 
 }
 
-int TunnelProtocol::makePacket(packet_type_t packet_type, char* write_buffer, string category, const char *formats, va_list args)
+unsigned int TunnelProtocol::makePacket(packet_type_t packet_type, char* write_buffer, string category, const char *formats, va_list args)
 {
-    int buffer_index = 0;
+    unsigned int buffer_index = 0;
     write_buffer[buffer_index++] = PACKET_START_0;
     write_buffer[buffer_index++] = PACKET_START_1;
     buffer_index += 2;  // bytes 2 and 3 are for packet length which will be calculated later

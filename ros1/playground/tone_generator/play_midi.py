@@ -3,8 +3,13 @@ import time
 import rospy
 
 import mido
+from mido.midifiles.meta import MetaMessage
 
-from bw_interfaces.msg import BwDriveTone
+from bw_interfaces.msg import BwSequence
+from bw_interfaces.srv import PlaySequence
+from bw_interfaces.srv import StopSequence
+
+from sequence_generator import SequenceGenerator
 
 
 def note_to_freq(note):
@@ -21,7 +26,11 @@ class MidiPlayer:
             # log_level=rospy.DEBUG
         )
 
-        self.tone_pub = rospy.Publisher("/bw/module_tone", BwDriveTone, queue_size=10)
+        self.sequence_pub = rospy.Publisher("/bw/sequence", BwSequence, queue_size=10)
+        self.start_seq_srv = rospy.ServiceProxy("/bw/play_sequence", PlaySequence)
+        self.stop_seq_srv = rospy.ServiceProxy("/bw/stop_sequence", StopSequence)
+
+        self.gen = SequenceGenerator()
 
         self.midi = mido.MidiFile('megalovania.mid', clip=True)
 
@@ -33,35 +42,31 @@ class MidiPlayer:
 
         rospy.loginfo("%s init complete" % self.node_name)
 
-    def publish_tone(self, channel, frequency, volume):
-        msg = BwDriveTone()
-        msg.module_index = str(int(channel))
-        msg.frequency = int(frequency)
-        msg.speed = int(volume)
-        self.tone_pub.publish(msg)
-    
-    def stop_tone(self):
-        self.publish_tone(0, 0, 0)
-    
     def run(self):
         time.sleep(2.0)
 
         try:
-            for msg in self.midi.play():
+            for msg in self.midi:
                 print(msg)
-                time.sleep(msg.time)
-                if msg.type != "note_on":
+                if isinstance(msg, MetaMessage):
+                    continue
+                if msg.type != "note_off":
                     continue
                 if msg.channel not in self.channel_map:
                     continue
                 channel = self.channel_map[msg.channel]
+                if channel != 0:
+                    continue
                 frequency = note_to_freq(msg.note)
                 while frequency < 100:
                     frequency *= 2
 
-                self.publish_tone(channel, frequency, 30)
+                self.gen.add(*self.gen.make_tone(frequency, 30, msg.time * 1000))
+            self.sequence_pub.publish(self.gen.msg)
+            print(self.start_seq_srv(self.gen.serial, False))
+            rospy.spin()
         finally:
-            self.stop_tone()
+           self.stop_seq_srv() 
 
 if __name__ == "__main__":
     node = MidiPlayer()
