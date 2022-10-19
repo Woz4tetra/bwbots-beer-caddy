@@ -28,7 +28,8 @@ class SequenceGenerator:
         for element in elements:
             self.msg.sequence.append(element)
 
-    def make_start_tone(self, channel: int, frequency: int, volume: int):
+    @classmethod
+    def make_start_tone(cls, channel: int, frequency: int, volume: int):
         tone_msg = BwSequenceElement()
         channel = clamp(int(channel), 0, 4)
         frequency = clamp(int(frequency), 0, 0xffff)
@@ -36,18 +37,28 @@ class SequenceGenerator:
         tone_msg.parameters = (channel << 28) | (volume << 20) | (frequency << 4) | BwSequenceType.START_TONE
         return tone_msg
 
-    def make_delay(self, delay_ms):
+    @classmethod
+    def make_stop_tone(cls, channel: int):
+        tone_msg = BwSequenceElement()
+        channel = clamp(int(channel), 0, 4)
+        tone_msg.parameters = (channel << 28) | BwSequenceType.STOP_TONE
+        return tone_msg
+
+    @classmethod
+    def make_delay(cls, delay_ms):
         delay_msg = BwSequenceElement()
         delay_ms = clamp(int(delay_ms), 0, 10000)
         delay_msg.parameters = (delay_ms << 4) | BwSequenceType.DELAY
         return delay_msg
 
-    def make_tone(self, frequency, volume, duration_ms):
-        tone_msg = self.make_start_tone(0, frequency, volume)
-        delay_msg = self.make_delay(duration_ms)
+    @classmethod
+    def make_tone(cls, frequency, volume, duration_ms):
+        tone_msg = cls.make_start_tone(0, frequency, volume)
+        delay_msg = cls.make_delay(duration_ms)
         return tone_msg, delay_msg
 
-    def make_led(self, index, r, g, b, w):
+    @classmethod
+    def make_led(cls, index, r, g, b, w):
         led_msg = BwSequenceElement()
         index = clamp(int(index), 0, 0xffff)
         r = clamp(int(r), 0, 0xff)
@@ -57,7 +68,8 @@ class SequenceGenerator:
         led_msg.parameters = (index << 36) | (w << 28) | (r << 20) | (g << 12) | (b << 4) | BwSequenceType.SET_RING_LED
         return led_msg
 
-    def make_show(self):
+    @classmethod
+    def make_show(cls):
         show_msg = BwSequenceElement()
         show_msg.parameters = BwSequenceType.SHOW_LED
         return show_msg

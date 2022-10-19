@@ -10,6 +10,7 @@ from bw_interfaces.srv import PlaySequence
 from bw_interfaces.srv import StopSequence
 
 from sequence_generator import SequenceGenerator
+from midi_sequencer import MidiSequencer
 
 
 def note_to_freq(note):
@@ -30,38 +31,16 @@ class MidiPlayer:
         self.start_seq_srv = rospy.ServiceProxy("/bw/play_sequence", PlaySequence)
         self.stop_seq_srv = rospy.ServiceProxy("/bw/stop_sequence", StopSequence)
 
+        self.midi_sequencer = MidiSequencer("megalovania.mid", 30, True)
         self.gen = SequenceGenerator()
-
-        self.midi = mido.MidiFile('megalovania.mid', clip=True)
-
-        self.channel_map = {
-            0: 0,
-            1: 1,
-            # 9: 3
-        }
 
         rospy.loginfo("%s init complete" % self.node_name)
 
     def run(self):
-        time.sleep(2.0)
+        time.sleep(1.0)
 
         try:
-            for msg in self.midi:
-                print(msg)
-                if isinstance(msg, MetaMessage):
-                    continue
-                if msg.type != "note_off":
-                    continue
-                if msg.channel not in self.channel_map:
-                    continue
-                channel = self.channel_map[msg.channel]
-                if channel != 0:
-                    continue
-                frequency = note_to_freq(msg.note)
-                while frequency < 100:
-                    frequency *= 2
-
-                self.gen.add(*self.gen.make_tone(frequency, 30, msg.time * 1000))
+            self.midi_sequencer.generate(self.gen)
             self.sequence_pub.publish(self.gen.msg)
             print(self.start_seq_srv(self.gen.serial, False))
             rospy.spin()
