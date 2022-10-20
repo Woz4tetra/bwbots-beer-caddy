@@ -1,14 +1,14 @@
 <robot name="robeert">
     <material name="white">
-        <color rgba="1 1 1"/>
+        <color rgba="1 1 1 1"/>
     </material>
 
     <material name="blue">
-        <color rgba="0 0.1 0.9"/>
+        <color rgba="0 0.1 0.9 1"/>
     </material>
 
     <material name="red">
-        <color rgba="0.9 0.1 0"/>
+        <color rgba="0.9 0.1 0 1"/>
     </material>
 
     <!-- base_link -> base_tilt_link is defined in bw_imu_joint node -->

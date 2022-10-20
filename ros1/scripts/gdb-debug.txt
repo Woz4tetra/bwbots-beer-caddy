@@ -1,0 +1,1 @@
+<node name="bw_tunnel" pkg="bw_tunnel" type="bw_tunnel_node" output="screen" required="true" launch-prefix="gdb -ex run --args" >
