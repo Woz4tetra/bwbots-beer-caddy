@@ -289,6 +289,7 @@ bool BwTunnel::playSequenceCallback(bw_interfaces::PlaySequence::Request &req, b
     PacketResult* result = getResult(">seq", "cb", 0.0, 1.0, req.serial, req.loop);
     bool success;
     if (result == NULL || !result->getBool(success)) {
+        ROS_WARN("Failed to get start sequence result!");
         resp.success = false;
     }
     else {

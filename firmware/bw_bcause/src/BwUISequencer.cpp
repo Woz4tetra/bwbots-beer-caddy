@@ -131,7 +131,7 @@ void BwUISequencer::stop_tone_from_param(uint64_t parameters)
 {
     uint8_t channel = (parameters >> 28) & 0b1111;
     Serial.print("Stopping tone. channel=");
-    Serial.print(channel);
+    Serial.println(channel);
     set_module_tone(channel, 500, 0);
 }
 

@@ -49,6 +49,7 @@ private:
     char* _write_buffer;
 
     std::mutex _write_lock;
+    std::mutex _handshake_lock;
     boost::thread* _poll_thread;
     boost::thread* _write_thread;
     TunnelProtocol* _protocol;

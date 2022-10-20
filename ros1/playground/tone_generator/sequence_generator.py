@@ -27,6 +27,9 @@ class SequenceGenerator:
     def add(self, *elements):
         for element in elements:
             self.msg.sequence.append(element)
+    
+    def __len__(self):
+        return len(self.msg.sequence)
 
     @classmethod
     def make_start_tone(cls, channel: int, frequency: int, volume: int):
@@ -47,13 +50,13 @@ class SequenceGenerator:
     @classmethod
     def make_delay(cls, delay_ms):
         delay_msg = BwSequenceElement()
-        delay_ms = clamp(int(delay_ms), 0, 10000)
+        delay_ms = clamp(int(delay_ms), 0, 100000)
         delay_msg.parameters = (delay_ms << 4) | BwSequenceType.DELAY
         return delay_msg
 
     @classmethod
-    def make_tone(cls, frequency, volume, duration_ms):
-        tone_msg = cls.make_start_tone(0, frequency, volume)
+    def make_tone(cls, channel, frequency, volume, duration_ms):
+        tone_msg = cls.make_start_tone(channel, frequency, volume)
         delay_msg = cls.make_delay(duration_ms)
         return tone_msg, delay_msg
 

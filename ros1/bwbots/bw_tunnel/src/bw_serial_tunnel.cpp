@@ -189,7 +189,9 @@ void BwSerialTunnel::writeHandshakePacket(string category, const char *formats, 
     // ROS_DEBUG("Writing handshake packet: %s", packetToString(_write_buffer, 0, length).c_str());
     if (length > 0) {
         Handshake* handshake = new Handshake(category, _write_buffer, length, _protocol->getWritePacketNum() - 1, write_interval, timeout);
+        _handshake_lock.lock();
         _pending_handshakes.push_back(handshake);
+        _handshake_lock.unlock();
         _write_lock.lock();
         _device.write((uint8_t*)_write_buffer, length);
         _write_lock.unlock();
@@ -209,22 +211,22 @@ PacketResult* BwSerialTunnel::getResult(string category, const char *formats, do
     va_list args;
     va_start(args, timeout);
     int length = _protocol->makePacket(PACKET_TYPE_HANDSHAKE, _write_buffer, category, formats, args);
-    // ROS_DEBUG("Writing handshake packet: %s", packetToString(_write_buffer, 0, length).c_str());
+    // ROS_INFO("Writing get packet: %s", packetToString(_write_buffer, 0, length).c_str());
     PacketResult* result = NULL;
     if (length > 0) {
         Handshake* handshake = new Handshake(category, _write_buffer, length, _protocol->getWritePacketNum() - 1, write_interval, timeout);
+        _handshake_lock.lock();
         _pending_handshakes.push_back(handshake);
+        _handshake_lock.unlock();
         _write_lock.lock();
         _device.write((uint8_t*)_write_buffer, length);
         _write_lock.unlock();
 
         std::unique_lock<std::mutex> lk(_result_get_lock);
         _is_waiting_on_result = true;
-        if (_result_get != NULL) {
-            delete _result_get;
-            _result_get = NULL;
+        if (_result_get == NULL) {
+            _result_get = new PacketResult(TunnelProtocol::NULL_ERROR, ros::Time::now());
         }
-        _result_get = new PacketResult(TunnelProtocol::NULL_ERROR, ros::Time::now());
         _result_get->setCategory(category);
         std::chrono::duration<double> cond_timeout(timeout);
         _result_get_condition.wait_for(lk, cond_timeout, [this]{ return !this->_is_waiting_on_result; });
@@ -234,6 +236,7 @@ PacketResult* BwSerialTunnel::getResult(string category, const char *formats, do
         ROS_DEBUG("Skipping write for packet: %s. Length is %d", packetToString(_write_buffer, 0, length).c_str(), length);
     }
     va_end(args);
+    ROS_INFO("got result");
     return result;
 }
 
@@ -243,8 +246,10 @@ void BwSerialTunnel::checkHandshakes()
         Handshake* handshake = _pending_handshakes.at(index);
         if (handshake->didFail()) {
             ROS_WARN("Handshake packet failed! The category was %s.", handshake->getCategory().c_str());
+            _handshake_lock.lock();
             delete _pending_handshakes.at(index);
             _pending_handshakes.erase(_pending_handshakes.begin() + index);
+            _handshake_lock.unlock();
             index--;
             break;
         }
@@ -268,9 +273,11 @@ void BwSerialTunnel::compareHandshakes(PacketResult* result)
     for (size_t index = 0; index < _pending_handshakes.size(); index++) {
         Handshake* pending_handshake = _pending_handshakes.at(index);
         if (pending_handshake->isEqual(handshake)) {
-            ROS_INFO("Handshake for %s received.", handshake->getCategory().c_str());
+            ROS_INFO("Handshake for %s #%d received.", handshake->getCategory().c_str(), handshake->getPacketNum());
+            _handshake_lock.lock();
             delete _pending_handshakes.at(index);
             _pending_handshakes.erase(_pending_handshakes.begin() + index);
+            _handshake_lock.unlock();
             index--;
             return;
         }

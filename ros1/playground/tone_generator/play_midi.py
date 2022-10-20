@@ -31,7 +31,12 @@ class MidiPlayer:
         self.start_seq_srv = rospy.ServiceProxy("/bw/play_sequence", PlaySequence)
         self.stop_seq_srv = rospy.ServiceProxy("/bw/stop_sequence", StopSequence)
 
-        self.midi_sequencer = MidiSequencer("megalovania.mid", 30, True)
+        # path = "megalovania.mid"
+        # path = "brawl.mid"
+        path = "spear_pillar.mid"
+        # path = "one_winged_angel.mid"
+        # path = "simple.mid"
+        self.midi_sequencer = MidiSequencer(path, 30, True)
         self.gen = SequenceGenerator()
 
         rospy.loginfo("%s init complete" % self.node_name)
@@ -40,8 +45,11 @@ class MidiPlayer:
         time.sleep(1.0)
 
         try:
-            self.midi_sequencer.generate(self.gen)
+            rospy.loginfo("Generating sequence")
+            length = self.midi_sequencer.generate(self.gen)
+            rospy.loginfo(f"Publishing sequence with {length} notes. Length is {len(self.gen.msg.sequence)}")
             self.sequence_pub.publish(self.gen.msg)
+            rospy.loginfo("Starting sequence")
             print(self.start_seq_srv(self.gen.serial, False))
             rospy.spin()
         finally:

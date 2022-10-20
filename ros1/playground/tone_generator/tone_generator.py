@@ -67,7 +67,7 @@ class ToneGenerator:
             duration = int(duration)
             frequency = self.semitone_table[name]
 
-            self.gen.add(*self.gen.make_tone(frequency, volume, duration))
+            self.gen.add(*self.gen.make_tone(0, frequency, volume, duration))
             self.gen.add(self.gen.make_led(index % 24, 0, 0, 0, 255))
             self.gen.add(self.gen.make_show())
         for index in range(24):
