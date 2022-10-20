@@ -59,6 +59,7 @@ class MidiSequencer:
                 frequency = note_to_freq(msg.note)
                 while frequency < 20:
                     frequency *= 2
+
                 if not self.is_channel_playable(msg.channel):
                     continue
             else:

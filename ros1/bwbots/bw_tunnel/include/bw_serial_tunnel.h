@@ -29,6 +29,7 @@
 
 using namespace std;
 
+#define LOCK_GET_RESULT std::unique_lock<std::mutex> lk(_result_get_lock)
 
 class BwSerialTunnel {
 private:
@@ -70,7 +71,6 @@ private:
     ros::Time _start_time;
 
     bool _is_waiting_on_result;
-    std::mutex _result_get_lock;
     std::condition_variable _result_get_condition;
     PacketResult* _result_get;
 
@@ -93,6 +93,8 @@ private:
 
 protected:
     ros::NodeHandle nh;  // ROS node handle
+
+    std::mutex _result_get_lock;
 
     void begin();
 

@@ -146,9 +146,9 @@ PacketResult::PacketResult(int error_code, ros::Time recv_time) {
 }
 
 PacketResult::~PacketResult() {
-    if (_buffer != NULL) {
-        free(_buffer);
-    }
+    // if (_buffer != NULL) {
+    //     free(_buffer);
+    // }
 }
 void PacketResult::setFrom(PacketResult* result) {
     _category = result->getCategory();
@@ -156,14 +156,15 @@ void PacketResult::setFrom(PacketResult* result) {
     _error_code = result->getErrorCode();
     _packet_type = result->getPacketType();
     _packet_num = result->getPacketNum();
-    _start_index = result->getStart();
-    _stop_index = result->getStop();
-    int length = _stop_index - _start_index;
-    if (length < 0) {
-        length = 0;
+    _start_index = 0;
+    _stop_index = result->getStop() - result->getStart();
+    if (_stop_index < 0) {
+        _stop_index = 0;
     }
-    _buffer = (char*)malloc(sizeof(char) * length);
-    memcpy(_buffer, result->getBuffer() + _start_index, sizeof(char) * length);
+    else {
+        _buffer = (char*)malloc(sizeof(char) * _stop_index);
+        memcpy(_buffer, result->getBuffer(), sizeof(char) * _stop_index);
+    }
 }
 
 void PacketResult::setCategory(string category) {
@@ -216,67 +217,80 @@ int PacketResult::getStop() {
     return _stop_index;
 }
 bool PacketResult::getInt64(int64_t& result) {
+    if (_buffer == NULL) { return false; }
     result = to_int64(_buffer + _current_index);
     _current_index += sizeof(int64_t);
     return checkIndex();
 }
 bool PacketResult::getUInt64(uint64_t& result) {
+    if (_buffer == NULL) { return false; }
     result = to_uint64(_buffer + _current_index);
     _current_index += sizeof(uint64_t);
     return checkIndex();
 }
 bool PacketResult::getInt32(int32_t& result) {
+    if (_buffer == NULL) { return false; }
     result = to_int32(_buffer + _current_index);
     _current_index += sizeof(int32_t);
     return checkIndex();
 }
 bool PacketResult::getUInt32(uint32_t& result) {
+    if (_buffer == NULL) { return false; }
     result = to_uint32(_buffer + _current_index);
     _current_index += sizeof(uint32_t);
     return checkIndex();
 }
 bool PacketResult::getInt16(int16_t& result) {
+    if (_buffer == NULL) { return false; }
     result = to_int16(_buffer + _current_index);
     _current_index += sizeof(int16_t);
     return checkIndex();
 }
 bool PacketResult::getUInt16(uint16_t& result) {
+    if (_buffer == NULL) { return false; }
     result = to_uint16(_buffer + _current_index);
     _current_index += sizeof(uint16_t);
     return checkIndex();
 }
 bool PacketResult::getInt8(int8_t& result) {
+    if (_buffer == NULL) { return false; }
     result = (int8_t)_buffer[_current_index];
     _current_index += sizeof(int8_t);
     return checkIndex();
 }
 bool PacketResult::getUInt8(uint8_t& result) {
+    if (_buffer == NULL) { return false; }
     result = (uint8_t)_buffer[_current_index];
     _current_index += sizeof(uint8_t);
     return checkIndex();
 }
 bool PacketResult::getBool(bool& result) {
+    if (_buffer == NULL) { return false; }
     result = (bool)_buffer[_current_index];
     _current_index += sizeof(uint8_t);
     return checkIndex();
 }
 bool PacketResult::getFloat(float& result) {
+    if (_buffer == NULL) { return false; }
     result = to_float(_buffer + _current_index);
     _current_index += sizeof(float);
     return checkIndex();
 }
 bool PacketResult::getDouble(double& result) {
+    if (_buffer == NULL) { return false; }
     result = to_double(_buffer + _current_index);
     _current_index += sizeof(double);
     return checkIndex();
 }
 bool PacketResult::getString(string& result) {
+    if (_buffer == NULL) { return false; }
     int length = to_uint16(_buffer + _current_index);
     _current_index += sizeof(uint16_t);
     getString(result, length);
     return checkIndex();
 }
 bool PacketResult::getString(string& result, int length) {
+    if (_buffer == NULL) { return false; }
     result = to_string(_buffer + _current_index, length);
     _current_index += length;
     return checkIndex();

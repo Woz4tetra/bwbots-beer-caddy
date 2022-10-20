@@ -132,7 +132,7 @@ void BwUISequencer::stop_tone_from_param(uint64_t parameters)
     uint8_t channel = (parameters >> 28) & 0b1111;
     Serial.print("Stopping tone. channel=");
     Serial.println(channel);
-    set_module_tone(channel, 500, 0);
+    set_module_tone(channel, 0, 0);
 }
 
 void BwUISequencer::set_led_from_param(uint64_t parameters)
@@ -150,7 +150,9 @@ uint32_t BwUISequencer::get_delay(uint64_t parameters) {
 void BwUISequencer::set_module_tone(unsigned int channel, int frequency, int volume)
 {
     if (channel < drive->get_num_motors()) {
-        drive->get_module(channel)->get_motor()->set_frequency(frequency);
+        if (frequency > 0) {
+            drive->get_module(channel)->get_motor()->set_frequency(frequency);
+        }
         drive->get_module(channel)->command_wheel_pwm(volume);
     }
 }

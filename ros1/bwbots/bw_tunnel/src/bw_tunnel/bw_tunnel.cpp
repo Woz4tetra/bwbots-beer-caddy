@@ -286,7 +286,10 @@ bool BwTunnel::odomResetCallback(bw_interfaces::OdomReset::Request &req, bw_inte
 bool BwTunnel::playSequenceCallback(bw_interfaces::PlaySequence::Request &req, bw_interfaces::PlaySequence::Response &resp)
 {
     ROS_INFO("Playing sequence %d. Looping=%d", req.serial, req.loop);
+    // writeHandshakePacket(">seq", "cb", 0.5, 1.0, req.serial, req.loop);
+    // resp.success = true;
     PacketResult* result = getResult(">seq", "cb", 0.0, 1.0, req.serial, req.loop);
+    LOCK_GET_RESULT;
     bool success;
     if (result == NULL || !result->getBool(success)) {
         ROS_WARN("Failed to get start sequence result!");
@@ -300,7 +303,11 @@ bool BwTunnel::playSequenceCallback(bw_interfaces::PlaySequence::Request &req, b
 
 bool BwTunnel::stopSequenceCallback(bw_interfaces::StopSequence::Request &req, bw_interfaces::StopSequence::Response &resp)
 {
+    ROS_INFO("Stopping sequence.");
+    // writeHandshakePacket("xseq", "", 0.0, 1.0);
+    // resp.success = true;
     PacketResult* result = getResult("xseq", "", 0.0, 1.0);
+    LOCK_GET_RESULT;
     bool success;
     if (result == NULL || !result->getBool(success)) {
         resp.success = false;

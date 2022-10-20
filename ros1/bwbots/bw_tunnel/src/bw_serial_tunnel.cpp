@@ -236,7 +236,6 @@ PacketResult* BwSerialTunnel::getResult(string category, const char *formats, do
         ROS_DEBUG("Skipping write for packet: %s. Length is %d", packetToString(_write_buffer, 0, length).c_str(), length);
     }
     va_end(args);
-    ROS_INFO("got result");
     return result;
 }
 
@@ -255,8 +254,8 @@ void BwSerialTunnel::checkHandshakes()
         }
         if (handshake->shouldWriteAgain()) {
             ROS_DEBUG("Writing a handshake packet again");
-            unsigned int length = handshake->getPacket(_write_buffer);
             _write_lock.lock();
+            unsigned int length = handshake->getPacket(_write_buffer);
             _device.write((uint8_t*)_write_buffer, length);
             _write_lock.unlock();
         }
@@ -329,8 +328,7 @@ bool BwSerialTunnel::pollDevice()
                 {
                     std::lock_guard<std::mutex> lk(_result_get_lock);
                     _is_waiting_on_result = false;
-                    delete _result_get;
-                    _result_get = new PacketResult(result);
+                    _result_get = result;
                 }
                 _result_get_condition.notify_all();
             }

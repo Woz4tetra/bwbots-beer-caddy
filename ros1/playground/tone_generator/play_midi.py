@@ -31,12 +31,9 @@ class MidiPlayer:
         self.start_seq_srv = rospy.ServiceProxy("/bw/play_sequence", PlaySequence)
         self.stop_seq_srv = rospy.ServiceProxy("/bw/stop_sequence", StopSequence)
 
-        # path = "megalovania.mid"
-        # path = "brawl.mid"
-        path = "spear_pillar.mid"
-        # path = "one_winged_angel.mid"
-        # path = "simple.mid"
-        self.midi_sequencer = MidiSequencer(path, 30, True)
+        self.midi_path = rospy.get_param("~midi_path", "simple.mid")
+        self.volume = rospy.get_param("~volume", 30)
+        self.midi_sequencer = MidiSequencer(self.midi_path, self.volume, True)
         self.gen = SequenceGenerator()
 
         rospy.loginfo("%s init complete" % self.node_name)
