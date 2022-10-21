@@ -245,12 +245,17 @@ void BwTunnel::loadSequenceCallback(const bw_interfaces::BwSequenceConstPtr& msg
         length = (uint16_t)msg->sequence.size();
     }
     writePacket("lseq", "cg", msg->serial, length);
+    int attempts = 0;
     for (size_t index = 0; index < length; index++) {
         bw_interfaces::BwSequenceElement element = msg->sequence.at(index);
-        if (getResult("seq", "cgm", 0.0, 1.0, msg->serial, index, element.parameters) == NULL) {
-            ROS_WARN("Failed to write entire sequence!");
-            break;
+        while (getResult("seq", "cgm", 0.0, 1.0, msg->serial, index, element.parameters) == NULL) {
+            attempts++;
+            if (attempts > 10) {
+                ROS_WARN("Failed to write entire sequence!");
+                break;
+            }
         }
+        attempts = 0;
     }
 }
 
