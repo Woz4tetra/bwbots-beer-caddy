@@ -14,8 +14,6 @@ public class ArticulationWheelController : MonoBehaviour
     public ArticulationBody wheel2;
     public ArticulationBody wheel3;
     public ArticulationBody wheel4;
-    public float wheelTrackLength;
-    public float wheelRadius;
 
     private float vel1;
     private float vel2;
@@ -30,27 +28,12 @@ public class ArticulationWheelController : MonoBehaviour
     {
     }
 
-    public void setRobotVelocity(float targetLinearSpeed, float targetAngularSpeed)
+    public void setRobotVelocity(float targetLinearSpeed, float targetLateralSpeed, float targetAngularSpeed)
     {
-        // Stop the wheel if target velocity is 0
-        // if (targetLinearSpeed == 0 && targetAngularSpeed == 0)
-        // {
-        //     stopWheel(leftWheel);
-        //     stopWheel(rightWheel);
-        // }
-        // else
-        // {
-        //     // Convert from linear x and angular z velocity to wheel speed
-        //     vRight = targetAngularSpeed*(wheelTrackLength/2) + targetLinearSpeed;
-        //     vLeft = -targetAngularSpeed*(wheelTrackLength/2) + targetLinearSpeed;
-
-        //     setWheelVelocity(leftWheel, vLeft / wheelRadius * Mathf.Rad2Deg);
-        //     setWheelVelocity(rightWheel, vRight / wheelRadius * Mathf.Rad2Deg);
-        // }
         setWheelVelocity(wheel1, targetLinearSpeed);
-        setWheelVelocity(wheel2, targetLinearSpeed);
+        setWheelVelocity(wheel2, -targetLinearSpeed);
         setWheelVelocity(wheel3, targetLinearSpeed);
-        setWheelVelocity(wheel4, targetLinearSpeed);
+        setWheelVelocity(wheel4, -targetLinearSpeed);
     }
 
     private void setWheelVelocity(ArticulationBody wheel, float jointVelocity)

@@ -28,6 +28,6 @@ public class KeyboardControl : MonoBehaviour
 
     void FixedUpdate()
     {
-        wheelController.setRobotVelocity(targetLinearSpeed, targetAngularSpeed);
+        wheelController.setRobotVelocity(targetLinearSpeed, 0.0f, targetAngularSpeed);
     }
 }

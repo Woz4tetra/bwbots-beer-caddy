@@ -2223,8 +2223,8 @@ GameObject:
   - component: {fileID: 1085098831}
   - component: {fileID: 1085098835}
   - component: {fileID: 1085098834}
-  - component: {fileID: 1085098833}
   - component: {fileID: 1085098832}
+  - component: {fileID: 1085098836}
   m_Layer: 0
   m_Name: base_tilt_link
   m_TagString: Untagged
@@ -2269,24 +2269,6 @@ MonoBehaviour:
   jointName: base_joint
   EffortLimit: 1000
   VelocityLimit: 1000
---- !u!114 &1085098833
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1085098830}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7631001c063f69d4495bca90731abab2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  displayInertiaGizmo: 0
-  useUrdfData: 1
-  centerOfMass: {x: -0, y: 0, z: 0}
-  inertiaTensor: {x: 0.9867938, y: 1.2236035, z: 1.2869028}
-  inertiaTensorRotation: {x: 0.5130712, y: -0.49372327, z: 0.50010484, w: -0.49283913}
-  inertialAxisRotation: {x: 0, y: 0, z: 0, w: 1}
 --- !u!171741748 &1085098834
 ArticulationBody:
   m_ObjectHideFlags: 0
@@ -2352,6 +2334,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   IsBaseLink: 0
+--- !u!114 &1085098836
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1085098830}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7631001c063f69d4495bca90731abab2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  displayInertiaGizmo: 0
+  useUrdfData: 1
+  centerOfMass: {x: 0, y: 0, z: 0}
+  inertiaTensor: {x: 0, y: 0, z: 0}
+  inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
+  inertialAxisRotation: {x: 0, y: 0, z: 0, w: 0}
 --- !u!1001 &1093542825
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2923,8 +2923,6 @@ MonoBehaviour:
   wheel2: {fileID: 2115699131}
   wheel3: {fileID: 691219791}
   wheel4: {fileID: 104418388}
-  wheelTrackLength: 0.02
-  wheelRadius: 0.0575
 --- !u!114 &1388347202
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3020,8 +3018,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   wheelController: {fileID: 1388347201}
-  speed: 10
-  angularSpeed: 10
+  speed: 1000
+  angularSpeed: 1000
 --- !u!1 &1423854081
 GameObject:
   m_ObjectHideFlags: 0
