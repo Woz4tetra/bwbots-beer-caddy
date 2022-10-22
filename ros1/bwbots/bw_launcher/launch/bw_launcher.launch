@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <node pkg="bw_launcher" type="bw_launcher_node.py" name="bw_launcher" output="screen" required="false">
+        <rosparam param="launches" file="$(find bw_launcher)/config/launcher.yaml" command="load"/>
+    </node>
+</launch>

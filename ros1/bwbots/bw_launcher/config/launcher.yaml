@@ -1,0 +1,6 @@
+move_base:
+  package: "bw_move_base"
+  path: "bw_move_base.launch"
+  on_start: false
+  topics:
+    /move_base: None
