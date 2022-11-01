@@ -3,7 +3,7 @@
     <arg name="robot_address" default="/dev/ttyTHS0"/>
 
     <group ns="bw">
-        <node name="bw_tunnel" pkg="bw_tunnel" type="bw_tunnel_node" output="screen" required="true">
+        <node name="bw_tunnel" pkg="bw_tunnel" type="bw_tunnel_node" output="screen" respawn="true">
             <rosparam param="joint_names" file="$(find bw_description)/config/robeert_joints.yaml" command="load"/>
             <param name="device_path" value="$(arg robot_address)"/>
             <param name="device_baud" value="1000000"/>

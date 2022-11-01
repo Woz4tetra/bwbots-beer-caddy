@@ -21,6 +21,7 @@ def main():
 
     with open(args.config) as file:
         config = yaml.safe_load(file)
+        print(config)
 
     sequence_locations = []
     stored_sequences = []
@@ -33,11 +34,12 @@ def main():
         elif filepath.endswith(".mid"):
             name = os.path.splitext(os.path.basename(filepath))[0]
             if name in config:
-                volume = config.get("volume", 30)
-                tempo_multiplier = config.get("tempo_multiplier", 1.0)
+                volume = config[name].get("volume", 30)
+                tempo_multiplier = config[name].get("tempo_multiplier", 1.0)
             else:
                 volume = 30
                 tempo_multiplier = 1.0
+            print(f"Set volume to {volume}. Set tempo multipler to {tempo_multiplier}")
             midi_sequencer = MidiSequencer(filepath, int(volume), True, float(tempo_multiplier))
             midi_sequencer.generate(generator)
         else:

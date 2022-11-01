@@ -436,6 +436,7 @@ void packetCallback(PacketResult* result)
             DEBUG_SERIAL.print(should_loop);
             DEBUG_SERIAL.print(", from_flash=");
             DEBUG_SERIAL.println(from_flash);
+            set_control_mode(CONTROL_TONE);
             set_motor_enable(true);
         }
         else {
@@ -619,13 +620,13 @@ void loop()
     bool is_sequence_running = sequencer_state > 0;
     if (was_sequencer_active != is_sequence_running) {
         was_sequencer_active = is_sequence_running;
-        stop_motors();
         if (is_sequence_running) {
             Serial.println("Sequence started");
         }
         else {
             Serial.println("Sequence stopped");
             set_control_mode(CONTROL_GLOBAL);
+            stop_motors();
         }
     }
 

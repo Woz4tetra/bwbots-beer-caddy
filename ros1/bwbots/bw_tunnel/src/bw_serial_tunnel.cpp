@@ -81,12 +81,18 @@ bool BwSerialTunnel::openDevice()
 {
     ROS_INFO("Initializing device");
 
-    _device.setPort(_device_path);
-    _device.setBaudrate(_device_baud);
-    serial::Timeout timeout = serial::Timeout::simpleTimeout(1000);
-    _device.setTimeout(timeout);
-    _device.open();
-
+    try {
+        _device.setPort(_device_path);
+        _device.setBaudrate(_device_baud);
+        serial::Timeout timeout = serial::Timeout::simpleTimeout(1000);
+        _device.setTimeout(timeout);
+        _device.open();
+    }
+    catch (serial::IOException& e) {
+        ROS_WARN("Device failed to open!");
+        return false;
+    }
+    
     if (!_device.isOpen()) {
         return false;
     }
@@ -168,7 +174,12 @@ void BwSerialTunnel::writePacket(string category, const char *formats, ...)
     // ROS_DEBUG("Writing packet: %s", packetToString(_write_buffer, 0, length).c_str());
     if (length > 0) {
         _write_lock.lock();
-        _device.write((uint8_t*)_write_buffer, length);
+        try {
+            _device.write((uint8_t*)_write_buffer, length);
+        }
+        catch (serial::IOException& e) {
+            ROS_WARN("Failed to write to device!");
+        }
         _write_lock.unlock();
     }
     else {
@@ -193,7 +204,12 @@ void BwSerialTunnel::writeHandshakePacket(string category, const char *formats, 
         _pending_handshakes.push_back(handshake);
         _handshake_lock.unlock();
         _write_lock.lock();
-        _device.write((uint8_t*)_write_buffer, length);
+        try {
+            _device.write((uint8_t*)_write_buffer, length);
+        }
+        catch (serial::IOException& e) {
+            ROS_WARN("Failed to write to device!");
+        }
         _write_lock.unlock();
     }
     else {
@@ -219,7 +235,13 @@ PacketResult* BwSerialTunnel::getResult(string category, const char *formats, do
         _pending_handshakes.push_back(handshake);
         _handshake_lock.unlock();
         _write_lock.lock();
-        _device.write((uint8_t*)_write_buffer, length);
+        try {
+            _device.write((uint8_t*)_write_buffer, length);
+        }
+        catch (serial::IOException& e) {
+            ROS_WARN("Failed to write to device!");
+            return new PacketResult(TunnelProtocol::NULL_ERROR, ros::Time::now());
+        }
         _write_lock.unlock();
 
         std::unique_lock<std::mutex> lk(_result_get_lock);
@@ -256,7 +278,13 @@ void BwSerialTunnel::checkHandshakes()
             ROS_DEBUG("Writing a handshake packet again");
             _write_lock.lock();
             unsigned int length = handshake->getPacket(_write_buffer);
-            _device.write((uint8_t*)_write_buffer, length);
+            try {
+                _device.write((uint8_t*)_write_buffer, length);
+            }
+            catch (serial::IOException& e) {
+                ROS_WARN("Failed to write to device!");
+                return;
+            }
             _write_lock.unlock();
         }
     }
@@ -292,18 +320,25 @@ bool BwSerialTunnel::pollDevice()
         return true;
     }
 
-    int num_chars_read = _device.available();
-    if (num_chars_read <= 0) {
-        if (didDeviceTimeout()) {
-            reOpenDevice();
+    int num_chars_read;
+    try {
+        num_chars_read = _device.available();
+        if (num_chars_read <= 0) {
+            if (didDeviceTimeout()) {
+                reOpenDevice();
+            }
+            return true;
         }
+        if (_unparsed_index + num_chars_read >= READ_BUFFER_LEN) {
+            num_chars_read = READ_BUFFER_LEN - _unparsed_index - 1;
+        }
+        _device.read((uint8_t*)(_read_buffer + _unparsed_index), num_chars_read);
+    }
+    catch (serial::IOException& e) {
+        ROS_WARN("Failed to read from device!");
         return true;
     }
-    if (_unparsed_index + num_chars_read >= READ_BUFFER_LEN) {
-        num_chars_read = READ_BUFFER_LEN - _unparsed_index - 1;
-    }
-    _device.read((uint8_t*)(_read_buffer + _unparsed_index), num_chars_read);
-
+    
     _last_read_time = ros::Time::now();
     int read_stop_index = _unparsed_index + num_chars_read;
     int last_parsed_index = _protocol->parseBuffer(_read_buffer, 0, read_stop_index);
@@ -384,7 +419,12 @@ void BwSerialTunnel::writeDeviceTick() {
 
 void BwSerialTunnel::closeDevice()
 {
-    _device.close();
+    try {
+        _device.close();
+    }
+    catch (serial::IOException& e) {
+        ROS_WARN("Failed to close device!");
+    }
     _initialized = false;
 }
 

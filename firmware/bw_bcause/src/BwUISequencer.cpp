@@ -83,6 +83,10 @@ int BwUISequencer::update()
             return 0;
         }
     }
+    if (_selected_index == 0) {
+        _sequence_start_time = millis();
+        _cumulative_delay = 0;
+    }
     uint32_t dt = millis() - _sequence_start_time;
     if (dt < _cumulative_delay) {
         return _prev_status;  // wait for delay to finish
