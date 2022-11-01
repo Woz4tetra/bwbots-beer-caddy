@@ -11,6 +11,7 @@ BwUISequencer::BwUISequencer(BwDriveTrain* drive, Adafruit_NeoPixel* led_ring, i
     }
     _selected_serial = MAX_NUM_SEQUENCES + 1;
     _is_delay_active = false;
+    _from_flash = false;
 }
 
 void BwUISequencer::allocate_sequence(uint8_t serial, uint16_t length)
@@ -31,11 +32,19 @@ bool BwUISequencer::set_element(uint8_t serial, uint16_t index, uint64_t paramet
     return true;
 }
 
-bool BwUISequencer::play_sequence(uint8_t serial, bool loop_sequence)
+bool BwUISequencer::play_sequence(uint8_t serial, bool loop_sequence, bool from_flash)
 {
-    if (_sequences[serial] == NULL) {
-        return false;
+    if (_from_flash) {
+        if (serial >= NUM_STORED_SEQUENCES) {
+            return false;
+        }
     }
+    else {
+        if (_sequences[serial] == NULL) {
+            return false;
+        }
+    }
+    _from_flash = from_flash;
     _selected_serial = serial;
     _selected_index = 0;
     _loop_sequence = loop_sequence;
@@ -55,7 +64,14 @@ bool BwUISequencer::update()
     if (_selected_serial == MAX_NUM_SEQUENCES + 1) {
         return false;
     }
-    if (_selected_index >= _sequences[_selected_serial][0]) {
+    bool is_sequence_finished;
+    if (_from_flash) {
+        is_sequence_finished = _selected_index >= get_stored_element(_selected_serial, 0);
+    }
+    else {
+        is_sequence_finished = _selected_index >= _sequences[_selected_serial][0];
+    }
+    if (is_sequence_finished) {
         if (_loop_sequence) {
             _selected_index = 0;
         }
@@ -73,7 +89,13 @@ bool BwUISequencer::update()
         _is_delay_active = false;
     }
 
-    uint64_t parameter = _sequences[_selected_serial][_selected_index + 1];
+    uint64_t parameter;
+    if (_from_flash) {
+        parameter = get_stored_element(_selected_serial, _selected_index + 1);
+    }
+    else {
+        parameter = _sequences[_selected_serial][_selected_index + 1];
+    }
     BwSequenceType_t type = static_cast<BwSequenceType_t>(parameter & 0b1111);
     Serial.print("Sequence index ");
     Serial.print(_selected_index);

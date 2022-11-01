@@ -17,6 +17,8 @@ public class ArticulationBodyInitialization : MonoBehaviour
     public int robotChainLength = 0;
     public float stiffness = 10000f;
     public float damping = 100f;
+    public float jointFriction = 100f;
+    public float angularDamping = 100f;
     public float forceLimit = 1000f;
 
     void Start()
@@ -32,14 +34,13 @@ public class ArticulationBodyInitialization : MonoBehaviour
             assignLength = robotChainLength;
 
         // Setting stiffness, damping and force limit
-        int defDyanmicVal = 100;
         for (int i = 0; i < assignLength; i++)
         {
             ArticulationBody joint = articulationChain[i];
             ArticulationDrive drive = joint.xDrive;
 
-            joint.jointFriction = defDyanmicVal;
-            joint.angularDamping = defDyanmicVal;
+            joint.jointFriction = jointFriction;
+            joint.angularDamping = angularDamping;
 
             drive.stiffness = stiffness;
             drive.damping = damping;

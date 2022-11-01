@@ -417,16 +417,19 @@ void packetCallback(PacketResult* result)
     }
     else if (category.equals(">seq")) {
         uint8_t serial;
-        bool should_loop;
+        bool should_loop, from_flash;
         if (!result->getUInt8(serial)) { DEBUG_SERIAL.println(F("Failed to get serial")); return; }
         if (!result->getBool(should_loop)) { DEBUG_SERIAL.println(F("Failed to get should_loop")); return; }
-        bool success = sequencer->play_sequence(serial, should_loop);
+        if (!result->getBool(from_flash)) { DEBUG_SERIAL.println(F("Failed to get from_flash")); return; }
+        bool success = sequencer->play_sequence(serial, should_loop, from_flash);
         tunnel->writePacket(">seq", "b", success);
         if (success) {
             DEBUG_SERIAL.print("Starting sequence ");
             DEBUG_SERIAL.print(serial);
             DEBUG_SERIAL.print(", should_loop=");
             DEBUG_SERIAL.println(should_loop);
+            DEBUG_SERIAL.print(", from_flash=");
+            DEBUG_SERIAL.println(from_flash);
             set_motor_enable(true);
         }
         else {
@@ -549,15 +552,17 @@ void setup()
     drive->begin();
     drive->set_enable(false);
 
-    for(int i = 0; i < NUM_PIXELS; i++) {
-        led_ring.setPixelColor(i, led_ring.Color(0, 150, 0, 0));
-        led_ring.show();
-        delay(10);
-    }
-    for(int i = 0; i < NUM_PIXELS; i++) {
-        led_ring.setPixelColor(i, led_ring.Color(0, 0, 0, 0));
-        led_ring.show();
-        delay(10);
+    if (!sequencer->play_sequence(0, false, true)) {
+        for(int i = 0; i < NUM_PIXELS; i++) {
+            led_ring.setPixelColor(i, led_ring.Color(0, 150, 0, 0));
+            led_ring.show();
+            delay(10);
+        }
+        for(int i = 0; i < NUM_PIXELS; i++) {
+            led_ring.setPixelColor(i, led_ring.Color(0, 0, 0, 0));
+            led_ring.show();
+            delay(10);
+        }
     }
 
     DEBUG_SERIAL.println("setup complete");

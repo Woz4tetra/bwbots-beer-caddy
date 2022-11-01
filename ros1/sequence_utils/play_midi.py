@@ -2,15 +2,12 @@
 import time
 import rospy
 
-import mido
-from mido.midifiles.meta import MetaMessage
-
 from bw_interfaces.msg import BwSequence
 from bw_interfaces.srv import PlaySequence
 from bw_interfaces.srv import StopSequence
 
-from sequence_generator import SequenceGenerator
-from midi_sequencer import MidiSequencer
+from bw_tools.sequencers import MidiSequencer
+from bw_tools.sequencers import SequenceGenerator
 
 
 def note_to_freq(note):
@@ -33,13 +30,16 @@ class MidiPlayer:
 
         self.midi_path = rospy.get_param("~midi_path", "simple.mid")
         self.volume = rospy.get_param("~volume", 30)
-        self.midi_sequencer = MidiSequencer(self.midi_path, self.volume, True)
+        self.tempo_multiplier = rospy.get_param("~tempo_multiplier", 1.0)
+        self.loop = rospy.get_param("~loop", False)
+        self.midi_sequencer = MidiSequencer(self.midi_path, self.volume, True, self.tempo_multiplier)
         self.gen = SequenceGenerator()
 
         rospy.loginfo("%s init complete" % self.node_name)
 
     def run(self):
         time.sleep(1.0)
+        self.stop_seq_srv()
 
         try:
             rospy.loginfo("Generating sequence")
@@ -47,10 +47,11 @@ class MidiPlayer:
             rospy.loginfo(f"Publishing sequence with {length} notes. Length is {len(self.gen.msg.sequence)}")
             self.sequence_pub.publish(self.gen.msg)
             rospy.loginfo("Starting sequence")
-            print(self.start_seq_srv(self.gen.serial, False))
+            print(self.start_seq_srv(self.gen.serial, self.loop))
             rospy.spin()
         finally:
-           self.stop_seq_srv() 
+           self.stop_seq_srv()
+           time.sleep(2.0)
 
 if __name__ == "__main__":
     node = MidiPlayer()

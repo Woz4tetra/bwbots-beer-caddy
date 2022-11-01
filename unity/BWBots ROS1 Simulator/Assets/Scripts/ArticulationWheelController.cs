@@ -15,6 +15,11 @@ public class ArticulationWheelController : MonoBehaviour
     public ArticulationBody wheel3;
     public ArticulationBody wheel4;
 
+    public ArticulationBody module1;
+    public ArticulationBody module2;
+    public ArticulationBody module3;
+    public ArticulationBody module4;
+    
     private float vel1;
     private float vel2;
     private float vel3;
@@ -30,6 +35,10 @@ public class ArticulationWheelController : MonoBehaviour
 
     public void setRobotVelocity(float targetLinearSpeed, float targetLateralSpeed, float targetAngularSpeed)
     {
+        setModuleAzimuth(module1, targetAngularSpeed);
+        setModuleAzimuth(module2, targetAngularSpeed);
+        setModuleAzimuth(module3, targetAngularSpeed);
+        setModuleAzimuth(module4, targetAngularSpeed);
         setWheelVelocity(wheel1, targetLinearSpeed);
         setWheelVelocity(wheel2, -targetLinearSpeed);
         setWheelVelocity(wheel3, targetLinearSpeed);
@@ -41,6 +50,12 @@ public class ArticulationWheelController : MonoBehaviour
         ArticulationDrive drive = wheel.xDrive;
         drive.target = drive.target + jointVelocity * Time.fixedDeltaTime;
         wheel.xDrive = drive;
+    }
+
+    private void setModuleAzimuth(ArticulationBody module, float jointPosition) {
+        ArticulationDrive drive = module.xDrive;
+        drive.target = jointPosition;
+        module.xDrive = drive;
     }
 
     private void stopWheel(ArticulationBody wheel)

@@ -27,7 +27,11 @@ class SequenceGenerator:
     def add(self, *elements):
         for element in elements:
             self.msg.sequence.append(element)
-    
+        
+    def iter(self):
+        for element in self.msg.sequence:
+            yield element
+
     def __len__(self):
         return len(self.msg.sequence)
 
