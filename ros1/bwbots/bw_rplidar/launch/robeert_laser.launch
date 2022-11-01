@@ -6,14 +6,5 @@
             <arg name="lidar_node_name" value="robeert_rplidar"/>
             <arg name="laser_frame_id" value="laser"/>
         </include>
-
-        <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="laser_filter">
-            <rosparam command="load" file="$(find bw_rplidar)/config/laser_filter.yaml" />
-        </node>
-
-        <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="obstacle_laser_filter">
-            <rosparam command="load" file="$(find bw_rplidar)/config/obstacle_laser_filter.yaml" />
-            <remap from="scan_filtered" to="obstacle_scan"/>
-        </node>
     </group>
 </launch>

@@ -9,7 +9,7 @@
     <node pkg="bw_laser_slam" type="odom_bag_publisher.py" name="odom_bag_publisher" output="screen">
         <remap from="odom" to="/bw/odom"/>
     </node>
-    <include file="$(find bw_rplidar)/launch/laser_filter.launch"/>
+    <include file="$(find bw_rplidar)/launch/robeert_filters.launch"/>
     <include file="$(find bw_description)/launch/bw_description.launch"/>
 
     <include file="$(find bw_laser_slam)/launch/bw_laser_slam.launch">

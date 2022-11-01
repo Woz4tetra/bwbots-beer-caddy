@@ -6,5 +6,6 @@ pcb/
 matlab/
 python/logs/
 .egg-info/
+ros1/bwbots/bw_laser_slam/bags/
 ros1/playground/module_tuning/bags/
 unity/
