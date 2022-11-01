@@ -19,6 +19,7 @@ class LastSequencePlayer:
         self.stop_seq_srv = rospy.ServiceProxy("/bw/stop_sequence", StopSequence)
 
         self.serial = int(rospy.get_param("~serial", 0))
+        self.from_flash = int(rospy.get_param("~from_flash", False))
 
         rospy.loginfo("%s init complete" % self.node_name)
 
@@ -27,10 +28,10 @@ class LastSequencePlayer:
 
         try:
             rospy.loginfo("Starting sequence")
-            print(self.start_seq_srv(self.serial, False))
+            print(self.start_seq_srv(self.serial, False, self.from_flash))
             rospy.spin()
         finally:
-           self.stop_seq_srv() 
+           self.stop_seq_srv()
 
 if __name__ == "__main__":
     node = LastSequencePlayer()

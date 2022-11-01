@@ -19,7 +19,7 @@ class MidiSequencer:
             0: None,
             1: None,
             2: None,
-            # 3: None,
+            3: None,
         }
         self.max_midi_volume = 127
 

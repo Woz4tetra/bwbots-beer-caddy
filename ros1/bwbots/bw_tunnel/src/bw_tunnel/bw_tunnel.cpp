@@ -293,7 +293,7 @@ bool BwTunnel::playSequenceCallback(bw_interfaces::PlaySequence::Request &req, b
     ROS_INFO("Playing sequence %d. Looping=%d", req.serial, req.loop);
     // writeHandshakePacket(">seq", "cb", 0.5, 1.0, req.serial, req.loop);
     // resp.success = true;
-    PacketResult* result = getResult(">seq", "cb", 0.0, 1.0, req.serial, req.loop);
+    PacketResult* result = getResult(">seq", "cbb", 0.0, 1.0, req.serial, req.loop, req.from_flash);
     LOCK_GET_RESULT;
     bool success;
     if (result == NULL || !result->getBool(success)) {

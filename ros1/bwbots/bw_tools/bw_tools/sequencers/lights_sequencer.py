@@ -5,6 +5,7 @@ from .sequence_generator import SequenceGenerator, BwSequenceType
 class LightsSequencer:
     def __init__(self, file_path) -> None:
         self.raw_sequence = self.load_file(file_path)
+        self.show_delay = 35  # millisecond delay introduced by show command
     
     def generate(self, generator: SequenceGenerator):
         for element_type, parameters in self.raw_sequence:
@@ -33,6 +34,12 @@ class LightsSequencer:
                 else:
                     generator.add(SequenceGenerator.make_led(index, r, g, b, w))
             elif element_type == BwSequenceType.SHOW_LED:
+                if len(parameters) != 0 and type(parameters[0]) == int:
+                    delay = parameters[0]
+                    delay -= self.show_delay
+                    delay = max(0, min(0xffff, int(delay)))
+                    if delay > 0:
+                        generator.add(SequenceGenerator.make_delay(delay))
                 generator.add(SequenceGenerator.make_show())
 
     def load_file(self, file_path):
@@ -41,6 +48,8 @@ class LightsSequencer:
             reader = csv.reader(file)
             header = next(reader)
             for row in reader:
+                if len(row) == 0 or len(row[0]) == 0:
+                    continue
                 element_type = int(row[0])
                 values = []
                 for element in row[1:]:

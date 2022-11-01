@@ -27,6 +27,7 @@ private:
     uint32_t _cumulative_delay;
     bool _is_delay_active;
     bool _from_flash;
+    int _prev_status;
 
     void play_tone_from_param(uint64_t parameters);
     void stop_tone_from_param(uint64_t parameters);
@@ -42,5 +43,5 @@ public:
     bool set_element(uint8_t serial, uint16_t index, uint64_t parameter);
     bool play_sequence(uint8_t serial, bool loop_sequence, bool from_flash);
     void stop_sequence();
-    bool update();
+    int update();
 };

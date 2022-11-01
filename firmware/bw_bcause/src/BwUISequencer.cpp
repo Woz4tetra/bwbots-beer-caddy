@@ -12,6 +12,7 @@ BwUISequencer::BwUISequencer(BwDriveTrain* drive, Adafruit_NeoPixel* led_ring, i
     _selected_serial = MAX_NUM_SEQUENCES + 1;
     _is_delay_active = false;
     _from_flash = false;
+    _prev_status = 0;
 }
 
 void BwUISequencer::allocate_sequence(uint8_t serial, uint16_t length)
@@ -34,7 +35,7 @@ bool BwUISequencer::set_element(uint8_t serial, uint16_t index, uint64_t paramet
 
 bool BwUISequencer::play_sequence(uint8_t serial, bool loop_sequence, bool from_flash)
 {
-    if (_from_flash) {
+    if (from_flash) {
         if (serial >= NUM_STORED_SEQUENCES) {
             return false;
         }
@@ -51,6 +52,7 @@ bool BwUISequencer::play_sequence(uint8_t serial, bool loop_sequence, bool from_
     _sequence_start_time = millis();
     _cumulative_delay = 0;
     _is_delay_active = false;
+    _prev_status = 0;
     return true;
 }
 
@@ -59,30 +61,31 @@ void BwUISequencer::stop_sequence()
     _selected_serial = MAX_NUM_SEQUENCES + 1;
 }
 
-bool BwUISequencer::update()
+int BwUISequencer::update()
 {
     if (_selected_serial == MAX_NUM_SEQUENCES + 1) {
-        return false;
+        return 0;
     }
-    bool is_sequence_finished;
+    uint64_t sequence_length;
     if (_from_flash) {
-        is_sequence_finished = _selected_index >= get_stored_element(_selected_serial, 0);
+        sequence_length = get_stored_element(_selected_serial, 0);
     }
     else {
-        is_sequence_finished = _selected_index >= _sequences[_selected_serial][0];
+        sequence_length = _sequences[_selected_serial][0];
     }
-    if (is_sequence_finished) {
+    if (_selected_index >= sequence_length) {
         if (_loop_sequence) {
             _selected_index = 0;
         }
         else {
             _selected_serial = MAX_NUM_SEQUENCES + 1;
-            return false;
+            Serial.println("Sequence completed");
+            return 0;
         }
     }
     uint32_t dt = millis() - _sequence_start_time;
     if (dt < _cumulative_delay) {
-        return true;
+        return _prev_status;  // wait for delay to finish
     }
     else if (_is_delay_active) {
         _selected_index++;
@@ -99,18 +102,23 @@ bool BwUISequencer::update()
     BwSequenceType_t type = static_cast<BwSequenceType_t>(parameter & 0b1111);
     Serial.print("Sequence index ");
     Serial.print(_selected_index);
+    Serial.print(" of ");
+    Serial.print(sequence_length);
     Serial.print(", type=");
     Serial.println(type);
+
     switch (type)
     {
     case BW_SEQ_START_TONE:
         play_tone_from_param(parameter);
         _selected_index++;
+        _prev_status = 2;  // indicates that motors are required for this element
         break;
 
     case BW_SEQ_STOP_TONE:
         stop_tone_from_param(parameter);
         _selected_index++;
+        _prev_status = 2;  // indicates that motors are required for this element
         break;
 
     case BW_SEQ_DELAY:
@@ -121,18 +129,21 @@ bool BwUISequencer::update()
     case BW_SEQ_SET_RING_LED:
         set_led_from_param(parameter);
         _selected_index++;
+        _prev_status = 1;
         break;
 
     case BW_SEQ_SHOW_LED:
+        Serial.println("Show leds");
         led_ring->show();
         _selected_index++;
+        _prev_status = 1;
         break;
 
     default:
         _selected_index++;
         break;
     }
-    return true;
+    return _prev_status;  // indicates that no motors are required for this element
 }
 
 void BwUISequencer::play_tone_from_param(uint64_t parameters)
@@ -161,12 +172,18 @@ void BwUISequencer::set_led_from_param(uint64_t parameters)
 {
     uint32_t color = (parameters >> 4) & 0xffffffff;
     uint16_t index = (uint16_t)((parameters >> 36) & 0xffff);
+    Serial.print("Setting led. index=");
+    Serial.print(index);
+    Serial.print(", color=");
+    Serial.println(color);
     led_ring->setPixelColor(index, color);
 }
 
 uint32_t BwUISequencer::get_delay(uint64_t parameters) {
-    Serial.println("Set delay");
-    return (uint32_t)((parameters >> 4) & 0xffff);
+    uint32_t delay = (uint32_t)((parameters >> 4) & 0xffff);
+    Serial.print("Set delay: ");
+    Serial.println(delay);
+    return delay;
 }
 
 void BwUISequencer::set_module_tone(unsigned int channel, int frequency, int volume)

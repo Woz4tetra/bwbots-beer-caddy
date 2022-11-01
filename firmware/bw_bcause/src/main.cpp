@@ -267,6 +267,13 @@ void write_enable_state() {
     tunnel->writePacket("en", "b", drive->get_enable());
 }
 
+void set_control_mode(control_mode_t new_mode) {
+    control_mode = new_mode;
+    if (control_mode != CONTROL_GLOBAL) {
+        prev_nonglobal_time = current_time;
+    }
+}
+
 void set_motor_enable(bool enabled)
 {
     if (enabled && load_voltage < DISABLE_THRESHOLD) {
@@ -285,7 +292,7 @@ void set_motor_enable(bool enabled)
         was_disabled_by_command = true;
         sequencer->stop_sequence();
     }
-    control_mode = CONTROL_GLOBAL;
+    set_control_mode(CONTROL_GLOBAL);
 }
 
 void stop_motors()
@@ -378,8 +385,7 @@ void packetCallback(PacketResult* result)
         if (!result->getDouble(wheel_position)) { DEBUG_SERIAL.println(F("Failed to get wheel_position")); return; }
         if (!result->getFloat(wheel_velocity)) { DEBUG_SERIAL.println(F("Failed to get wheel_velocity")); return; }
 
-        control_mode = CONTROL_INDIVIDUAL;
-        prev_nonglobal_time = current_time;
+        set_control_mode(CONTROL_INDIVIDUAL);
 
         drive->set(channel, azimuth_position, wheel_velocity);
     }
@@ -427,7 +433,7 @@ void packetCallback(PacketResult* result)
             DEBUG_SERIAL.print("Starting sequence ");
             DEBUG_SERIAL.print(serial);
             DEBUG_SERIAL.print(", should_loop=");
-            DEBUG_SERIAL.println(should_loop);
+            DEBUG_SERIAL.print(should_loop);
             DEBUG_SERIAL.print(", from_flash=");
             DEBUG_SERIAL.println(from_flash);
             set_motor_enable(true);
@@ -600,26 +606,26 @@ void loop()
     }
     
     if (control_mode != CONTROL_GLOBAL && current_time - prev_nonglobal_time > NONGLOBAL_CONTROL_TIMEOUT_MS) {
-        control_mode = CONTROL_GLOBAL;
+        set_control_mode(CONTROL_GLOBAL);
         stop_motors();
         Serial.println("Switching to global control mode");
         sequencer->stop_sequence();
     }
 
-    bool sequencer_state = sequencer->update();
-    if (sequencer_state) {
-        control_mode = CONTROL_TONE;
-        prev_nonglobal_time = current_time;
+    int sequencer_state = sequencer->update();
+    if (sequencer_state == 2) {
+        set_control_mode(CONTROL_TONE);
     }
-    if (was_sequencer_active != sequencer_state) {
-        was_sequencer_active = sequencer_state;
-        if (sequencer_state) {
+    bool is_sequence_running = sequencer_state > 0;
+    if (was_sequencer_active != is_sequence_running) {
+        was_sequencer_active = is_sequence_running;
+        stop_motors();
+        if (is_sequence_running) {
             Serial.println("Sequence started");
         }
         else {
             Serial.println("Sequence stopped");
-            control_mode = CONTROL_GLOBAL;
-            stop_motors();
+            set_control_mode(CONTROL_GLOBAL);
         }
     }
 

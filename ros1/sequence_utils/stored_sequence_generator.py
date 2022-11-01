@@ -1,3 +1,5 @@
+import os
+import yaml
 import argparse
 import textwrap
 try:
@@ -5,44 +7,73 @@ try:
     CLIPBOARD = True
 except ImportError:
     CLIPBOARD = False
-from bw_tools.sequencers import LightsSequencer, SequenceGenerator
+from bw_tools.sequencers import LightsSequencer, SequenceGenerator, MidiSequencer
 
 def main():
     parser = argparse.ArgumentParser(description="stored_sequence_generator")
 
     parser.add_argument("filepaths", nargs='+',
                         help="Path to sequence file")
+    parser.add_argument("--config",
+                        default="config.yaml",
+                        help="sequence config file")
     args = parser.parse_args()
+
+    with open(args.config) as file:
+        config = yaml.safe_load(file)
 
     sequence_locations = []
     stored_sequences = []
+    paths = []
     for filepath in args.filepaths:
         generator = SequenceGenerator()
-        lights = LightsSequencer(filepath)
-        lights.generate(generator)
+        if filepath.endswith(".csv"):
+            lights = LightsSequencer(filepath)
+            lights.generate(generator)
+        elif filepath.endswith(".mid"):
+            name = os.path.splitext(os.path.basename(filepath))[0]
+            if name in config:
+                volume = config.get("volume", 30)
+                tempo_multiplier = config.get("tempo_multiplier", 1.0)
+            else:
+                volume = 30
+                tempo_multiplier = 1.0
+            midi_sequencer = MidiSequencer(filepath, int(volume), True, float(tempo_multiplier))
+            midi_sequencer.generate(generator)
+        else:
+            raise RuntimeError(f"Invalid file type: {filepath}")
 
         sequence_locations.append(len(stored_sequences))
-        stored_sequences.append(len(generator))
+        stored_sequences.append(len(generator) + 1)
+        paths.append(filepath)
+        print(f"Appending sequence of length {len(generator)}")
 
         for element in generator.iter():
             stored_sequences.append(element.parameters)
     
     code = """
-const PROGMEM uint64_t STORED_SEQUENCES[] = {
+const uint64_t STORED_SEQUENCES[] = {
     %s
 };
 
-const PROGMEM uint64_t SEQUENCE_LOCATIONS[] = {
+const uint64_t SEQUENCE_LOCATIONS[] = {
     %s
 };
 
 const uint8_t NUM_STORED_SEQUENCES = %s;
 
+/* 
+Sequences:
+%s
+*/
+
 """ % (
     "\n    ".join(textwrap.wrap(", ".join(["0x%02x" % x for x in stored_sequences]))),
     "\n    ".join(textwrap.wrap(", ".join(["0x%02x" % x for x in sequence_locations]))),
-    len(sequence_locations)
+    len(sequence_locations),
+    "\n".join(["    %s: %s" % (index, path) for index, path in enumerate(paths)]),
 )
+    print(f"Generated code for {len(sequence_locations)} sequences. Total length is {len(stored_sequences)}")
     if CLIPBOARD:
         pyperclip.copy(code)
         print("Code is pasted into your clipboard. Paste it into StoredSequences.h")

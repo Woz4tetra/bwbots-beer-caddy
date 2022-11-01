@@ -75,7 +75,8 @@ def main():
             elif element_type == BwSequenceType.SHOW_LED:
                 for index, state in enumerate(led_states):
                     draw_led(screen, index, state, len(led_states), width, height, ring_radius, led_radius)
-                    pygame.display.flip()
+                pygame.display.flip()
+                time.sleep(0.035)
             elif element_type == BwSequenceType.DELAY:
                 delay = (parameters >> 4) & 0xffff
                 delay /= 1000.0

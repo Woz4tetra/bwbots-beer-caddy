@@ -47,7 +47,7 @@ class MidiPlayer:
             rospy.loginfo(f"Publishing sequence with {length} notes. Length is {len(self.gen.msg.sequence)}")
             self.sequence_pub.publish(self.gen.msg)
             rospy.loginfo("Starting sequence")
-            print(self.start_seq_srv(self.gen.serial, self.loop))
+            print(self.start_seq_srv(self.gen.serial, self.loop, False))
             rospy.spin()
         finally:
            self.stop_seq_srv()
