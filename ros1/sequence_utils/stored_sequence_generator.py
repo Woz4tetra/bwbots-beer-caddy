@@ -1,4 +1,5 @@
 import os
+import re
 import yaml
 import argparse
 import textwrap
@@ -26,13 +27,14 @@ def main():
     sequence_locations = []
     stored_sequences = []
     paths = []
+    names = []
     for filepath in args.filepaths:
         generator = SequenceGenerator()
+        name = os.path.splitext(os.path.basename(filepath))[0]
         if filepath.endswith(".csv"):
             lights = LightsSequencer(filepath)
             lights.generate(generator)
         elif filepath.endswith(".mid"):
-            name = os.path.splitext(os.path.basename(filepath))[0]
             if name in config:
                 volume = config[name].get("volume", 30)
                 tempo_multiplier = config[name].get("tempo_multiplier", 1.0)
@@ -48,6 +50,7 @@ def main():
         sequence_locations.append(len(stored_sequences))
         stored_sequences.append(len(generator) + 1)
         paths.append(filepath)
+        names.append(name)
         print(f"Appending sequence of length {len(generator)}")
 
         for element in generator.iter():
@@ -69,11 +72,13 @@ Sequences:
 %s
 */
 
+%s
 """ % (
     "\n    ".join(textwrap.wrap(", ".join(["0x%02x" % x for x in stored_sequences]))),
     "\n    ".join(textwrap.wrap(", ".join(["0x%02x" % x for x in sequence_locations]))),
     len(sequence_locations),
     "\n".join(["    %s: %s" % (index, path) for index, path in enumerate(paths)]),
+    "\n".join(["const uint8_t STORED_SEQUENCE_%s = %s;" % (re.sub(r"[\s\W]", "_", name.upper()), index) for index, name in enumerate(names)])
 )
     print(f"Generated code for {len(sequence_locations)} sequences. Total length is {len(stored_sequences)}")
     if CLIPBOARD:

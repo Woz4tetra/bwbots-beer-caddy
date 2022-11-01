@@ -54,6 +54,8 @@ add_message_files(
   LoadCell.msg
   BwSequence.msg
   BwSequenceElement.msg
+  Waypoint.msg
+  WaypointArray.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -63,6 +65,12 @@ add_service_files(
   CalibrateScale.srv
   PlaySequence.srv
   StopSequence.srv
+  DeleteWaypoint.srv
+  GetAllWaypoints.srv
+  GetWaypoint.srv
+  SavePose.srv
+  SaveRobotPose.srv
+  SaveTF.srv
 )
 
 ## Generate actions in the 'action' folder

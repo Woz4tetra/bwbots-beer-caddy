@@ -56,7 +56,7 @@ def main():
         screen.fill((0, 0, 0,))
         for index, state in enumerate(led_states):
             draw_led(screen, index, (0, 0, 0, 255), len(led_states), width, height, ring_radius, led_radius + 2)
-        for element in generator.iter():
+        for seq_index, element in enumerate(generator.iter()):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -75,14 +75,16 @@ def main():
             elif element_type == BwSequenceType.SHOW_LED:
                 delay = (parameters >> 4) & 0xffff
                 delay /= 1000.0
+                delay += 0.035
                 for index, state in enumerate(led_states):
                     draw_led(screen, index, state, len(led_states), width, height, ring_radius, led_radius)
                 pygame.display.flip()
-                time.sleep(max(0.035, delay))
+                time.sleep(delay)
+                print(f"{seq_index} -> delay for {delay}s")
             elif element_type == BwSequenceType.DELAY:
                 delay = (parameters >> 4) & 0xffff
                 delay /= 1000.0
-                print(f"delay for {delay}s")
+                print(f"{seq_index} -> delay for {delay}s")
                 time.sleep(delay)
         if not loop:
             should_loop = False

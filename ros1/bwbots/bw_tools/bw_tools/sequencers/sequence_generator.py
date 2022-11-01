@@ -19,8 +19,8 @@ class SequenceGenerator:
     def __init__(self) -> None:
         self.serial = SequenceGenerator.SERIAL_COUNTER
         SequenceGenerator.SERIAL_COUNTER += 1
-        if SequenceGenerator.SERIAL_COUNTER >= 8:
-            raise ValueError("Can't have more than 8 sequences")
+        if SequenceGenerator.SERIAL_COUNTER >= 64:
+            raise ValueError("Can't have more than 64 sequences")
         self.msg = BwSequence()
         self.msg.serial = self.serial
     

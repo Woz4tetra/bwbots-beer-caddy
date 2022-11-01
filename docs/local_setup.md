@@ -85,11 +85,8 @@ This is optional. Use this for training off the robot. Run all these commands on
 - Download cuda for Ubuntu 20.04, deb
 - `mkdir ~/build_ws`
 - `cd ~/build_ws`
-- `wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin`
-- `sudo mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600`
-- `wget https://developer.download.nvidia.com/compute/cuda/11.7.0/local_installers/cuda-repo-ubuntu2004-11-7-local_11.7.0-515.43.04-1_amd64.deb`
-- `sudo dpkg -i cuda-repo-ubuntu2004-11-7-local_11.7.0-515.43.04-1_amd64.deb`
-- `sudo cp /var/cuda-repo-ubuntu2004-11-7-local/cuda-*-keyring.gpg /usr/share/keyrings/`
+- `wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb`
+- `sudo dpkg -i cuda-keyring_1.0-1_all.deb`
 - `sudo apt-get update`
 - `sudo apt-get -y install cuda`
 
@@ -97,11 +94,10 @@ This is optional. Use this for training off the robot. Run all these commands on
 (Based on this guide)[https://docs.nvidia.com/deeplearning/tensorrt/install-guide/index.html#downloading]
 - Download link: https://developer.nvidia.com/nvidia-tensorrt-download
 (create a login if needed)
-- Click `TensorRT 8` -> `TensorRT 8.4 GA Update 1` -> `TensorRT 8.4 GA Update 1 for Ubuntu 20.04 and CUDA 11.0, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6 and 11.7 DEB local repo Package`
-- `sudo dpkg -i nv-tensorrt-repo-ubuntu2004-cuda11.4-trt8.2.2.1-ga-20211214_1-1_amd64.deb`
+- Click `TensorRT 8` -> `TensorRT 8.4 GA Update 2` -> `TensorRT 8.4 GA Update 2 for Ubuntu 20.04 and CUDA 11.0, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6 and 11.7 DEB local repo Package`
+- `sudo dpkg -i nv-tensorrt-repo-ubuntu2004-cuda11.6-trt8.4.3.1-ga-20220813_1-1_amd64.deb`
 - `sudo apt-get update`
 - `sudo apt-get install tensorrt`
-- `sudo apt-get install libcudnn8-dev`
 
 ## Install pytorch
 - `sudo -H pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116`

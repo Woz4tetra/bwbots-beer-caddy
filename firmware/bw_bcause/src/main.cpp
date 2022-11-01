@@ -559,7 +559,7 @@ void setup()
     drive->begin();
     drive->set_enable(false);
 
-    if (!sequencer->play_sequence(0, false, true)) {
+    if (!sequencer->play_sequence(STORED_SEQUENCE_STARTUP, false, true)) {
         for(int i = 0; i < NUM_PIXELS; i++) {
             led_ring.setPixelColor(i, led_ring.Color(0, 150, 0, 0));
             led_ring.show();
