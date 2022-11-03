@@ -1,0 +1,6 @@
+bw_interfaces/WaypointArray waypoints
+---
+bool success
+---
+bw_interfaces/Waypoint current_goal
+geometry_msgs/PoseStamped current_pose

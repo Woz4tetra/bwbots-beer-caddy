@@ -32,5 +32,5 @@
     </node>
 
     <node pkg="tf" type="static_transform_publisher" name="tag_to_rotated_pos" args="0.0 0.0 0.0 -0.5 0.5 0.5 0.5 charge_dock_tag charge_dock_tag_rotated 30" />
-    <node pkg="tf" type="static_transform_publisher" name="tag_to_start_pos" args="-0.1764 0.0 -0.2611 0 0 0 1 charge_dock_tag_rotated charge_dock_goal 30" />
+    <!-- <node pkg="tf" type="static_transform_publisher" name="tag_to_start_pos" args="-0.1764 0.0 -0.2611 0 0 0 1 charge_dock_tag_rotated charge_dock_goal 30" /> -->
 </launch>

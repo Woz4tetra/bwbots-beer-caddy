@@ -1,4 +1,5 @@
 string name
-string frame
+string parent_frame
+string child_frame
 ---
 bool success

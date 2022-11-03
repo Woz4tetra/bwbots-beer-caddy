@@ -68,8 +68,7 @@ add_service_files(
   DeleteWaypoint.srv
   GetAllWaypoints.srv
   GetWaypoint.srv
-  SavePose.srv
-  SaveRobotPose.srv
+  SaveWaypoint.srv
   SaveTF.srv
 )
 
