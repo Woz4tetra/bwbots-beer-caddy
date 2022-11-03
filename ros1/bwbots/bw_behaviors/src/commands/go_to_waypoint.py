@@ -9,7 +9,7 @@ from bw_interfaces.msg import Waypoint
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseResult
 
 
-class GoToWaypointAction:
+class GoToWaypointCommand:
     def __init__(self) -> None:
         self.move_base = actionlib.SimpleActionClient(self.move_base_namespace, MoveBaseAction)
 
@@ -61,6 +61,10 @@ class GoToWaypointAction:
                 result = FollowWaypointsResult(False)
                 break
         self.follow_waypoints_server.publish_result(result)
+        if result.success:
+            self.waypoints_node.follow_path_server.set_succeeded()
+        else:
+            self.waypoints_node.follow_path_server.set_aborted()
 
     def move_base_feedback(self, mb_feedback):
         feedback = FollowWaypointsFeedback()
@@ -68,6 +72,6 @@ class GoToWaypointAction:
         feedback.current_waypoint = self.current_waypoint
         self.follow_waypoints_server.publish_feedback(feedback)
         
-    def move_base_done(self, goal_status, result):
+    def move_base_done(self, goal_status: GoalStatus, result: MoveBaseResult):
         rospy.loginfo("move_base finished: %s. %s" % (goal_status, result))
         self.is_move_base_done = True

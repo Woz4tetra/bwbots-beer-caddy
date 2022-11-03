@@ -1,4 +1,5 @@
 import math
+from typing import List
 import numpy as np
 import tf_conversions
 from geometry_msgs.msg import Quaternion
@@ -174,6 +175,28 @@ class State:
             dx = self.x - other.x
             dy = self.y - other.y
             return math.atan2(dy, dx)
+
+    @classmethod
+    def median(cls, poses: List["Pose2d"]):
+        self = cls()
+        xs = [pose.x for pose in poses]
+        ys = [pose.y for pose in poses]
+        thetas = [pose.theta for pose in poses]
+        self.x = np.median(xs)
+        self.y = np.median(ys)
+        self.theta = np.median(thetas)
+        return self
+
+    @classmethod
+    def average(cls, poses: List["Pose2d"]):
+        self = cls()
+        xs = [pose.x for pose in poses]
+        ys = [pose.y for pose in poses]
+        thetas = [pose.theta for pose in poses]
+        self.x = np.average(xs)
+        self.y = np.average(ys)
+        self.theta = np.average(thetas)
+        return self
 
     @classmethod
     def normalize_theta(cls, theta):
