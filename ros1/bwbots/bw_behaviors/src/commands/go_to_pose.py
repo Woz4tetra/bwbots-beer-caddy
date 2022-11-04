@@ -1,4 +1,6 @@
 from typing import Optional
+from enum import Enum
+
 import rospy
 import actionlib
 
@@ -16,13 +18,18 @@ from bw_tools.controller.profiled_pid import ProfiledPIDController
 from bw_tools.controller.trapezoid_profile import Constraints
 
 
+class ControllerType(Enum):
+    RAMSETE = "ramsete"
+    HOLONOMIC = "holonomic"
+
+
 class GoToPoseCommand:
     def __init__(self) -> None:
         self.robot_state: Optional[Pose2d] = None
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=10)
         self.odom_sub = None
         self.goal_pose_sub = None
-        self.controller_type = rospy.get_param("~go_to_pose/controller_type", "ramsete")
+        self.controller_type = ControllerType(rospy.get_param("~go_to_pose/controller_type", "ramsete"))
 
         self.x_kP = rospy.get_param("~go_to_pose/x_kP", 1.0)
         self.x_kI = rospy.get_param("~go_to_pose/x_kI", 0.0)
@@ -54,13 +61,13 @@ class GoToPoseCommand:
         linear_constraints = Constraints(self.linear_max_vel, self.linear_max_accel)
         theta_constraints = Constraints(self.theta_max_vel, self.theta_max_accel)
 
-        if self.controller_type == "holonomic":
+        if self.controller_type == ControllerType.HOLONOMIC:
             self.controller = HolonomicDriveController(
                 ProfiledPIDController(self.x_kP, self.x_kI, self.x_kD, linear_constraints, self.loop_period),
                 ProfiledPIDController(self.y_kP, self.y_kI, self.y_kD, linear_constraints, self.loop_period),
                 ProfiledPIDController(self.theta_kP, self.theta_kI, self.theta_kD, theta_constraints, self.loop_period)
             )
-        elif self.controller_type == "ramsete":
+        elif self.controller_type == ControllerType.RAMSETE:
             self.controller = RamseteController(self.ramsete_b, self.ramsete_zeta)
         else:
             raise ValueError(f"Invalid controller type: {self.controller_type}")
@@ -132,11 +139,11 @@ class GoToPoseCommand:
 
             goal_pose2d = self.update_goal_pose()
 
-            if self.controller_type == "holonomic":
+            if self.controller_type == ControllerType.HOLONOMIC:
                 velocity_command: Velocity = self.controller.calculate(
                     self.robot_state, goal_pose2d, reference_linear_speed
                 )
-            elif self.controller_type == "ramsete":
+            elif self.controller_type == ControllerType.RAMSETE:
                 velocity_command: Velocity = self.controller.calculate(
                     self.robot_state, goal_pose2d, reference_linear_speed, reference_angular_speed
                 )
