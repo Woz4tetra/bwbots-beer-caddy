@@ -65,10 +65,13 @@ class BwWaypoints:
 
     def load_from_path(self, waypoints_path) -> WaypointArray:
         waypoints_path = self.process_path(waypoints_path)
-        with open(self.waypoints_path) as file:
+        if not os.path.isfile(waypoints_path):
+            rospy.loginfo(f"Creating waypoints file: {waypoints_path}")
+            self.save_to_path(waypoints_path, WaypointArray())
+        with open(waypoints_path) as file:
             config = yaml.safe_load(file)
         waypoints2d_array = Waypoints2dArray()
-        for data in config["waypoints"]:
+        for data in config:
             waypoint2d = Waypoint2d(
                 data["name"],
                 data["parent_frame"],
@@ -77,9 +80,12 @@ class BwWaypoints:
                 data["theta"],
             )
             waypoints2d_array.set(data["name"], waypoint2d)
-        return waypoints2d_array.to_waypoints_array()
+        waypoints = waypoints2d_array.to_waypoints_array()
+        rospy.loginfo(f"Loaded {len(waypoints.waypoints)} waypoints from {waypoints_path}")
+        return waypoints
 
     def save_to_path(self, waypoints_path: str, waypoints: WaypointArray):
+        waypoints_path = self.process_path(waypoints_path)
         waypoints_dir = os.path.dirname(waypoints_path)
         if not os.path.isdir(waypoints_dir):
             os.makedirs(waypoints_dir)
@@ -89,6 +95,7 @@ class BwWaypoints:
                 waypoint_dict = Waypoint2d.from_ros_waypoint(waypoint).to_dict()
                 waypoints_list.append(waypoint_dict)
             yaml.safe_dump(waypoints_list, file)
+            rospy.loginfo(f"Saving {len(waypoints.waypoints)} waypoints to {waypoints_path}")
     
     def process_path(self, waypoints_path):
         map_name = os.path.basename(waypoints_path)
@@ -119,7 +126,7 @@ class BwWaypoints:
     # ---
 
     def get_waypoint(self, name: str) -> Optional[Waypoint]:
-        for waypoint in self.waypoints:
+        for waypoint in self.waypoints.waypoints:
             if waypoint.name == name:
                 return waypoint
         return None
@@ -130,11 +137,10 @@ class BwWaypoints:
         self.waypoints.waypoints = new_waypoints
         return success
     
-    def add_waypoint(self, name: str, waypoint: Waypoint) -> None:
-        if self.get_waypoint(name):
-            self.delete_waypoint(name)
-        else:
-            self.waypoints.waypoints.append(waypoint)
+    def add_waypoint(self, waypoint: Waypoint) -> None:
+        if self.get_waypoint(waypoint.name):
+            self.delete_waypoint(waypoint.name)
+        self.waypoints.waypoints.append(waypoint)
 
     # ---
     # Service callbacks
@@ -162,7 +168,7 @@ class BwWaypoints:
                 success = False
             else:
                 array.waypoints.append(waypoint)
-        return GetWaypointResponse(array, success)
+        return GetWaypointsResponse(array, success)
 
     def delete_waypoint_callback(self, req):
         self.waypoints = self.load_from_path(self.waypoints_path)
@@ -194,7 +200,7 @@ class BwWaypoints:
     # Waypoint markers
 
     def to_markers(self, waypoints: WaypointArray) -> MarkerArray:
-        self.markers = MarkerArray()
+        markers = MarkerArray()
         for waypoint in waypoints.waypoints:
             position_marker = self.make_marker(waypoint)
             text_marker = self.make_marker(waypoint)
@@ -207,8 +213,9 @@ class BwWaypoints:
             text_marker.scale.x = 0.0
             text_marker.scale.y = 0.0
 
-            self.markers.markers.append(position_marker)
-            self.markers.markers.append(text_marker)
+            markers.markers.append(position_marker)
+            markers.markers.append(text_marker)
+        return markers
 
     def prep_position_marker(self, position_marker: Marker):
         position_marker.type = Marker.ARROW

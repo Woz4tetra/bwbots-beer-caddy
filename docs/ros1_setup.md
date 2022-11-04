@@ -58,13 +58,17 @@ This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY
 - `cmake .. && make -j4`
 - `sudo make install`
 - `sudo -H python3 -m pip install psutil`
+- If `/usr/local/lib/python3` doesn't exist
+  - `sudo ln -s /usr/local/lib/python3.6/ /usr/local/lib/python3`
 - `cd ../../python_orocos_kdl`
 - `mkdir build && cd build`
 - ```
-    cmake -D PYTHON_EXECUTABLE=/usr/bin/python3 \
-    -D PYTHON_INCLUDE_DIR=/usr/include/python3 \
-    -D PYTHON_LIBRARY=/usr/lib/aarch64-linux-gnu/libpython3.so \
-    -D PYBIND11_PYTHON_VERSION=3 ..
+    cmake -D PYTHON_EXECUTABLE=/usr/bin/python3.6 \
+    -D PYTHON_INCLUDE_DIR=/usr/include/python3.6 \
+    -D PYTHON_LIBRARY=/usr/lib/aarch64-linux-gnu/libpython3.6.so \
+    -D PYBIND11_PYTHON_VERSION=3 \
+    ..
+    
   ```
 - `make -j4`
 - `sudo make install`

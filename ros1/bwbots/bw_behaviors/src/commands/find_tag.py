@@ -25,6 +25,7 @@ class FindTagCommand:
             auto_start=False
         )
         self.find_tag_server.start()
+        rospy.loginfo("find_tag is ready")
 
     def find_tag_callback(self, goal: FindTagGoal):
         tag_frame = goal.tag_frame_id

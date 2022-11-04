@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import yaml
 import rospy
 import actionlib
@@ -7,7 +8,11 @@ from bw_interfaces.msg import FollowWaypointsAction, FollowWaypointsGoal, Follow
 from bw_interfaces.srv import GetWaypoints
 
 
-def action_done(result: FollowWaypointsResult):
+IS_DONE = False
+
+def action_done(goal_status, result: FollowWaypointsResult):
+    global IS_DONE
+    IS_DONE = True
     rospy.loginfo(f"Action finished with result: {result}")
 
 
@@ -22,7 +27,7 @@ def main():
     rospy.loginfo("Connecting to action server...")
     action.wait_for_server()
 
-    get_waypoints_srv = rospy.ServiceProxy("/bw/get_waypoints", GetWaypoints)
+    get_waypoints_srv = rospy.ServiceProxy("/bw/bw_waypoints/get_waypoints", GetWaypoints)
 
     parser = argparse.ArgumentParser(description="action_script")
 
@@ -31,15 +36,24 @@ def main():
     args = parser.parse_args()
 
     rospy.loginfo(f"Requesting locations of waypoints: {args.waypoints}")
-    waypoints_array = get_waypoints_srv(args.waypoints)
-    rospy.loginfo(f"Waypoint locations: {waypoints_array}")
+    result = get_waypoints_srv(args.waypoints)
+    if not result.success:
+        rospy.logwarn("Failed to get waypoint locations")
+        return
+    rospy.loginfo(f"Waypoint locations: {result}")
+    waypoints_array = result.waypoints
 
     goal = FollowWaypointsGoal()
     goal.waypoints = waypoints_array
 
     action.send_goal(goal, done_cb=action_done)
     try:
-        rospy.spin()
+        while not IS_DONE:
+            rospy.sleep(0.1)
     except KeyboardInterrupt:
         rospy.loginfo("Cancelling goal")
         action.cancel_goal()
+
+
+if __name__ == '__main__':
+    main()

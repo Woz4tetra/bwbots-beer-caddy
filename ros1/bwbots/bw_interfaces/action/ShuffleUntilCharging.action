@@ -1,4 +1,4 @@
-std_msgs/duration timeout
+duration timeout
 ---
 bool success
 ---

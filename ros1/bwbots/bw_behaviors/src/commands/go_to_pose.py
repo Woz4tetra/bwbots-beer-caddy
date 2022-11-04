@@ -79,6 +79,7 @@ class GoToPoseCommand:
             auto_start=False
         )
         self.go_to_pose_server.start()
+        rospy.loginfo("go_to_pose is ready")
 
     def register_topics(self):
         self.odom_sub = rospy.Subscriber("odom", Odometry, self.odom_msg_callback, queue_size=10)
@@ -141,11 +142,16 @@ class GoToPoseCommand:
 
             if self.controller_type == ControllerType.HOLONOMIC:
                 velocity_command: Velocity = self.controller.calculate(
-                    self.robot_state, goal_pose2d, reference_linear_speed
+                    current_pose=self.robot_state, 
+                    pose_ref=goal_pose2d, 
+                    linear_velocity_ref_meters=reference_linear_speed
                 )
             elif self.controller_type == ControllerType.RAMSETE:
                 velocity_command: Velocity = self.controller.calculate(
-                    self.robot_state, goal_pose2d, reference_linear_speed, reference_angular_speed
+                    current_pose=self.robot_state, 
+                    pose_ref=goal_pose2d, 
+                    linear_velocity_ref=reference_linear_speed, 
+                    angular_velocity_ref=reference_angular_speed
                 )
             else:
                 raise ValueError(f"Invalid controller type: {self.controller_type}")

@@ -41,8 +41,7 @@ class HolonomicDriveController(Controller):
 
         self.first_run = True
 
-    def calculate(
-        self, /, **kwargs) -> Velocity:
+    def calculate(self, **kwargs) -> Velocity:
         current_pose: Pose2d = kwargs["current_pose"]
         pose_ref: Optional[Pose2d] = kwargs.get("pose_ref", None)
         linear_velocity_ref_meters: Optional[float] = kwargs.get("linear_velocity_ref_meters", None)

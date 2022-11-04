@@ -3,7 +3,7 @@ import rospy
 
 from ..robot_state import Pose2d
 
-from bw_interface.msg import Waypoint
+from bw_interfaces.msg import Waypoint
 
 
 class Waypoint2d(Pose2d):
@@ -36,9 +36,9 @@ class Waypoint2d(Pose2d):
         return cls(
             waypoint.name, 
             waypoint.header.frame_id,
-            waypoint.position.x,
-            waypoint.position.y,
-            cls.theta_from_quat(waypoint.orientation)
+            waypoint.pose.position.x,
+            waypoint.pose.position.y,
+            cls.theta_from_quat(waypoint.pose.orientation)
         )
 
     def __str__(self):

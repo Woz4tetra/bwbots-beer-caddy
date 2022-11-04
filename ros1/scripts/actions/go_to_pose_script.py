@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import yaml
 import rospy
 import actionlib
@@ -68,3 +69,7 @@ def main():
     except KeyboardInterrupt:
         rospy.loginfo("Cancelling goal")
         action.cancel_goal()
+
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,32 @@
+find_tag:
+  num_samples: 10
+  sample_interval: 0.1
+  max_attempts: 10
+
+go_to_pose:
+  controller_type: ramsete
+  x_kP: 1.0
+  x_kI: 0.0
+  x_kD: 0.0
+  y_kP: 1.0
+  y_kI: 0.0
+  y_kD: 0.0
+  linear_max_vel: 1.0
+  linear_max_accel: 3.0
+  theta_kP: 1.0
+  theta_kI: 0.0
+  theta_kD: 0.0
+  ramsete_b: 2.0
+  ramsete_zeta: 0.7
+  theta_max_vel: 3.0
+  theta_max_accel: 6.0
+  loop_rate: 50.0
+
+go_to_waypoint:
+  move_base_namespace: /move_base
+
+shuffle_until_charging:
+  is_charging_cooldown: 1.0
+  speed: 0.3
+  loop_rate: 10.0
+  interval: 0.5

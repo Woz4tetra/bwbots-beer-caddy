@@ -10,8 +10,8 @@ from bw_interfaces.msg import ChargeState
 class ShuffleUntilChargingCommand:
     def __init__(self) -> None:
         self.is_charging_cooldown = rospy.Duration(rospy.get_param("~shuffle_until_charging/is_charging_cooldown", 1.0))
-        self.speed = rospy.Duration(rospy.get_param("~shuffle_until_charging/speed", 0.3))
-        self.loop_rate = rospy.Duration(rospy.get_param("~shuffle_until_charging/loop_rate", 10.0))
+        self.speed = rospy.get_param("~shuffle_until_charging/speed", 0.3)
+        self.loop_rate = rospy.get_param("~shuffle_until_charging/loop_rate", 10.0)
         self.shuffle_interval = rospy.Duration(rospy.get_param("~shuffle_until_charging/interval", 0.5))
 
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=10)
@@ -28,6 +28,7 @@ class ShuffleUntilChargingCommand:
             auto_start=False
         )
         self.shuffle_until_charging_server.start()
+        rospy.loginfo("shuffle_until_charging is ready")
     
     def charger_callback(self, msg):
         self.charger_state = msg

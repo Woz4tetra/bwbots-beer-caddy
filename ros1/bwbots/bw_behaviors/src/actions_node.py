@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import rospy
 
 from commands.go_to_waypoint import GoToWaypointCommand

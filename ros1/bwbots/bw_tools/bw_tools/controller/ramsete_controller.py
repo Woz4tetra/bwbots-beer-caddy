@@ -63,7 +63,7 @@ class RamseteController(Controller):
         self.b = b
         self.zeta = zeta
 
-    def calculate(self, /, **kwargs) -> Velocity:
+    def calculate(self, **kwargs) -> Velocity:
         current_pose: Pose2d = kwargs["current_pose"]
         pose_ref: Optional[Pose2d] = kwargs.get("pose_ref", None)
         linear_velocity_ref: Optional[float] = kwargs.get("linear_velocity_ref", None)

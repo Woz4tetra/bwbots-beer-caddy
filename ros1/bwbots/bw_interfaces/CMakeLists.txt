@@ -11,6 +11,8 @@ find_package(catkin  REQUIRED COMPONENTS
   std_msgs
   geometry_msgs
   message_generation
+  actionlib_msgs
+  actionlib
 )
 
 ## System dependencies are found with CMake's conventions
@@ -78,6 +80,7 @@ add_action_files(
   FILES
   FindTag.action
   FollowWaypoints.action
+  GoToPose.action
   ShuffleUntilCharging.action
 )
 
@@ -86,6 +89,7 @@ generate_messages(
   DEPENDENCIES
   std_msgs  # Or other packages containing msgs
   geometry_msgs
+  actionlib_msgs
 )
 
 ################################################

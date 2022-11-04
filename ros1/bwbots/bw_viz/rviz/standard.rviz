@@ -7,6 +7,7 @@ Panels:
         - /Global Options1
         - /Camera1/Visibility1
         - /PointStamped1
+        - /MarkerArray1
       Splitter Ratio: 0.3412107527256012
     Tree Height: 908
   - Class: rviz/Selection
@@ -269,6 +270,7 @@ Visualization Manager:
         Local Path: true
         Map: true
         Marker: true
+        MarkerArray: true
         PointCloud2: true
         PointStamped: true
         Polygon: true
@@ -431,6 +433,23 @@ Visualization Manager:
       Topic: /clicked_point
       Unreliable: false
       Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /bw/waypoint_markers
+      Name: MarkerArray
+      Namespaces:
+        posdock_prep: true
+        postest1: true
+        postest2: true
+        postest3: true
+        postest4: true
+        textdock_prep: true
+        texttest1: true
+        texttest2: true
+        texttest3: true
+        texttest4: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -459,7 +478,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 10.358986854553223
+      Distance: 12.997560501098633
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -467,17 +486,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -1.5184502601623535
-        Y: 0.9159395098686218
-        Z: -0.8467724919319153
+        X: -2.474203109741211
+        Y: 2.302868127822876
+        Z: -0.9126631021499634
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.1647964715957642
+      Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
-      Yaw: 5.735422611236572
+      Yaw: 5.640419960021973
     Saved: ~
 Window Geometry:
   Camera:
