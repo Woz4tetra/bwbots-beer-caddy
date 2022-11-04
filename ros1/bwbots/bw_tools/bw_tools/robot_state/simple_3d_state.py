@@ -153,7 +153,7 @@ class Simple3DState(State):
         ros_pose.orientation = self.get_theta_as_quat()
         return ros_pose
 
-    def relative_to(self, other):
+    def transform_by(self, other):
         if not isinstance(other, self.__class__):
             raise ValueError("%s is not of type %s" % (repr(other), self.__class__))
         new_self = self.__class__.from_state(other)
@@ -177,7 +177,7 @@ class Simple3DState(State):
 
         return new_self
 
-    def relative_to_reverse(self, other):
+    def relative_to(self, other):
         if not isinstance(other, self.__class__):
             raise ValueError("%s is not of type %s" % (repr(other), self.__class__))
         new_self = self.__class__.from_state(other)

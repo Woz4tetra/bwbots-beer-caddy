@@ -77,6 +77,7 @@ add_action_files(
   FILES
   FindTag.action
   FollowWaypoints.action
+  ShuffleUntilCharging.action
 )
 
 ## Generate added messages and services with any dependencies listed here

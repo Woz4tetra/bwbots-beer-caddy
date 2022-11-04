@@ -57,6 +57,10 @@ class FindTagCommand:
             result.pose = result_pose
 
         self.find_tag_server.publish_result(result)
+        if result.success:
+            self.find_tag_server.set_succeeded()
+        else:
+            self.find_tag_server.set_aborted()
     
     def lookup_tag(self, reference_frame, tag_frame):
         try:

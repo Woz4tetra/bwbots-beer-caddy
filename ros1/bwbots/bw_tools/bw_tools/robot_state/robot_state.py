@@ -70,7 +70,7 @@ class State:
         quat_msg.w = quat[3]
         return quat_msg
 
-    def relative_to(self, other):
+    def transform_by(self, other):
         if not isinstance(other, self.__class__):
             raise ValueError("Can't transform %s to %s" % (self.__class__, other.__class__))
         state = self.__class__.from_state(self)
@@ -80,7 +80,7 @@ class State:
         state.theta = self.normalize_theta(state.theta)
         return state
 
-    def relative_to_reverse(self, other):
+    def relative_to(self, other):
         if not isinstance(other, self.__class__):
             raise ValueError("%s is not of type %s" % (repr(other), self.__class__))
         state = self.__class__.from_state(self)
@@ -324,4 +324,9 @@ class Pose2d(State):
 
 
 class Velocity(State):
-    pass
+    @classmethod
+    def from_global_relative_speeds(cls, vx: float, vy: float, vt: float, angle_ref: float):
+        self = cls(vx, vy, 0.0)
+        self.rotate_by(-angle_ref)
+        self.theta = vt
+        return self

@@ -62,9 +62,9 @@ class GoToWaypointCommand:
                 break
         self.follow_waypoints_server.publish_result(result)
         if result.success:
-            self.waypoints_node.follow_path_server.set_succeeded()
+            self.follow_waypoints_server.set_succeeded()
         else:
-            self.waypoints_node.follow_path_server.set_aborted()
+            self.follow_waypoints_server.set_aborted()
 
     def move_base_feedback(self, mb_feedback):
         feedback = FollowWaypointsFeedback()

@@ -1,0 +1,12 @@
+geometry_msgs/PoseStamped goal
+float64 xy_tolerance
+float64 yaw_tolerance
+std_msgs/duration timeout
+bool ignore_obstacles
+float64 reference_linear_speed
+float64 reference_angular_speed
+---
+bool success
+---
+geometry_msgs/PoseStamped current_pose
+geometry_msgs/PoseStamped goal_pose
