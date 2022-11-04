@@ -1,0 +1,4 @@
+string[] names
+---
+bw_interfaces/WaypointArray waypoints
+bool success

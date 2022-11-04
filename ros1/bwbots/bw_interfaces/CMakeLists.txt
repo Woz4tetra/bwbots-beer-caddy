@@ -68,6 +68,7 @@ add_service_files(
   DeleteWaypoint.srv
   GetAllWaypoints.srv
   GetWaypoint.srv
+  GetWaypoints.srv
   SaveWaypoint.srv
   SaveTF.srv
 )

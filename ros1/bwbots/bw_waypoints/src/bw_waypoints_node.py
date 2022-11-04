@@ -16,6 +16,7 @@ from std_msgs.msg import ColorRGBA
 
 from bw_interfaces.srv import GetAllWaypoints, GetAllWaypointsResponse
 from bw_interfaces.srv import GetWaypoint, GetWaypointResponse
+from bw_interfaces.srv import GetWaypoints, GetWaypointsResponse
 from bw_interfaces.srv import DeleteWaypoint, DeleteWaypointResponse
 from bw_interfaces.srv import SaveWaypoint, SaveWaypointResponse
 from bw_interfaces.srv import SaveTF, SaveTFResponse
@@ -51,6 +52,7 @@ class BwWaypoints:
 
         self.get_all_waypoints_srv = self.create_service("get_all_waypoints", GetAllWaypoints, self.get_all_waypoints_callback)
         self.get_waypoint_srv = self.create_service("get_waypoint", GetWaypoint, self.get_waypoint_callback)
+        self.get_waypoints_srv = self.create_service("get_waypoints", GetWaypoints, self.get_waypoints_callback)
         self.delete_waypoint_srv = self.create_service("delete_waypoint", DeleteWaypoint, self.delete_waypoint_callback)
         self.save_pose_srv = self.create_service("save_waypoint", SaveWaypoint, self.save_waypoint_callback)
         self.save_tf_srv = self.create_service("save_tf", SaveTF, self.save_tf_callback)
@@ -149,6 +151,18 @@ class BwWaypoints:
             return GetWaypointResponse(Waypoint(), False)
         else:
             return GetWaypointResponse(waypoint, True)
+    
+    def get_waypoints_callback(self, req):
+        self.waypoints = self.load_from_path(self.waypoints_path)
+        success = True
+        array = WaypointArray()
+        for name in req.names:
+            waypoint = self.get_waypoint(name)
+            if waypoint is None:
+                success = False
+            else:
+                array.waypoints.append(waypoint)
+        return GetWaypointResponse(array, success)
 
     def delete_waypoint_callback(self, req):
         self.waypoints = self.load_from_path(self.waypoints_path)
