@@ -8,7 +8,11 @@ from bw_interfaces.msg import GoToPoseAction, GoToPoseGoal, GoToPoseResult
 
 from bw_tools.robot_state import Pose2d
 
-def action_done(result: GoToPoseResult):
+IS_DONE = False
+
+def action_done(goal_status, result: GoToPoseResult):
+    global IS_DONE
+    IS_DONE = True
     rospy.loginfo(f"Action finished with result: {result}")
 
 
@@ -36,7 +40,7 @@ def main():
     parser.add_argument("-t", "--timeout",
                         default=10.0,
                         help="Action timeout")
-    parser.add_argument("io", "--ignore-obstacles",
+    parser.add_argument("-io", "--ignore-obstacles",
                         default=False,
                         help="Ignore obstacles during movement")
     parser.add_argument("-l", "--reference-linear-speed",
@@ -65,7 +69,8 @@ def main():
 
     action.send_goal(goal, done_cb=action_done)
     try:
-        rospy.spin()
+        while not IS_DONE:
+            rospy.sleep(0.1)
     except KeyboardInterrupt:
         rospy.loginfo("Cancelling goal")
         action.cancel_goal()

@@ -4,3 +4,8 @@ move_base:
   on_start: true
   topics:
     /move_base: None
+
+behaviors:
+  package: "bw_behaviors"
+  path: "bw_behaviors.launch"
+  on_start: false
