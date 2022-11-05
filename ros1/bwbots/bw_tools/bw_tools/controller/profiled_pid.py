@@ -3,8 +3,8 @@
 # Open Source Software; you can modify and/or share it under the terms of
 # the WPILib BSD license file in the root directory of this project.
 
-from typing import Optional
-from .pid import PIDController, input_modulus
+from typing import Any, Optional
+from .pid import PIDController
 from .trapezoid_profile import State, Constraints, TrapezoidProfile
 
 
@@ -60,9 +60,9 @@ class ProfiledPIDController(PIDController):
             # Get error which is smallest distance between goal and measurement
             error_bound = (self.maximum_input - self.minimum_input) / 2.0
             goal_min_distance = \
-                input_modulus(self.goal.position - measurement, -error_bound, error_bound)
+                self.input_modulus(self.goal.position - measurement, -error_bound, error_bound)
             setpoint_min_distance = \
-                input_modulus(self.setpoint.position - measurement, -error_bound, error_bound)
+                self.input_modulus(self.setpoint.position - measurement, -error_bound, error_bound)
 
             # recompute the profile goal with the smallest error, thus giving the shortest path. the goal
             # may be outside the input range after this operation, but that's ok because the controller
@@ -75,21 +75,16 @@ class ProfiledPIDController(PIDController):
         self.trap_setpoint = profile.calculate(self.period)
         return super().calculate(measurement, self.trap_setpoint.position)
 
-    def reset(self, measurement: State):
+    def reset(self, measurement: Any):
         """
         * Reset the previous error and the integral term.
         *
         * @param measurement The current measured State of the system.
         """
         super().reset()
-        self.trap_setpoint = measurement
-
-    def reset_position(self, measurement: float):
-        """
-        * Reset the previous error and the integral term.
-        *
-        * @param measuredPosition The current measured position of the system. The velocity is assumed to
-        *     be zero.
-        """
-        super().reset()
-        self.trap_setpoint = State(measurement, 0.0)
+        if isinstance(measurement, float):
+            self.trap_setpoint = State(measurement, 0.0)
+        elif isinstance(measurement, State):
+            self.trap_setpoint = measurement
+        else:
+            raise ValueError(f"Invalid parameter type for reset. {type(measurement)}: {measurement}")

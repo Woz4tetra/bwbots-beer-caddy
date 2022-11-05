@@ -32,13 +32,13 @@ def main():
     parser.add_argument("pose",
                         help="Goal pose. Yaml format (ex. \"{x: 0.1}\". Equivalent to \"{x: 0.1, y: 0.0, theta: 0.0}\")")
     parser.add_argument("-xy", "--xy-tolerance",
-                        default=0.25,
+                        default=0.025,
                         help="Distance tolerance")
     parser.add_argument("-th", "--theta-tolerance",
-                        default=0.25,
+                        default=0.15,
                         help="Angular tolerance")
     parser.add_argument("-t", "--timeout",
-                        default=10.0,
+                        default=1.0,
                         help="Action timeout")
     parser.add_argument("-io", "--ignore-obstacles",
                         default=False,
@@ -69,11 +69,11 @@ def main():
 
     action.send_goal(goal, done_cb=action_done)
     try:
-        while not IS_DONE:
-            rospy.sleep(0.1)
+        action.wait_for_result()
     except KeyboardInterrupt:
         rospy.loginfo("Cancelling goal")
         action.cancel_goal()
+        rospy.sleep(1.0)
 
 
 if __name__ == '__main__':

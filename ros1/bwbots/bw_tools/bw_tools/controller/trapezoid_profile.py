@@ -55,6 +55,8 @@ class TrapezoidProfile:
         * @param goal The desired state when the profile is complete.
         * @param initial The initial state (usually the current state).
         """
+        assert isinstance(goal, State), f"{type(goal)}: {goal}"
+        assert isinstance(initial, State), f"{type(initial)}: {initial}"
         # The direction of the profile, either 1 for forwards or -1 for inverted
         self.direction: int = -1 if self.should_flip_acceleration(initial, goal) else 1
 
@@ -93,7 +95,7 @@ class TrapezoidProfile:
         self.end_decel = self.end_full_speed + acceleration_time - cutoff_end
 
 
-    def should_flip_acceleration(initial: State, goal: State) -> bool:
+    def should_flip_acceleration(self, initial: State, goal: State) -> bool:
         """
         * Returns true if the profile inverted.
         *
@@ -111,7 +113,7 @@ class TrapezoidProfile:
         result.velocity = result.velocity * self.direction
         return result
 
-    def calculate(self, timestamp) -> float:
+    def calculate(self, timestamp) -> State:
         """
         * Calculate the correct position and velocity for the profile at a time t where the beginning of
         * the profile was at time t = 0.

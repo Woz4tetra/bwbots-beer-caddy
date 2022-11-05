@@ -29,9 +29,9 @@ class HolonomicDriveController(Controller):
         """
         * Constructs a holonomic drive controller.
         *
-        * @param xController A PID Controller to respond to error in the field-relative x direction.
-        * @param yController A PID Controller to respond to error in the field-relative y direction.
-        * @param thetaController A profiled PID controller to respond to error in angle.
+        * @param x_controller A PID Controller to respond to error in the field-relative x direction.
+        * @param y_controller A PID Controller to respond to error in the field-relative y direction.
+        * @param theta_controller A profiled PID controller to respond to error in angle.
         """
         super().__init__()
 
@@ -86,12 +86,12 @@ class HolonomicDriveController(Controller):
         x_ff = linear_velocity_ref_meters * math.cos(pose_ref.theta)
         y_ff = linear_velocity_ref_meters * math.sin(pose_ref.theta)
         theta_ff = \
-            self.theta_controller.calculate(current_pose, angle_ref)
+            self.theta_controller.calculate(current_pose.theta, angle_ref)
 
         self.pose_error = pose_ref.relative_to(current_pose)
         self.rotation_error = angle_ref - current_pose.theta
 
-        if self.enabled:
+        if not self.enabled:
             return Velocity.from_global_relative_speeds(x_ff, y_ff, theta_ff, current_pose.theta)
 
         # calculate feedback velocities (based on position error).
@@ -107,9 +107,9 @@ class HolonomicDriveController(Controller):
         """
         * Returns the next output of the holonomic drive controller.
         *
-        * @param currentPose The current pose.
-        * @param desiredState The desired trajectory state.
-        * @param angleRef The desired end-angle.
+        * @param current_pose The current pose.
+        * @param desired_state The desired trajectory state.
+        * @param angle_ref The desired end-angle.
         * @return The next output of the holonomic drive controller.
         """
         return self.calculate(

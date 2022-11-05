@@ -6,41 +6,6 @@
 
 from typing import Optional
 
-
-def input_modulus(input: float, minimum_input: float, maximum_input: float) -> float:
-    """
-    * Returns modulus of input.
-    *
-    * @param input Input value to wrap.
-    * @param minimum_input The minimum value expected from the input.
-    * @param maximum_input The maximum value expected from the input.
-    * @return The wrapped value.
-    """
-    modulus = maximum_input - minimum_input
-
-    # Wrap input if it's above the maximum input
-    num_max = int((input - minimum_input) / modulus)
-    input -= num_max * modulus;
-
-    #Wrap input if it's below the minimum input
-    num_min = int((input - maximum_input) / modulus);
-    input -= num_min * modulus
-
-    return input
-
-
-def clamp(value: float, low: float, high: float) -> float:
-    """
-    * Returns value clamped between low and high boundaries.
-    *
-    * @param value Value to clamp.
-    * @param low The lower boundary to which to clamp value.
-    * @param high The higher boundary to which to clamp value.
-    * @return The clamped value.
-    """
-    return max(low, min(value, high))
-
-
 class PIDController:
     def __init__(self, kp: float, ki: float, kd: float, period: float = 0.02) -> None:
         """
@@ -148,7 +113,7 @@ class PIDController:
         """
         if (self.continuous):
             error_bound = (self.maximum_input - self.minimum_input) / 2.0
-            position_error = input_modulus(self.setpoint - self.measurement, -error_bound, error_bound)
+            position_error = self.input_modulus(self.setpoint - self.measurement, -error_bound, error_bound)
         else:
             position_error = self.setpoint - self.measurement
         velocity_error = (position_error - self.prev_error) / self.period
@@ -243,14 +208,14 @@ class PIDController:
 
         if self.continuous:
             error_bound = (self.maximum_input - self.minimum_input) / 2.0;
-            self.position_error = input_modulus(self.setpoint - self.measurement, -error_bound, error_bound)
+            self.position_error = self.input_modulus(self.setpoint - self.measurement, -error_bound, error_bound)
         else:
             self.position_error = self.setpoint - measurement
 
         self.velocity_error = (self.position_error - self.prev_error) / self.period
 
         if self.ki != 0:
-            self.totalError = clamp(
+            self.totalError = self.clamp(
                 self.total_error + self.position_error * self.period,
                 self.minimum_integral / self.ki,
                 self.maximum_integral / self.ki
@@ -262,3 +227,91 @@ class PIDController:
         """Resets the previous error and the integral term."""
         self.prev_error = 0.0
         self.total_error = 0.0
+
+    @staticmethod
+    def input_modulus(input: float, minimum_input: float, maximum_input: float) -> float:
+        """
+        * Returns modulus of input.
+        *
+        * @param input Input value to wrap.
+        * @param minimum_input The minimum value expected from the input.
+        * @param maximum_input The maximum value expected from the input.
+        * @return The wrapped value.
+        """
+        modulus = maximum_input - minimum_input
+
+        # Wrap input if it's above the maximum input
+        num_max = int((input - minimum_input) / modulus)
+        input -= num_max * modulus;
+
+        #Wrap input if it's below the minimum input
+        num_min = int((input - maximum_input) / modulus);
+        input -= num_min * modulus
+
+        return input
+
+    @staticmethod
+    def clamp(value: float, low: float, high: float) -> float:
+        """
+        * Returns value clamped between low and high boundaries.
+        *
+        * @param value Value to clamp.
+        * @param low The lower boundary to which to clamp value.
+        * @param high The higher boundary to which to clamp value.
+        * @return The clamped value.
+        """
+        return max(low, min(value, high))
+
+    @staticmethod
+    def apply_deadband(value, deadband, max_magnitude=1.0):
+        """
+        * Returns 0.0 if the given value is within the specified range around zero. The remaining range
+        * between the deadband and the maximum magnitude is scaled from 0.0 to the maximum magnitude.
+        *
+        * @param value Value to clip.
+        * @param deadband Range around zero.
+        * @param max_magnitude The maximum magnitude of the input. Can be infinite.
+        * @return The value after the deadband is applied.
+        """
+        if abs(value) > deadband:
+            if max_magnitude / deadband > 1.0e12:
+                # If max magnitude is sufficiently large, the implementation encounters
+                # roundoff error.  Implementing the limiting behavior directly avoids
+                # the problem.
+                return value - deadband if value > 0.0 else value + deadband
+            if value > 0.0:
+                # Map deadband to 0 and map max to max.
+                #
+                # y - y₁ = m(x - x₁)
+                # y - y₁ = (y₂ - y₁)/(x₂ - x₁) (x - x₁)
+                # y = (y₂ - y₁)/(x₂ - x₁) (x - x₁) + y₁
+                #
+                # (x₁, y₁) = (deadband, 0) and (x₂, y₂) = (max, max).
+                # x₁ = deadband
+                # y₁ = 0
+                # x₂ = max
+                # y₂ = max
+                #
+                # y = (max - 0)/(max - deadband) (x - deadband) + 0
+                # y = max/(max - deadband) (x - deadband)
+                # y = max (x - deadband)/(max - deadband)
+                return max_magnitude * (value - deadband) / (max_magnitude - deadband)
+            else:
+                # Map -deadband to 0 and map -max to -max.
+                #
+                # y - y₁ = m(x - x₁)
+                # y - y₁ = (y₂ - y₁)/(x₂ - x₁) (x - x₁)
+                # y = (y₂ - y₁)/(x₂ - x₁) (x - x₁) + y₁
+                #
+                # (x₁, y₁) = (-deadband, 0) and (x₂, y₂) = (-max, -max).
+                # x₁ = -deadband
+                # y₁ = 0
+                # x₂ = -max
+                # y₂ = -max
+                #
+                # y = (-max - 0)/(-max + deadband) (x + deadband) + 0
+                # y = max/(max - deadband) (x + deadband)
+                # y = max (x + deadband)/(max - deadband)
+                return max_magnitude * (value + deadband) / (max_magnitude - deadband)
+        else:
+            return 0.0

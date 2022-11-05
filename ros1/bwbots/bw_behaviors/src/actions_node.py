@@ -11,8 +11,8 @@ def main():
     commands = {}
     node_name = "bw_behaviors"
     rospy.init_node(
-        node_name
-        # disable_signals=True
+        node_name,
+        # disable_signals=True,
         # log_level=rospy.DEBUG
     )
     

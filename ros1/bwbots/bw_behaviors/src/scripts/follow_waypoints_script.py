@@ -48,11 +48,11 @@ def main():
 
     action.send_goal(goal, done_cb=action_done)
     try:
-        while not IS_DONE:
-            rospy.sleep(0.1)
+        action.wait_for_result()
     except KeyboardInterrupt:
         rospy.loginfo("Cancelling goal")
         action.cancel_goal()
+        rospy.sleep(1.0)
 
 
 if __name__ == '__main__':
