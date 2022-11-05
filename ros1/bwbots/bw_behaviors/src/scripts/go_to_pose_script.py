@@ -50,8 +50,11 @@ def main():
                         default=3.0,
                         help="Angular movement speed")
     parser.add_argument("-f", "--reference-frame",
-                        default="odom",
+                        default="base_link",
                         help="Parent frame of pose")
+    parser.add_argument("-r", "--allow_reverse",
+                        default=False,
+                        help="Allow backwards motion")
     args = parser.parse_args()
 
     pose_dict: dict = yaml.safe_load(args.pose)
@@ -66,6 +69,7 @@ def main():
     goal.ignore_obstacles = args.ignore_obstacles
     goal.reference_linear_speed = args.reference_linear_speed
     goal.reference_angular_speed = args.reference_angular_speed
+    goal.allow_reverse = args.allow_reverse
 
     action.send_goal(goal, done_cb=action_done)
     try:

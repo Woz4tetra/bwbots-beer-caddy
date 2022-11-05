@@ -3,7 +3,6 @@
 # Open Source Software; you can modify and/or share it under the terms of
 # the WPILib BSD license file in the root directory of this project.
 
-import rospy
 import math
 from typing import Optional
 from ..robot_state import Pose2d, Velocity
@@ -19,9 +18,9 @@ class NonHolonomicDriveController(Controller):
             x_controller: PIDController,
             y_controller: PIDController,
             theta_controller: ProfiledPIDController,
-            turn_in_place_threshold: float = math.pi / 8.0) -> None:
+            turn_in_place_threshold: float = math.pi / 10.0) -> None:
         """
-        * Constructs a holonomic drive controller.
+        * Constructs a nonholonomic drive controller.
         *
         * @param x_controller A PID Controller to respond to error in the field-relative x direction.
         * @param y_controller A PID Controller to respond to error in the field-relative y direction.
@@ -38,7 +37,7 @@ class NonHolonomicDriveController(Controller):
     def calculate(self, **kwargs) -> Velocity:
         current_pose: Pose2d = kwargs["current_pose"]
         pose_ref: Optional[Pose2d] = kwargs.get("pose_ref", None)
-        linear_velocity_ref_meters: Optional[float] = kwargs.get("linear_velocity_ref_meters", None)
+        linear_velocity_ref: Optional[float] = kwargs.get("linear_velocity_ref", None)
         angular_velocity_ref: Optional[float] = kwargs.get("angular_velocity_ref", None)
         desired_state: Optional[State] = kwargs.get("desired_state", None)
         linear_min_velocity: float = kwargs.get("linear_min_velocity", 0.0)
@@ -49,7 +48,7 @@ class NonHolonomicDriveController(Controller):
             return self.calculate_from_poses(
                 current_pose,
                 pose_ref,
-                linear_velocity_ref_meters,
+                linear_velocity_ref,
                 angular_velocity_ref,
                 linear_min_velocity,
                 theta_min_velocity,
@@ -68,22 +67,12 @@ class NonHolonomicDriveController(Controller):
     def calculate_from_poses(self, 
             current_pose: Pose2d,
             pose_ref: Pose2d,
-            linear_velocity_ref_meters: Optional[float],
+            linear_velocity_ref: Optional[float],
             angular_velocity_ref: Optional[float],
             linear_min_velocity: float,
             theta_min_velocity: float,
             allow_reverse: bool) -> Velocity:
-        """
-        * Returns the next output of the holonomic drive controller.
-        *
-        * @param current_pose The current pose.
-        * @param pose_ref The desired pose.
-        * @param linear_velocity_ref_meters The linear velocity reference.
-        * @return The next output of the holonomic drive controller.
-        """
-        
         self.pose_error = pose_ref.relative_to(current_pose)
-        rospy.loginfo(f"self.pose_error: {self.pose_error}")
 
         if self.pose_error.distance() > self.pose_tolerance.distance():
             self.pose_error.theta = self.pose_error.heading()
@@ -99,7 +88,6 @@ class NonHolonomicDriveController(Controller):
         if is_reversed:
             vx *= -1.0
             vt *= -1.0
-        rospy.loginfo(f"vx: {vx}, vt: {vt}")
 
         if abs(vx) < 1E-6:
             vx = 0.0
@@ -111,8 +99,8 @@ class NonHolonomicDriveController(Controller):
         elif abs(vt) < theta_min_velocity:
             vt = math.copysign(theta_min_velocity, vt)
 
-        if linear_velocity_ref_meters is not None:
-            vx = PIDController.clamp(vx, -linear_velocity_ref_meters, linear_velocity_ref_meters)
+        if linear_velocity_ref is not None:
+            vx = PIDController.clamp(vx, -linear_velocity_ref, linear_velocity_ref)
         if angular_velocity_ref is not None:
             vt = PIDController.clamp(vt, -angular_velocity_ref, angular_velocity_ref)
 
@@ -127,14 +115,6 @@ class NonHolonomicDriveController(Controller):
             linear_min_velocity: float,
             theta_min_velocity: float,
             allow_reverse: bool) -> Velocity:
-        """
-        * Returns the next output of the holonomic drive controller.
-        *
-        * @param currentPose The current pose.
-        * @param desiredState The desired trajectory state.
-        * @param angleRef The desired end-angle.
-        * @return The next output of the holonomic drive controller.
-        """
         return self.calculate(
             current_pose,
             desired_state.pose_meters,

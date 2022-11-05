@@ -21,13 +21,13 @@ class ShuffleUntilChargingCommand:
         self.prev_charger_state: Optional[ChargeState] = None
         self.prev_is_charging_time = rospy.Time.now()
 
-        self.shuffle_until_charging_server = actionlib.ActionServer(
+        self.action_server = actionlib.ActionServer(
             "shuffle_until_charging",
             ShuffleUntilChargingAction,
-            self.shuffle_until_charging_callback, 
+            self.action_callback, 
             auto_start=False
         )
-        self.shuffle_until_charging_server.start()
+        self.action_server.start()
         rospy.loginfo("shuffle_until_charging is ready")
     
     def charger_callback(self, msg):
@@ -38,7 +38,7 @@ class ShuffleUntilChargingCommand:
         twist.linear.x = speed
         self.cmd_vel_pub.publish(twist)
     
-    def shuffle_until_charging_callback(self, goal: ShuffleUntilChargingGoal):
+    def action_callback(self, goal: ShuffleUntilChargingGoal):
         timeout = rospy.Duration(goal.timeout.data)
 
         self.prev_charger_state = None
@@ -71,13 +71,13 @@ class ShuffleUntilChargingCommand:
 
             feedback = ShuffleUntilChargingFeedback()
             feedback.attempts = attempts
-            self.shuffle_until_charging_server.publish_feedback(feedback)
+            self.action_server.publish_feedback(feedback)
 
         success = self.charger_state.is_charging
 
         result = ShuffleUntilChargingResult(success)
-        self.shuffle_until_charging_server.publish_result(result)
+        self.action_server.publish_result(result)
         if result.success:
-            self.shuffle_until_charging_server.set_succeeded()
+            self.action_server.set_succeeded()
         else:
-            self.shuffle_until_charging_server.set_aborted()
+            self.action_server.set_aborted()

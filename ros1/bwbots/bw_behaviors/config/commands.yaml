@@ -4,17 +4,17 @@ find_tag:
   max_attempts: 10
 
 go_to_pose:
-  controller_type: nonholonomic
-  x_kP: 1.0
+  controller_type: strafe
+  x_kP: 3.0
   x_kI: 0.0
   x_kD: 0.0
-  y_kP: 5.0
+  y_kP: 3.0
   y_kI: 0.0
   y_kD: 0.0
-  linear_min_vel: 0.25
+  linear_min_vel: 0.0
   linear_max_vel: 1.0
   linear_max_accel: 3.0
-  theta_kP: 10.0
+  theta_kP: 3.0
   theta_kI: 0.0
   theta_kD: 0.0
   ramsete_b: 2.0

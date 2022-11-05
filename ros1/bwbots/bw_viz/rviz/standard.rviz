@@ -5,6 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /TF1/Frames1
         - /Camera1/Visibility1
         - /PointStamped1
         - /MarkerArray1
@@ -119,28 +120,6 @@ Visualization Manager:
           Value: true
         odom:
           Value: true
-        zed2_baro_link:
-          Value: false
-        zed2_base_link:
-          Value: false
-        zed2_camera_center:
-          Value: false
-        zed2_imu_link:
-          Value: false
-        zed2_left_camera_frame:
-          Value: false
-        zed2_left_camera_optical_frame:
-          Value: false
-        zed2_mag_link:
-          Value: false
-        zed2_right_camera_frame:
-          Value: false
-        zed2_right_camera_optical_frame:
-          Value: false
-        zed2_temp_left_link:
-          Value: false
-        zed2_temp_right_link:
-          Value: false
       Marker Alpha: 1
       Marker Scale: 0.5
       Name: TF
@@ -153,24 +132,7 @@ Visualization Manager:
             base_link:
               base_tilt_link:
                 camera_link:
-                  zed2_base_link:
-                    zed2_camera_center:
-                      zed2_baro_link:
-                        {}
-                      zed2_left_camera_frame:
-                        zed2_imu_link:
-                          {}
-                        zed2_left_camera_optical_frame:
-                          {}
-                        zed2_temp_left_link:
-                          {}
-                      zed2_mag_link:
-                        {}
-                      zed2_right_camera_frame:
-                        zed2_right_camera_optical_frame:
-                          {}
-                        zed2_temp_right_link:
-                          {}
+                  {}
                 laser:
                   {}
                 module_1:
@@ -494,7 +456,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 5.994169235229492
+      Distance: 11.667546272277832
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -502,17 +464,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.4186404049396515
-        Y: -0.027448954060673714
-        Z: -0.915705680847168
+        X: -2.0824079513549805
+        Y: 3.303694486618042
+        Z: -0.9123784899711609
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5697963237762451
+      Pitch: 1.5147963762283325
       Target Frame: <Fixed Frame>
-      Yaw: 5.640419960021973
+      Yaw: 4.940419673919678
     Saved: ~
 Window Geometry:
   Camera:

@@ -44,12 +44,12 @@ class HolonomicDriveController(Controller):
     def calculate(self, **kwargs) -> Velocity:
         current_pose: Pose2d = kwargs["current_pose"]
         pose_ref: Optional[Pose2d] = kwargs.get("pose_ref", None)
-        linear_velocity_ref_meters: Optional[float] = kwargs.get("linear_velocity_ref_meters", None)
+        linear_velocity_ref: Optional[float] = kwargs.get("linear_velocity_ref", None)
         angle_ref: Optional[float] = kwargs.get("angle_ref", None)
         desired_state: Optional[State] = kwargs.get("desired_state", None)
 
         if pose_ref is not None:
-            return self.calculate_from_poses(current_pose, pose_ref, linear_velocity_ref_meters, angle_ref)
+            return self.calculate_from_poses(current_pose, pose_ref, linear_velocity_ref, angle_ref)
         elif desired_state is not None:
             return self.calculate_from_state(current_pose, desired_state, angle_ref)
         else:
@@ -57,22 +57,17 @@ class HolonomicDriveController(Controller):
     
     def calculate_from_poses(self, current_pose: Pose2d,
             pose_ref: Pose2d,
-            linear_velocity_ref_meters: float,
+            linear_velocity_ref: float,
             angle_ref: Optional[float] = None) -> Velocity:
         """
         * Returns the next output of the holonomic drive controller.
         *
         * @param current_pose The current pose.
         * @param pose_ref The desired pose.
-        * @param linear_velocity_ref_meters The linear velocity reference.
+        * @param linear_velocity_ref The linear velocity reference.
         * @param angle_ref The angular reference. If None, pose_ref.theta is used.
         * @return The next output of the holonomic drive controller.
         """
-        current_pose: Pose2d
-        pose_ref: Pose2d
-        linear_velocity_ref_meters: float
-        angle_ref: Optional[float] = None
-
         # If this is the first run, then we need to reset the theta controller to the current pose's
         # heading.
         if self.first_run:
@@ -83,8 +78,8 @@ class HolonomicDriveController(Controller):
             angle_ref = pose_ref.theta
 
         # calculate feedforward velocities (odom-relative).
-        x_ff = linear_velocity_ref_meters * math.cos(pose_ref.theta)
-        y_ff = linear_velocity_ref_meters * math.sin(pose_ref.theta)
+        x_ff = linear_velocity_ref * math.cos(pose_ref.theta)
+        y_ff = linear_velocity_ref * math.sin(pose_ref.theta)
         theta_ff = \
             self.theta_controller.calculate(current_pose.theta, angle_ref)
 

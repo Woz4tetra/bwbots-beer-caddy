@@ -18,16 +18,16 @@ class FindTagCommand:
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
-        self.find_tag_server = actionlib.ActionServer(
+        self.action_server = actionlib.ActionServer(
             "find_tag",
             FindTagAction,
-            self.find_tag_callback, 
+            self.action_callback, 
             auto_start=False
         )
-        self.find_tag_server.start()
+        self.action_server.start()
         rospy.loginfo("find_tag is ready")
 
-    def find_tag_callback(self, goal: FindTagGoal):
+    def action_callback(self, goal: FindTagGoal):
         tag_frame = goal.tag_frame_id
         reference_frame = goal.reference_frame_id
         tag_poses = []
@@ -57,11 +57,11 @@ class FindTagCommand:
             result_pose.pose = filtered_pose.to_ros_pose()
             result.pose = result_pose
 
-        self.find_tag_server.publish_result(result)
+        self.action_server.publish_result(result)
         if result.success:
-            self.find_tag_server.set_succeeded()
+            self.action_server.set_succeeded()
         else:
-            self.find_tag_server.set_aborted()
+            self.action_server.set_aborted()
     
     def lookup_tag(self, reference_frame, tag_frame):
         try:

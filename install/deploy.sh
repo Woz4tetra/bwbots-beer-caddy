@@ -32,9 +32,6 @@ SSH_COMMAND="ssh -i ${REMOTE_KEY} ${USERNAME}@${DESTINATION_NAME}"
 echo "Stopping roslaunch"
 ${SSH_COMMAND} -t "sudo systemctl stop roslaunch.service"
 
-# build db_tools
-${SSH_COMMAND} "bash ${DEST_FULL_PATH}/ros1/install/robot_installation/09_install_python_libraries.sh"
-
 # build catkin ws
 
 PACKAGE_LIST=`ls $PACKAGES_PATH`
