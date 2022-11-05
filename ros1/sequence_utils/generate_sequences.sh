@@ -1,7 +1,7 @@
 python3 stored_sequence_generator.py \
     lights/startup.csv \
     lights/charging.csv \
-    lights/delivering.csv \
+    lights/driving.csv \
     lights/hotspot.csv \
     lights/hotspot-charging.csv \
     lights/idle.csv \
@@ -9,4 +9,5 @@ python3 stored_sequence_generator.py \
     midi/fur_elise.mid \
     midi/brawl.mid \
     midi/mii_channel.mid \
-    midi/megalovania.mid
+    midi/megalovania.mid \
+    midi/ruins.mid

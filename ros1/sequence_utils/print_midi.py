@@ -5,6 +5,7 @@ Support for MIDI files is still experimental.
 """
 import sys
 from mido import MidiFile
+from mido.midifiles.meta import MetaMessage
 
 if __name__ == '__main__':
     filename = sys.argv[1]
@@ -12,6 +13,17 @@ if __name__ == '__main__':
     midi_file = MidiFile(filename)
 
     for i, track in enumerate(midi_file.tracks):
-        sys.stdout.write('=== Track {}\n'.format(i))
+        print(f"=== Track {i}")
+        info = {
+            "num_notes": 0,
+            "length": 0
+        }
         for message in track:
-            sys.stdout.write('  {!r}\n'.format(message))
+            if type(message) == MetaMessage:
+                print(f"    {message}")
+            else:
+                if "note" in message.type:
+                    info["num_notes"] += 1
+            info["length"] += 1
+        print(f"    Number of notes: {info['num_notes']}")
+        print(f"    Length: {info['length']}")

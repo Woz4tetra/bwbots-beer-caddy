@@ -9,7 +9,7 @@ def note_to_freq(note):
 
 
 class MidiSequencer:
-    def __init__(self, file_path, max_volume, kick_old_tones=False, tempo_multiplier=1.0, max_length=None) -> None:
+    def __init__(self, file_path, max_volume, kick_old_tones=False, tempo_multiplier=1.0, allowed_tracks=None, max_length=None) -> None:
         self.kick_old_tones = kick_old_tones
         self.max_volume = max_volume
         self.tempo_multiplier = 1.0 / tempo_multiplier
@@ -22,9 +22,13 @@ class MidiSequencer:
             3: None,
         }
         self.max_midi_volume = 127
+        self.allowed_tracks = allowed_tracks
 
     def is_channel_playable(self, channel):
-        return channel <= 8
+        if self.allowed_tracks is None or len(self.allowed_tracks) == 0:
+            return True
+        else:
+            return channel in self.allowed_tracks
 
     def generate(self, generator: SequenceGenerator):
         channel_queue = []
@@ -89,11 +93,13 @@ class MidiSequencer:
                             channel_queue.pop(0)
                         break
                 if not note_added and self.kick_old_tones:
-                    kick_channel = channel_queue.pop(0)
-                    channel_queue.append(kick_channel)
-                    print(f"{len(generator)}: On {frequency} Hz on channel {channel}. {msg}")
-                    SequenceGenerator.make_start_tone(kick_channel, frequency, volume)
-                    self.active_notes[kick_channel] = msg
+                    kick_channel = channel_queue[0]
+                    if msg.note > self.active_notes[kick_channel].note:
+                        kick_channel = channel_queue.pop(0)
+                        channel_queue.append(kick_channel)
+                        print(f"{len(generator)}: On {frequency} Hz on channel {channel}. {msg}")
+                        SequenceGenerator.make_start_tone(kick_channel, frequency, volume)
+                        self.active_notes[kick_channel] = msg
                 
             elif note_type == "note_off":
                 for channel, note in self.active_notes.items():

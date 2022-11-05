@@ -5,7 +5,7 @@
     <include file="$(find bw_load_cell)/launch/bw_load_cell.launch"/>
     <include file="$(find bw_rplidar)/launch/robeert_laser.launch"/>
     <include file="$(find bw_rplidar)/launch/robeert_filters.launch"/>
-    <include file="$(find bw_zed)/launch/zed2.launch"/>
+    <!-- <include file="$(find bw_zed)/launch/zed2.launch"/> -->
     <!-- <include file="$(find bw_move_base)/launch/bw_move_base.launch"/> -->
     <include file="$(find bw_launcher)/launch/bw_launcher.launch"/>
     <include file="$(find bw_waypoints)/launch/bw_waypoints.launch"/>

@@ -1,2 +1,13 @@
 BOT99:
   tempo_multiplier: 2.0
+  tracks: [0, 1, 2, 3, 4, 5, 6, 7]
+fur_elise:
+  tracks: [0, 1, 2, 3, 4, 5, 6, 7]
+brawl:
+  tracks: [0, 1, 2, 3, 4, 5, 6, 7]
+mii_channel:
+  tracks: [0, 1, 2, 3, 4, 5, 6, 7]
+megalovania:
+  tracks: [0, 1, 2, 3, 4, 5, 6, 7]
+ruins:
+  tracks: [0, 1, 2, 3, 4, 5, 6, 7]

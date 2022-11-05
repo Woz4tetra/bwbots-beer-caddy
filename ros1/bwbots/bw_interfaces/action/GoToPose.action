@@ -5,6 +5,7 @@ duration timeout
 bool ignore_obstacles
 float64 reference_linear_speed
 float64 reference_angular_speed
+bool allow_reverse
 ---
 bool success
 ---

@@ -43,6 +43,7 @@ class NonHolonomicDriveController(Controller):
         desired_state: Optional[State] = kwargs.get("desired_state", None)
         linear_min_velocity: float = kwargs.get("linear_min_velocity", 0.0)
         theta_min_velocity: float = kwargs.get("theta_min_velocity", 0.0)
+        allow_reverse: bool = kwargs.get("allow_reverse", False)
 
         if pose_ref is not None:
             return self.calculate_from_poses(
@@ -51,23 +52,27 @@ class NonHolonomicDriveController(Controller):
                 linear_velocity_ref_meters,
                 angular_velocity_ref,
                 linear_min_velocity,
-                theta_min_velocity)
+                theta_min_velocity,
+                allow_reverse)
         elif desired_state is not None:
             return self.calculate_from_state(
                 current_pose,
                 desired_state,
                 linear_min_velocity,
-                theta_min_velocity
+                theta_min_velocity,
+                allow_reverse
             )
         else:
             raise ValueError(f"Invalid parameters for {self.__class__.__name__}.calculate: {kwargs}")
     
-    def calculate_from_poses(self, current_pose: Pose2d,
+    def calculate_from_poses(self, 
+            current_pose: Pose2d,
             pose_ref: Pose2d,
             linear_velocity_ref_meters: Optional[float],
             angular_velocity_ref: Optional[float],
             linear_min_velocity: float,
-            theta_min_velocity: float) -> Velocity:
+            theta_min_velocity: float,
+            allow_reverse: bool) -> Velocity:
         """
         * Returns the next output of the holonomic drive controller.
         *
@@ -82,10 +87,18 @@ class NonHolonomicDriveController(Controller):
 
         if self.pose_error.distance() > self.pose_tolerance.distance():
             self.pose_error.theta = self.pose_error.heading()
+        
+        is_reversed = False
+        if allow_reverse and abs(self.pose_error.theta) > math.pi / 2.0:
+            self.pose_error = self.pose_error.rotate_by(math.pi)
+            is_reversed = True
 
         vx = self.x_controller.calculate(-self.pose_error.x, 0.0)
         vt = self.y_controller.calculate(-self.pose_error.y, 0.0)
         vt += self.theta_controller.calculate(-self.pose_error.theta, 0.0)
+        if is_reversed:
+            vx *= -1.0
+            vt *= -1.0
         rospy.loginfo(f"vx: {vx}, vt: {vt}")
 
         if abs(vx) < 1E-6:
@@ -108,8 +121,12 @@ class NonHolonomicDriveController(Controller):
         else:
             return Velocity(vx, 0.0, vt)
 
-    def calculate_from_state(
-        self, current_pose: Pose2d, desired_state: State, linear_min_velocity: float, theta_min_velocity: float) -> Velocity:
+    def calculate_from_state(self,
+            current_pose: Pose2d,
+            desired_state: State,
+            linear_min_velocity: float,
+            theta_min_velocity: float,
+            allow_reverse: bool) -> Velocity:
         """
         * Returns the next output of the holonomic drive controller.
         *
@@ -119,4 +136,10 @@ class NonHolonomicDriveController(Controller):
         * @return The next output of the holonomic drive controller.
         """
         return self.calculate(
-            current_pose, desired_state.pose_meters, desired_state.velocity_meters_per_second)
+            current_pose,
+            desired_state.pose_meters,
+            desired_state.velocity_meters_per_second,
+            linear_min_velocity,
+            theta_min_velocity,
+            allow_reverse
+        )

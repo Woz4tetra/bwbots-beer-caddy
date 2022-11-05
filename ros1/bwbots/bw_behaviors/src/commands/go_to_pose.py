@@ -179,7 +179,8 @@ class GoToPoseCommand:
         self.timeout_buffer: rospy.Duration = goal.timeout
         reference_linear_speed: float = goal.reference_linear_speed
         reference_angular_speed: float = goal.reference_angular_speed
-        # ignore_obstacles = goal.ignore_obstacles
+        ignore_obstacles = goal.ignore_obstacles
+        allow_reverse = goal.allow_reverse
 
         self.timeout = 1.0  # wait at least 1 second for a goal to come in
 
@@ -228,7 +229,8 @@ class GoToPoseCommand:
                     linear_velocity_ref=reference_linear_speed, 
                     angular_velocity_ref=reference_angular_speed,
                     linear_min_velocity=self.linear_min_vel,
-                    theta_min_velocity=self.theta_min_vel
+                    theta_min_velocity=self.theta_min_vel,
+                    allow_reverse=allow_reverse
                 )
             else:
                 raise ValueError(f"Invalid controller type: {self.controller_type}")
