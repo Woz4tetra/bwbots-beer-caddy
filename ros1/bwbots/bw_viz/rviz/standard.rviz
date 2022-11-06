@@ -8,6 +8,8 @@ Panels:
         - /TF1/Frames1
         - /ZedOdDisplay1
         - /Camera1/Visibility1
+        - /Tag Sample1
+        - /Tag Result1
       Splitter Ratio: 0.3412107527256012
     Tree Height: 873
   - Class: rviz/Selection
@@ -278,6 +280,8 @@ Visualization Manager:
         PoseArray: false
         RobotModel: false
         TF: false
+        Tag Result: true
+        Tag Sample: true
         Value: true
         ZedOdDisplay: true
       Zoom Factor: 1
@@ -466,11 +470,43 @@ Visualization Manager:
       Topic: /bw/go_to_pose_goal
       Unreliable: false
       Value: true
+    - Alpha: 1
+      Axes Length: 0.10000000149011612
+      Axes Radius: 0.009999999776482582
+      Class: rviz/Pose
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.30000001192092896
+      Head Radius: 0.10000000149011612
+      Name: Tag Sample
+      Queue Size: 10
+      Shaft Length: 1
+      Shaft Radius: 0.05000000074505806
+      Shape: Axes
+      Topic: /bw/tag_sample
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Axes Length: 0.05000000074505806
+      Axes Radius: 0.009999999776482582
+      Class: rviz/Pose
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.30000001192092896
+      Head Radius: 0.10000000149011612
+      Name: Tag Result
+      Queue Size: 10
+      Shaft Length: 1
+      Shaft Radius: 0.05000000074505806
+      Shape: Axes
+      Topic: /bw/tag_pose
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: map
+    Fixed Frame: odom
     Frame Rate: 30
   Name: root
   Tools:
@@ -494,7 +530,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 5.82747745513916
+      Distance: 1.1231743097305298
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -502,17 +538,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.12235088646411896
-        Y: 0.2359696626663208
-        Z: -1.1078405380249023
+        X: -0.1738768219947815
+        Y: 0.2549346089363098
+        Z: 0.1312812715768814
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5147963762283325
+      Pitch: 1.5347963571548462
       Target Frame: <Fixed Frame>
-      Yaw: 4.940419673919678
+      Yaw: 3.8754091262817383
     Saved: ~
 Window Geometry:
   Camera:
