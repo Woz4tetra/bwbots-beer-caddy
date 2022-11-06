@@ -4,6 +4,7 @@
 # the WPILib BSD license file in the root directory of this project.
 
 
+import math
 from typing import Optional
 
 class PIDController:
@@ -207,7 +208,7 @@ class PIDController:
         self.prev_error = self.position_error
 
         if self.continuous:
-            error_bound = (self.maximum_input - self.minimum_input) / 2.0;
+            error_bound = (self.maximum_input - self.minimum_input) / 2.0
             self.position_error = self.input_modulus(self.setpoint - self.measurement, -error_bound, error_bound)
         else:
             self.position_error = self.setpoint - measurement
@@ -242,10 +243,10 @@ class PIDController:
 
         # Wrap input if it's above the maximum input
         num_max = int((input - minimum_input) / modulus)
-        input -= num_max * modulus;
+        input -= num_max * modulus
 
         #Wrap input if it's below the minimum input
-        num_min = int((input - maximum_input) / modulus);
+        num_min = int((input - maximum_input) / modulus)
         input -= num_min * modulus
 
         return input
@@ -261,6 +262,30 @@ class PIDController:
         * @return The clamped value.
         """
         return max(low, min(value, high))
+
+    @staticmethod
+    def clamp_region(value: float, low: Optional[float], high: Optional[float], epsilon=1E-6) -> float:
+        """
+        * Returns value clamped between -high..-low and low..high. If abs(value) < epsilon, return
+        * zero
+        *
+        * @param value Value to clamp.
+        * @param low The lower boundary to which to clamp value.
+        * @param high The higher boundary to which to clamp value.
+        * @param epsilon Basically zero value
+        * @return The clamped value.
+        """
+
+        if abs(value) < epsilon:
+            return 0.0
+        if low is None:
+            low = 0.0
+        if high is None:
+            high_clamped = value
+        else:
+            high_clamped = min(abs(value), abs(high))
+        clamped = max(abs(low), high_clamped)
+        return math.copysign(clamped, value)
 
     @staticmethod
     def apply_deadband(value, deadband, max_magnitude=1.0):

@@ -53,7 +53,7 @@ def main():
                         default="base_link",
                         help="Parent frame of pose")
     parser.add_argument("-r", "--allow_reverse",
-                        default=False,
+                        action="store_true",
                         help="Allow backwards motion")
     args = parser.parse_args()
 

@@ -249,9 +249,9 @@ class GoToPoseCommand:
                 )
             else:
                 raise ValueError(f"Invalid controller type: {self.controller_type}")
-            rospy.loginfo(f"Robot pose: {self.robot_state}")
-            rospy.loginfo(f"Goal pose: {goal_pose2d}")
-            rospy.loginfo(f"Velocity command: {velocity_command}")
+            rospy.logdebug(f"Robot pose: {self.robot_state}")
+            rospy.logdebug(f"Goal pose: {goal_pose2d}")
+            rospy.logdebug(f"Velocity command: {velocity_command}")
             self.publish_velocity(velocity_command)
             self.publish_state_feedback(
                 self.robot_state,

@@ -56,6 +56,9 @@ class ProfiledPIDController(PIDController):
         * @param measurement The current measurement of the process variable.
         * @return The controller's next output.
         """
+        if setpoint is not None:
+            measurement -= setpoint
+
         if self.is_continuous_input_enabled():
             # Get error which is smallest distance between goal and measurement
             error_bound = (self.maximum_input - self.minimum_input) / 2.0

@@ -28,12 +28,13 @@ class MidiPlayer:
         self.start_seq_srv = rospy.ServiceProxy("/bw/play_sequence", PlaySequence)
         self.stop_seq_srv = rospy.ServiceProxy("/bw/stop_sequence", StopSequence)
 
-        self.midi_path = rospy.get_param("~midi_path", "simple.mid")
+        self.midi_path = rospy.get_param("~midi_path", "midi/simple.mid")
         self.volume = rospy.get_param("~volume", 30)
         self.tempo_multiplier = rospy.get_param("~tempo_multiplier", 1.0)
         self.loop = rospy.get_param("~loop", False)
         self.allowed_tracks = rospy.get_param("~allowed_tracks", [0, 1, 2, 3, 4, 5, 6, 7])
-        self.midi_sequencer = MidiSequencer(self.midi_path, self.volume, True, self.tempo_multiplier, self.allowed_tracks)
+        self.num_leds = rospy.get_param("~num_leds", 24)
+        self.midi_sequencer = MidiSequencer(self.midi_path, self.volume, True, self.tempo_multiplier, self.allowed_tracks, self.num_leds)
         self.gen = SequenceGenerator()
 
         rospy.loginfo("%s init complete" % self.node_name)

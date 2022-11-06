@@ -26,8 +26,13 @@ class SequenceGenerator:
     
     def add(self, *elements):
         for element in elements:
-            self.msg.sequence.append(element)
-        
+            if element is None:
+                continue
+            if isinstance(element, BwSequenceElement):
+                self.msg.sequence.append(element)
+            else:
+                raise ValueError(f"Can only add element of type BwSequenceElement: {type(element)}: {element}")
+
     def iter(self):
         for element in self.msg.sequence:
             yield element

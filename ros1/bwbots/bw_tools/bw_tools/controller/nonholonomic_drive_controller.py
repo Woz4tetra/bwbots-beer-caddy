@@ -82,9 +82,9 @@ class NonHolonomicDriveController(Controller):
             self.pose_error = self.pose_error.rotate_by(math.pi)
             is_reversed = True
 
-        vx = self.x_controller.calculate(-self.pose_error.x, 0.0)
-        vt = self.y_controller.calculate(-self.pose_error.y, 0.0)
-        vt += self.theta_controller.calculate(-self.pose_error.theta, 0.0)
+        vx = self.x_controller.calculate(0.0, self.pose_error.x)
+        vt = self.y_controller.calculate(0.0, self.pose_error.y)
+        vt += self.theta_controller.calculate(0.0, self.pose_error.theta)
         if is_reversed:
             vx *= -1.0
             vt *= -1.0

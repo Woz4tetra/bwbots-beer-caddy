@@ -39,12 +39,14 @@ def main():
                 volume = config[name].get("volume", 30)
                 tempo_multiplier = config[name].get("tempo_multiplier", 1.0)
                 tracks = config[name].get("tracks", None)
+                num_leds = config[name].get("num_leds", None)
             else:
                 volume = 30
                 tempo_multiplier = 1.0
                 tracks = None
+                num_leds = None
             print(f"Set volume to {volume}. Set tempo multipler to {tempo_multiplier}")
-            midi_sequencer = MidiSequencer(filepath, int(volume), True, float(tempo_multiplier), tracks)
+            midi_sequencer = MidiSequencer(filepath, int(volume), True, float(tempo_multiplier), tracks, num_leds)
             midi_sequencer.generate(generator)
         else:
             raise RuntimeError(f"Invalid file type: {filepath}")
