@@ -1,0 +1,12 @@
+<launch>
+    <include file="$(find bw_tags)/launch/apriltag.launch">
+        <arg name="image_topic" value="/zed/left/image_rect_color" />
+        <arg name="info_topic" value="/zed/left/camera_info" />
+        <arg name="node_namespace" value="apriltag_left"/>
+    </include>
+    <include file="$(find bw_tags)/launch/apriltag.launch">
+        <arg name="image_topic" value="/zed/right/image_rect_color" />
+        <arg name="info_topic" value="/zed/right/camera_info" />
+        <arg name="node_namespace" value="apriltag_right"/>
+    </include>
+</launch>

@@ -18,10 +18,10 @@ class FindTagCommand:
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
-        self.action_server = actionlib.ActionServer(
+        self.action_server = actionlib.SimpleActionServer(
             "find_tag",
             FindTagAction,
-            self.action_callback, 
+            execute_cb=self.action_callback, 
             auto_start=False
         )
         self.action_server.start()

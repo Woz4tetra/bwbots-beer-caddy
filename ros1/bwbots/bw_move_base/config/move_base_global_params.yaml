@@ -31,7 +31,7 @@ recovery_behaviors:
     type: 'clear_costmap_recovery/ClearCostmapRecovery'
   - name: 'clearing_rotation2'
     type: 'rotate_recovery/RotateRecovery'
-  - name: 'super_conservative_reset2'
+  - name: 'super_conservative_reset3'
     type: 'clear_costmap_recovery/ClearCostmapRecovery'
   - name: 'conservative_reset2'
     type: 'clear_costmap_recovery/ClearCostmapRecovery'
