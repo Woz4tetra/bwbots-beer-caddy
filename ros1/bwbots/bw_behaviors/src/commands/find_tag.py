@@ -1,8 +1,13 @@
+from typing import List
 import rospy
 import tf2_ros
 import actionlib
+import tf2_geometry_msgs
 
 from geometry_msgs.msg import PoseStamped
+
+from apriltag_ros.msg import AprilTagDetectionArray
+from apriltag_ros.msg import AprilTagDetection
 
 from bw_interfaces.msg import FindTagAction, FindTagGoal, FindTagFeedback, FindTagResult
 
@@ -12,8 +17,13 @@ from bw_tools.robot_state import Pose2d
 class FindTagCommand:
     def __init__(self) -> None:
         self.num_samples = rospy.get_param("~find_tag/num_samples", 10)
-        self.sample_interval = rospy.get_param("~find_tag/sample_interval", 0.1)
-        self.max_attempts = rospy.get_param("~find_tag/max_attempts", 10)
+        self.timeout = rospy.Duration(rospy.get_param("~find_tag/timeout", 5.0))
+        self.stale_tag_time = rospy.Duration(rospy.get_param("~find_tag/stale_tag_time", 5.0))
+
+        self.tag_ring = [None for _ in range(self.num_samples)]
+        self.ring_index = 0
+        self.left_tag_sub = rospy.Subscriber("/apriltag_left/tag_detections", AprilTagDetectionArray, self.tag_callback, queue_size=10)
+        self.right_tag_sub = rospy.Subscriber("/apriltag_right/tag_detections", AprilTagDetectionArray, self.tag_callback, queue_size=10)
 
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
@@ -26,32 +36,64 @@ class FindTagCommand:
         )
         self.action_server.start()
         rospy.loginfo("find_tag is ready")
+    
+    def tag_callback(self, msg):
+        self.tag_ring[self.ring_index] = msg
+        self.ring_index = (self.ring_index + 1) % len(self.tag_ring)
+
+    def get_tag_pose_in(self, destination_frame: str, detection_msg: AprilTagDetection) -> PoseStamped:
+        try:
+            transform = self.tf_buffer.lookup_transform(destination_frame, detection_msg.pose.header, rospy.Time(0), rospy.Duration(1.0))
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+            return
+        tag_pose = PoseStamped()
+        tag_pose.header = detection_msg.pose.header
+        tag_pose.pose = detection_msg.pose.pose
+        return tf2_geometry_msgs.do_transform_pose(tag_pose, transform)
 
     def action_callback(self, goal: FindTagGoal):
-        tag_frame = goal.tag_frame_id
-        reference_frame = goal.reference_frame_id
-        tag_poses = []
-        result = FindTagResult(PoseStamped(), True)
+        tag_id: List[int] = goal.tag_id
+        reference_frame: str = goal.reference_frame_id
 
-        sample_num = 0
-        attempts = 0
-        while sample_num < self.num_samples:
-            tag_pose = self.lookup_tag(reference_frame, tag_frame)
-            rospy.sleep(self.sample_interval)
-            if tag_pose is None:
-                attempts += 1
-                if attempts >= self.max_attempts:
-                    result = FindTagResult(PoseStamped(), False)
-            else:
-                attempts = 0
-                tag_poses.append(tag_pose)
+        tag_id.sort()
+
+        tag_poses = []
+        result = FindTagResult(PoseStamped(), False)
+
+        start_time = rospy.Time.now()
+        current_time = rospy.Time.now()
+        while current_time - start_time < self.timeout:
+            current_time = rospy.Time.now()
+            tag_poses = []  # reset buffer since num_samples not met
+            for index in range(0, -len(self.tag_ring), -1):
+                # iterate through detections in the order they were added
+                index = (index + self.ring_index) % len(self.tag_ring)
+                detection = self.tag_ring[index]
+                if detection is None:
+                    continue
+                if detection.pose.header.stamp - start_time > self.stale_tag_time:
+                    continue
+                detect_id: List[int] = detection.id
+                detect_id.sort()
+                if len(tag_id) != 0 and detect_id != tag_id:
+                    continue
+
+                pose = self.get_tag_pose_in(reference_frame, detection)
+                if pose is None:
+                    continue
 
                 feedback = FindTagFeedback()
-                feedback.sample = tag_pose
-                self.follow_waypoints_server.publish_feedback(feedback)
+                feedback.sample = pose
+                feedback.num_samples = len(tag_poses)
+                self.action_server.publish_feedback(feedback)
+
+                tag_poses.append(pose)
+                if len(tag_poses) >= self.num_samples:
+                    result.success = True
+                    break
 
         if result.success:
-            pose2ds = [Pose2d.from_ros_pose(ps.pose) for ps in tag_poses]
+            pose2ds = [Pose2d.from_ros_pose(msg.pose) for msg in tag_poses]
             filtered_pose = Pose2d.median(pose2ds)
             result_pose = tag_poses[-1]
             result_pose.pose = filtered_pose.to_ros_pose()
@@ -62,16 +104,3 @@ class FindTagCommand:
             self.action_server.set_succeeded()
         else:
             self.action_server.set_aborted()
-    
-    def lookup_tag(self, reference_frame, tag_frame):
-        try:
-            current_tf = self.tf_buffer.lookup_transform(reference_frame, tag_frame, rospy.Time(0), rospy.Duration(1.0))
-        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-            return None
-        
-        pose = PoseStamped()
-        pose.header.stamp = rospy.Time.now()
-        pose.header.frame_id = reference_frame
-        pose.pose.position = current_tf.transform.translation
-        pose.pose.orientation = current_tf.transform.rotation
-        return pose

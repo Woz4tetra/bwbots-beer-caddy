@@ -6,6 +6,7 @@
                 <param name="device_path" value="/dev/serial/by-id/usb-Silicon_Labs_CP2104_USB_to_UART_Bridge_Controller_018D31F7-if00-port0"/>
                 <param name="device_baud" value="115200"/>
                 <param name="calibration_value" value="-33393.6015625"/>
+                <param name="last_read_timeout" value="15.0"/>
             </node>
         </group>
     </group>

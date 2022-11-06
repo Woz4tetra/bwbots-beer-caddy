@@ -21,10 +21,10 @@ class ShuffleUntilChargingCommand:
         self.prev_charger_state: Optional[ChargeState] = None
         self.prev_is_charging_time = rospy.Time.now()
 
-        self.action_server = actionlib.ActionServer(
+        self.action_server = actionlib.SimpleActionServer(
             "shuffle_until_charging",
             ShuffleUntilChargingAction,
-            self.action_callback, 
+            execute_cb=self.action_callback,
             auto_start=False
         )
         self.action_server.start()

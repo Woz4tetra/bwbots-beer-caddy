@@ -10,6 +10,9 @@ BwSerialTunnel::BwSerialTunnel(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~write_rate", _write_rate, 15.0);
     ros::param::param<int>("~open_attempts", _open_attempts, 50);
 
+    double last_read_timeout_param;
+    ros::param::param<double>("~last_read_timeout", last_read_timeout_param, 5.0);
+
     _write_buffer = new char[TunnelProtocol::MAX_PACKET_LEN];
     _read_buffer = new char[READ_BUFFER_LEN];
     _initialized = false;
@@ -26,7 +29,7 @@ BwSerialTunnel::BwSerialTunnel(ros::NodeHandle* nodehandle) :
     _ping_interval = ros::Duration(1.0);
 
     _last_read_time = ros::Time(0);
-    _last_read_threshold = ros::Duration(5.0);
+    _last_read_threshold = ros::Duration(last_read_timeout_param);
 
     _is_waiting_on_result = false;
     _result_get = NULL;
@@ -58,28 +61,28 @@ bool BwSerialTunnel::reOpenDevice()
     for (int attempt = 0; attempt < _open_attempts; attempt++)
     {
         if (!ros::ok()) {
-            ROS_INFO("Exiting reopen");
+            ROS_INFO("[%s] Exiting reopen", _device_path.c_str());
             break;
         }
         ros::Duration(2.0).sleep();
         if (attempt > 0) {
-            ROS_INFO("Open device attempt #%d", attempt + 1);
+            ROS_INFO("[%s] Open device attempt #%d", _device_path.c_str(), attempt + 1);
         }
         closeDevice();
         if (openDevice()) {
             break;
         }
-        ROS_INFO("Connection attempt failed");
+        ROS_INFO("[%s] Connection attempt failed", _device_path.c_str());
     }
     if (!_initialized) {
-        ROS_ERROR("Maximum number of attempts reached");
+        ROS_ERROR("[%s] Maximum number of attempts reached", _device_path.c_str());
     }
     return _initialized;
 }
 
 bool BwSerialTunnel::openDevice()
 {
-    ROS_INFO("Initializing device");
+    ROS_INFO("[%s] Initializing device", _device_path.c_str());
 
     try {
         _device.setPort(_device_path);
@@ -89,7 +92,7 @@ bool BwSerialTunnel::openDevice()
         _device.open();
     }
     catch (serial::IOException& e) {
-        ROS_WARN("Device failed to open!");
+        ROS_WARN("[%s] Device failed to open!", _device_path.c_str());
         return false;
     }
     
@@ -98,7 +101,7 @@ bool BwSerialTunnel::openDevice()
     }
 
     _initialized = true;
-    ROS_INFO("Device initialized");
+    ROS_INFO("[%s] Device initialized", _device_path.c_str());
     _last_read_time = ros::Time::now();
 
     return true;
@@ -106,7 +109,7 @@ bool BwSerialTunnel::openDevice()
 bool BwSerialTunnel::didDeviceTimeout()
 {
     if (ros::Time::now() - _last_read_time > _last_read_threshold) {
-        ROS_INFO("Device timed out while waiting for data");
+        ROS_INFO("[%s] Device timed out while waiting for data", _device_path.c_str());
         _last_read_time = ros::Time::now();
         return true;
     }
@@ -124,7 +127,7 @@ void BwSerialTunnel::packetCallback(PacketResult* result)
         float ping_time;
         if (!result->getFloat(ping_time))  { ROS_ERROR("Failed to get ping_time"); return; }
         double dt = getLocalTime() - (double)ping_time;
-        ROS_DEBUG("Publishing ping time: %f. (Return time: %f)", dt, ping_time);
+        ROS_DEBUG("[%s] Publishing ping time: %f. (Return time: %f)", _device_path.c_str(), dt, ping_time);
         publishStatusMessages(dt);
     }
 }
@@ -157,7 +160,7 @@ void BwSerialTunnel::publishStatusMessages(float ping)
 
 void BwSerialTunnel::pingCallback(const ros::TimerEvent& event) {
     double ping_time = getLocalTime();
-    ROS_DEBUG("Writing ping time: %f", ping_time);
+    ROS_DEBUG("[%s] Writing ping time: %f", _device_path.c_str(), ping_time);
     writePacket("ping", "f", ping_time);
 }
 
@@ -165,7 +168,7 @@ void BwSerialTunnel::pingCallback(const ros::TimerEvent& event) {
 void BwSerialTunnel::writePacket(string category, const char *formats, ...)
 {
     if (!_initialized) {
-        ROS_DEBUG("Device is not initialized. Skipping write. Category: %s", category.c_str());
+        ROS_DEBUG("[%s] Device is not initialized. Skipping write. Category: %s", _device_path.c_str(), category.c_str());
         return;
     }
     va_list args;
@@ -178,12 +181,12 @@ void BwSerialTunnel::writePacket(string category, const char *formats, ...)
             _device.write((uint8_t*)_write_buffer, length);
         }
         catch (serial::IOException& e) {
-            ROS_WARN("Failed to write to device!");
+            ROS_WARN("[%s] Failed to write to device!", _device_path.c_str());
         }
         _write_lock.unlock();
     }
     else {
-        ROS_DEBUG("Skipping write for packet: %s. Length is %d", packetToString(_write_buffer, 0, length).c_str(), length);
+        ROS_DEBUG("[%s] Skipping write for packet: %s. Length is %d", _device_path.c_str(), packetToString(_write_buffer, 0, length).c_str(), length);
     }
     va_end(args);
 }
@@ -191,7 +194,7 @@ void BwSerialTunnel::writePacket(string category, const char *formats, ...)
 void BwSerialTunnel::writeHandshakePacket(string category, const char *formats, double write_interval, double timeout, ...)
 {
     if (!_initialized) {
-        ROS_DEBUG("Device is not initialized. Skipping write. Category: %s", category.c_str());
+        ROS_DEBUG("[%s] Device is not initialized. Skipping write. Category: %s", _device_path.c_str(), category.c_str());
         return;
     }
     va_list args;
@@ -208,12 +211,12 @@ void BwSerialTunnel::writeHandshakePacket(string category, const char *formats, 
             _device.write((uint8_t*)_write_buffer, length);
         }
         catch (serial::IOException& e) {
-            ROS_WARN("Failed to write to device!");
+            ROS_WARN("[%s] Failed to write to device!", _device_path.c_str());
         }
         _write_lock.unlock();
     }
     else {
-        ROS_DEBUG("Skipping write for packet: %s. Length is %d", packetToString(_write_buffer, 0, length).c_str(), length);
+        ROS_DEBUG("[%s] Skipping write for packet: %s. Length is %d", _device_path.c_str(), packetToString(_write_buffer, 0, length).c_str(), length);
     }
     va_end(args);
 }
@@ -221,7 +224,7 @@ void BwSerialTunnel::writeHandshakePacket(string category, const char *formats, 
 PacketResult* BwSerialTunnel::getResult(string category, const char *formats, double write_interval, double timeout, ...)
 {
     if (!_initialized) {
-        ROS_DEBUG("Device is not initialized. Skipping write. Category: %s", category.c_str());
+        ROS_DEBUG("[%s] Device is not initialized. Skipping write. Category: %s", _device_path.c_str(), category.c_str());
         return NULL;
     }
     va_list args;
@@ -239,7 +242,7 @@ PacketResult* BwSerialTunnel::getResult(string category, const char *formats, do
             _device.write((uint8_t*)_write_buffer, length);
         }
         catch (serial::IOException& e) {
-            ROS_WARN("Failed to write to device!");
+            ROS_WARN("[%s] Failed to write to device!", _device_path.c_str());
             return new PacketResult(TunnelProtocol::NULL_ERROR, ros::Time::now());
         }
         _write_lock.unlock();
@@ -255,7 +258,7 @@ PacketResult* BwSerialTunnel::getResult(string category, const char *formats, do
         result = _result_get;
     }
     else {
-        ROS_DEBUG("Skipping write for packet: %s. Length is %d", packetToString(_write_buffer, 0, length).c_str(), length);
+        ROS_DEBUG("[%s] Skipping write for packet: %s. Length is %d", _device_path.c_str(), packetToString(_write_buffer, 0, length).c_str(), length);
     }
     va_end(args);
     return result;
@@ -266,7 +269,7 @@ void BwSerialTunnel::checkHandshakes()
     for (size_t index = 0; index < _pending_handshakes.size(); index++) {
         Handshake* handshake = _pending_handshakes.at(index);
         if (handshake->didFail()) {
-            ROS_WARN("Handshake packet failed! The category was %s.", handshake->getCategory().c_str());
+            ROS_WARN("[%s] Handshake packet failed! The category was %s.", _device_path.c_str(), handshake->getCategory().c_str());
             _handshake_lock.lock();
             delete _pending_handshakes.at(index);
             _pending_handshakes.erase(_pending_handshakes.begin() + index);
@@ -275,14 +278,14 @@ void BwSerialTunnel::checkHandshakes()
             break;
         }
         if (handshake->shouldWriteAgain()) {
-            ROS_DEBUG("Writing a handshake packet again");
+            ROS_DEBUG("[%s] Writing a handshake packet again", _device_path.c_str());
             _write_lock.lock();
             unsigned int length = handshake->getPacket(_write_buffer);
             try {
                 _device.write((uint8_t*)_write_buffer, length);
             }
             catch (serial::IOException& e) {
-                ROS_WARN("Failed to write to device!");
+                ROS_WARN("[%s] Failed to write to device!", _device_path.c_str());
                 return;
             }
             _write_lock.unlock();
@@ -291,16 +294,16 @@ void BwSerialTunnel::checkHandshakes()
 }
 void BwSerialTunnel::compareHandshakes(PacketResult* result)
 {
-    ROS_DEBUG("Confirming packet for %s received.", result->getCategory().c_str());
+    ROS_DEBUG("[%s] Confirming packet for %s received.", _device_path.c_str(), result->getCategory().c_str());
     Handshake* handshake = new Handshake(result);
     if (_protocol->isCodeError(result->getErrorCode())) {
-        ROS_ERROR("Handshake %s confirm has an error code: %d.", handshake->getCategory().c_str(), result->getErrorCode());
+        ROS_ERROR("[%s] Handshake %s confirm has an error code: %d.", _device_path.c_str(), handshake->getCategory().c_str(), result->getErrorCode());
         return;
     }
     for (size_t index = 0; index < _pending_handshakes.size(); index++) {
         Handshake* pending_handshake = _pending_handshakes.at(index);
         if (pending_handshake->isEqual(handshake)) {
-            ROS_INFO("Handshake for %s #%d received.", handshake->getCategory().c_str(), handshake->getPacketNum());
+            ROS_INFO("[%s] Handshake for %s #%d received.", _device_path.c_str(), handshake->getCategory().c_str(), handshake->getPacketNum());
             _handshake_lock.lock();
             delete _pending_handshakes.at(index);
             _pending_handshakes.erase(_pending_handshakes.begin() + index);
@@ -309,13 +312,13 @@ void BwSerialTunnel::compareHandshakes(PacketResult* result)
             return;
         }
     }
-    ROS_WARN("Received confirm handshake %s, but no handshakes are expecting it!", handshake->getCategory().c_str());
+    ROS_WARN("[%s] Received confirm handshake %s, but no handshakes are expecting it!", _device_path.c_str(), handshake->getCategory().c_str());
 }
 
 bool BwSerialTunnel::pollDevice()
 {
     if (!_initialized) {
-        ROS_WARN("Device is not initialized.");
+        ROS_WARN("[%s] Device is not initialized.", _device_path.c_str());
         reOpenDevice();
         return true;
     }
@@ -335,7 +338,7 @@ bool BwSerialTunnel::pollDevice()
         _device.read((uint8_t*)(_read_buffer + _unparsed_index), num_chars_read);
     }
     catch (serial::IOException& e) {
-        ROS_WARN("Failed to read from device!");
+        ROS_WARN("[%s] Failed to read from device!", _device_path.c_str());
         return true;
     }
     
@@ -350,7 +353,7 @@ bool BwSerialTunnel::pollDevice()
             continue;
         }
         if (_protocol->isCodeError(result->getErrorCode())) {
-            ROS_ERROR("Encountered error code %d.", result->getErrorCode());
+            ROS_ERROR("[%s] Encountered error code %d.", _device_path.c_str(), result->getErrorCode());
             continue;
         }
         if (result->getPacketType() == PACKET_TYPE_CONFIRMING) {
@@ -395,7 +398,7 @@ void BwSerialTunnel::pollDeviceTask()
     while (ros::ok())
     {
         if (!pollDevice()) {
-            ROS_INFO("Exiting device poll thread");
+            ROS_INFO("[%s] Exiting device poll thread", _device_path.c_str());
             break;
         }
         clock_rate.sleep();
@@ -423,7 +426,7 @@ void BwSerialTunnel::closeDevice()
         _device.close();
     }
     catch (serial::IOException& e) {
-        ROS_WARN("Failed to close device!");
+        ROS_WARN("[%s] Failed to close device!", _device_path.c_str());
     }
     _initialized = false;
 }

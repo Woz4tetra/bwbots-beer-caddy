@@ -1,7 +1,8 @@
-string tag_frame_id
+int32[] tag_id
 string reference_frame_id
 ---
 geometry_msgs/PoseStamped pose
 bool success
 ---
 geometry_msgs/PoseStamped sample
+int32 num_samples
