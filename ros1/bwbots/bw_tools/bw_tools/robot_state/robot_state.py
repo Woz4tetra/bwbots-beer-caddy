@@ -43,7 +43,7 @@ class State:
         self = cls()
         self.x = pose.position.x
         self.y = pose.position.y
-        self.theta = State.theta_from_quat(pose.orientation)
+        self.theta = cls.normalize_theta(cls.theta_from_quat(pose.orientation))
         return self
 
     @staticmethod

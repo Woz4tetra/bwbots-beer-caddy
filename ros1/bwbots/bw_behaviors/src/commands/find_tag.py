@@ -76,6 +76,7 @@ class FindTagCommand:
         while current_time - start_time < self.timeout:
             current_time = rospy.Time.now()
             tag_poses = []  # reset buffer since num_samples not met
+            rospy.sleep(0.05)
             for index in range(0, -len(self.tag_ring), -1):
                 # iterate through detections in the order they were added
                 index = (index + self.ring_index) % len(self.tag_ring)
@@ -92,7 +93,7 @@ class FindTagCommand:
                 pose = self.get_tag_pose_in(reference_frame, detection)
                 if pose is None:
                     continue
-                rospy.loginfo(f"Found a tag: {pose}. {len(tag_poses)} found")
+                rospy.loginfo(f"Found a tag. {len(tag_poses)} samples taken.")
 
                 feedback = FindTagFeedback()
                 feedback.sample = pose

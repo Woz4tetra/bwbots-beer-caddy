@@ -48,6 +48,7 @@ class GoToPoseCommand:
         self.y_kD = rospy.get_param("~go_to_pose/y_kD", 0.0)
 
         self.linear_min_vel = rospy.get_param("~go_to_pose/linear_min_vel", 0.0)
+        self.linear_zero_vel = rospy.get_param("~go_to_pose/linear_zero_vel", 0.0)
         self.linear_max_vel = rospy.get_param("~go_to_pose/linear_max_vel", 1.0)
         self.linear_max_accel = rospy.get_param("~go_to_pose/linear_max_accel", 3.0)
 
@@ -59,6 +60,7 @@ class GoToPoseCommand:
         self.ramsete_zeta = rospy.get_param("~go_to_pose/ramsete_zeta", 0.7)
 
         self.theta_min_vel = rospy.get_param("~go_to_pose/theta_min_vel", 0.0)
+        self.theta_zero_vel = rospy.get_param("~go_to_pose/theta_zero_vel", 0.0)
         self.theta_max_vel = rospy.get_param("~go_to_pose/theta_max_vel", 3.0)
         self.theta_max_accel = rospy.get_param("~go_to_pose/theta_max_accel", 6.0)
 
@@ -192,6 +194,7 @@ class GoToPoseCommand:
 
         self.controller.set_enabled(True)
         self.controller.set_tolerance(Pose2d(xy_tolerance, xy_tolerance, yaw_tolerance))
+        self.controller.reset()
 
         self.goal_pose_msg = None
 
@@ -208,7 +211,8 @@ class GoToPoseCommand:
             if self.goal_pose_msg is None:
                 self.goal_pose_msg = self.goal_to_global_frame(goal.goal, self.global_frame_id)
                 self.timeout = self.compute_duration(reference_linear_speed, reference_angular_speed)
-                rospy.loginfo(f"Going to pose in {self.global_frame_id} frame: {self.goal_pose_msg}. Expected to take {self.timeout.to_sec()} seconds")
+                goal_pose2d = self.get_goal_pose()
+                rospy.loginfo(f"Going to pose in {self.global_frame_id} frame: {goal_pose2d}. Expected to take {self.timeout.to_sec()} seconds")
 
             goal_pose2d = self.get_goal_pose()
 
@@ -247,7 +251,9 @@ class GoToPoseCommand:
                     linear_velocity_ref=reference_linear_speed, 
                     angular_velocity_ref=reference_angular_speed,
                     linear_min_velocity=self.linear_min_vel,
+                    linear_zero_velocity=self.linear_zero_vel,
                     theta_min_velocity=self.theta_min_vel,
+                    theta_zero_velocity=self.theta_zero_vel,
                     allow_reverse=allow_reverse
                 )
             else:
@@ -270,7 +276,7 @@ class GoToPoseCommand:
                     goal_reached_timer = current_time
                     rospy.loginfo("Robot made it to goal. Starting goal reached timer.")
                 if current_time - goal_reached_timer > self.settling_time:
-                    rospy.loginfo(f"Robot made it to goal. Current pose: {self.robot_state}. Goal pose: {goal_pose2d}")
+                    rospy.loginfo(f"Robot made it to goal. Pose error: {goal_pose2d - self.robot_state}")
                     break
             else:
                 goal_reached_timer = None
@@ -282,25 +288,25 @@ class GoToPoseCommand:
         if self.robot_state is None:
             success = False
             distance = 0.0
-            angular_error = 0.0
+            angle_error = 0.0
             rospy.loginfo("Never received robot's position")
         else:
             distance = self.robot_state.distance(goal_pose2d)
-            angular_error = abs(self.robot_state.theta - goal_pose2d.theta)
+            angle_error = abs(self.robot_state.theta - goal_pose2d.theta)
 
             success = (
                 distance < xy_tolerance and
-                angular_error < yaw_tolerance
+                angle_error < yaw_tolerance
             )
         result = GoToPoseResult(success)
+
+        rospy.loginfo(f"Distance tolerance{' not' if distance >= xy_tolerance else ''} met: {distance} >= {xy_tolerance}")
+        rospy.loginfo(f"Angle tolerance{' not' if angle_error >= yaw_tolerance else ''} met: {angle_error} >= {yaw_tolerance}")
+
         if result.success:
             rospy.loginfo("Return success for go to pose")
             self.action_server.set_succeeded(result)
         else:
             rospy.loginfo("Return failure for go to pose")
-            if distance >= xy_tolerance:
-                rospy.loginfo(f"Distance tolerance not met: {distance} >= {xy_tolerance}")
-            if angular_error >= yaw_tolerance:
-                rospy.loginfo(f"Angular tolerance not met: {angular_error} >= {yaw_tolerance}")
             self.action_server.set_aborted(result, "Failed to go to pose")
         self.robot_state = None

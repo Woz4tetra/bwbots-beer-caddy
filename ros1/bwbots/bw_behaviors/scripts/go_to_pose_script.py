@@ -33,7 +33,7 @@ def main():
                         type=str,
                         help="Goal pose. Yaml format (ex. \"{x: 0.1}\". Equivalent to \"{x: 0.1, y: 0.0, theta: 0.0}\")")
     parser.add_argument("-xy", "--xy-tolerance",
-                        default=0.025,
+                        default=0.03,
                         type=float,
                         help="Distance tolerance")
     parser.add_argument("-th", "--theta-tolerance",

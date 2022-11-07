@@ -14,10 +14,6 @@ class GoToWaypointCommand:
         self.move_base_namespace = rospy.get_param("~go_to_waypoint/move_base_namespace", "/move_base")
         self.move_base = actionlib.SimpleActionClient(self.move_base_namespace, MoveBaseAction)
 
-        rospy.loginfo("Connecting to move_base...")
-        self.move_base.wait_for_server()
-        rospy.loginfo("move_base connected")
-        
         self.current_waypoint = Waypoint()
         self.is_move_base_done = False
         self.action_server = actionlib.SimpleActionServer(
@@ -52,6 +48,10 @@ class GoToWaypointCommand:
     def action_callback(self, goal: FollowWaypointsGoal):
         rospy.loginfo(f"Following waypoints: {goal}")
 
+        rospy.loginfo("Connecting to move_base...")
+        self.move_base.wait_for_server()
+        rospy.loginfo("move_base connected")
+        
         result = FollowWaypointsResult(True)
         for waypoint in goal.waypoints.waypoints:
             mb_goal = MoveBaseGoal()

@@ -4,14 +4,16 @@ from ..robot_state import Pose2d, Velocity
 class Controller:
     def __init__(self) -> None:
         self.pose_error = Pose2d()
-        self.rotation_error: float = 0.0
         self.pose_tolerance = Pose2d()
         self.enabled = True
     
     def at_reference(self) -> bool:
         return abs(self.pose_error.x) < self.pose_tolerance.x and \
             abs(self.pose_error.y) < self.pose_tolerance.y and \
-            abs(self.rotation_error) < self.pose_tolerance.theta
+            abs(self.pose_error.theta) < self.pose_tolerance.theta
+
+    def reset(self):
+        pass
 
     def set_tolerance(self, tolerance: Pose2d):
         """

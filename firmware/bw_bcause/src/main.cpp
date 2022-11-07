@@ -210,7 +210,7 @@ uint32_t prev_nonglobal_time = 0;
 const uint32_t NONGLOBAL_CONTROL_TIMEOUT_MS = 5000;
 
 bool was_disabled_by_command = true;
-const double MOVEMENT_EPSILON = 1E-4;
+const double MOVEMENT_EPSILON = 5E-3;
 uint32_t prev_movement_time = 0;
 const uint32_t MOVEMENT_DISABLE_TIMEOUT_MS = 3000;
 

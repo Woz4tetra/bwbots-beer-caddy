@@ -1,10 +1,16 @@
 import rospy
+from enum import Enum, auto
 import math
 from typing import Optional
 from ..robot_state import Pose2d, Velocity
 from .pid import PIDController
 from .controller import Controller
 
+class StrafeControllerState(Enum):
+    START = auto()
+    INITIAL_TURN = auto()
+    STRAFING = auto()
+    END_TURN = auto()
 
 class StrafeController(Controller):
     def __init__(self, x_controller: PIDController, y_controller: PIDController, theta_controller: PIDController, strafe_angle_limit: float) -> None:
@@ -21,6 +27,10 @@ class StrafeController(Controller):
         self.y_controller = y_controller
         self.theta_controller = theta_controller
         self.strafe_angle_limit = strafe_angle_limit
+        self.state = StrafeControllerState.START
+
+    def reset(self):
+        self.state = StrafeControllerState.START
 
     def calculate(self, **kwargs) -> Velocity:
         current_pose: Pose2d = kwargs["current_pose"]
@@ -28,10 +38,13 @@ class StrafeController(Controller):
         linear_velocity_ref: Optional[float] = kwargs.get("linear_velocity_ref", None)
         angular_velocity_ref: Optional[float] = kwargs.get("angular_velocity_ref", None)
         linear_min_velocity: float = kwargs.get("linear_min_velocity", 0.0)
+        linear_zero_velocity: float = kwargs.get("linear_zero_velocity", 1E-6)
         theta_min_velocity: float = kwargs.get("theta_min_velocity", 0.0)
+        theta_zero_velocity: float = kwargs.get("theta_zero_velocity", 1E-6)
         allow_reverse: bool = kwargs.get("allow_reverse", False)
 
-        pose_error = self.pose_error = pose_ref.relative_to(current_pose)
+        pose_error = pose_ref.relative_to(current_pose)
+        self.pose_error = Pose2d.from_state(pose_error)
 
         is_reversed = False
         if allow_reverse and abs(self.pose_error.heading()) > math.pi / 2.0:
@@ -40,24 +53,31 @@ class StrafeController(Controller):
             pose_error.y = new_pose_error.y
             is_reversed = True
 
-        strafe_direction = abs(pose_error.heading()) % (math.pi / 2.0)
-        if strafe_direction > self.strafe_angle_limit:
-            rospy.logwarn(f"Goal pose is outside strafe range: {pose_error.heading()}. Strafe limit: {self.strafe_angle_limit}")
-            return Velocity(0.0, 0.0, 0.0)
+        if self.state == StrafeControllerState.START:
+            self.state = StrafeControllerState.INITIAL_TURN
+        
+        if self.state == StrafeControllerState.INITIAL_TURN:
+            vel = Velocity(theta=self.theta_controller.calculate(0.0, pose_error.theta))
+            if abs(self.pose_error.theta) < self.pose_tolerance.theta:
+                self.state = StrafeControllerState.STRAFING
+        elif self.state == StrafeControllerState.STRAFING:
+            vel = Velocity(
+                x=self.x_controller.calculate(0.0, pose_error.x),
+                y=self.y_controller.calculate(0.0, pose_error.y)
+            )
+            if abs(self.pose_error.x) < self.pose_tolerance.x and \
+                    abs(self.pose_error.y) < self.pose_tolerance.y:
+                self.state = StrafeControllerState.END_TURN
+        elif self.state == StrafeControllerState.END_TURN:
+            vel = Velocity(theta=self.theta_controller.calculate(0.0, pose_error.theta))
 
-        vx = self.x_controller.calculate(0.0, pose_error.x)
-        vy = self.y_controller.calculate(0.0, pose_error.y)
-        vt = self.theta_controller.calculate(0.0, pose_error.theta)
-
-        vx = PIDController.clamp_region(vx, linear_min_velocity, linear_velocity_ref)
-        vy = PIDController.clamp_region(vy, linear_min_velocity, linear_velocity_ref)
-        vt = PIDController.clamp_region(vt, theta_min_velocity, angular_velocity_ref)
-
-        vel = Velocity(vx, vy, vt)
+        vel = Velocity(
+            PIDController.clamp_region(vel.x, linear_min_velocity, linear_velocity_ref, linear_zero_velocity),
+            PIDController.clamp_region(vel.y, linear_min_velocity, linear_velocity_ref, linear_zero_velocity),
+            PIDController.clamp_region(vel.theta, theta_min_velocity, angular_velocity_ref, theta_zero_velocity)
+        )
 
         if is_reversed:
-            # vel.x = -vel.x
-            # vel.y = -vel.y
             vel = -vel
 
         return vel
