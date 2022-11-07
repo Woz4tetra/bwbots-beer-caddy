@@ -8,6 +8,7 @@ Panels:
         - /TF1/Frames1
         - /ZedOdDisplay1
         - /Camera1/Visibility1
+        - /Pose2
         - /Tag Sample1
         - /Tag Result1
       Splitter Ratio: 0.3412107527256012
@@ -122,33 +123,33 @@ Visualization Manager:
         odom:
           Value: true
         zed2_baro_link:
-          Value: true
+          Value: false
         zed2_base_link:
-          Value: true
+          Value: false
         zed2_camera_center:
-          Value: true
+          Value: false
         zed2_imu_link:
-          Value: true
+          Value: false
         zed2_left_camera_frame:
-          Value: true
+          Value: false
         zed2_left_camera_optical_frame:
-          Value: true
+          Value: false
         zed2_mag_link:
-          Value: true
+          Value: false
         zed2_right_camera_frame:
-          Value: true
+          Value: false
         zed2_right_camera_optical_frame:
-          Value: true
+          Value: false
         zed2_temp_left_link:
-          Value: true
+          Value: false
         zed2_temp_right_link:
-          Value: true
+          Value: false
       Marker Alpha: 1
       Marker Scale: 0.5
       Name: TF
       Show Arrows: true
       Show Axes: true
-      Show Names: false
+      Show Names: true
       Tree:
         map:
           odom:
@@ -460,11 +461,11 @@ Visualization Manager:
       Class: rviz/Pose
       Color: 255; 25; 0
       Enabled: true
-      Head Length: 0.30000001192092896
+      Head Length: 0.10000000149011612
       Head Radius: 0.10000000149011612
       Name: Pose
       Queue Size: 10
-      Shaft Length: 1
+      Shaft Length: 0.25
       Shaft Radius: 0.05000000074505806
       Shape: Arrow
       Topic: /bw/go_to_pose_goal
@@ -506,7 +507,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: odom
+    Fixed Frame: map
     Frame Rate: 30
   Name: root
   Tools:
@@ -530,7 +531,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.1231743097305298
+      Distance: 1.6287651062011719
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -538,17 +539,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.1738768219947815
-        Y: 0.2549346089363098
-        Z: 0.1312812715768814
+        X: -0.21925505995750427
+        Y: -0.13078154623508453
+        Z: 0.3229818046092987
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5347963571548462
+      Pitch: 1.509796380996704
       Target Frame: <Fixed Frame>
-      Yaw: 3.8754091262817383
+      Yaw: 2.960387706756592
     Saved: ~
 Window Geometry:
   Camera:

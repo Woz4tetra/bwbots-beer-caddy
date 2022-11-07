@@ -30,27 +30,35 @@ def main():
     parser = argparse.ArgumentParser(description="action_script")
 
     parser.add_argument("pose",
+                        type=str,
                         help="Goal pose. Yaml format (ex. \"{x: 0.1}\". Equivalent to \"{x: 0.1, y: 0.0, theta: 0.0}\")")
     parser.add_argument("-xy", "--xy-tolerance",
                         default=0.025,
+                        type=float,
                         help="Distance tolerance")
     parser.add_argument("-th", "--theta-tolerance",
                         default=0.15,
+                        type=float,
                         help="Angular tolerance")
     parser.add_argument("-t", "--timeout",
                         default=1.0,
+                        type=float,
                         help="Action timeout")
     parser.add_argument("-io", "--ignore-obstacles",
                         default=False,
+                        type=bool,
                         help="Ignore obstacles during movement")
     parser.add_argument("-l", "--reference-linear-speed",
                         default=0.5,
+                        type=float,
                         help="Linear movement speed")
     parser.add_argument("-a", "--reference-angular-speed",
                         default=3.0,
+                        type=float,
                         help="Angular movement speed")
     parser.add_argument("-f", "--reference-frame",
                         default="base_link",
+                        type=str,
                         help="Parent frame of pose")
     parser.add_argument("-r", "--allow_reverse",
                         action="store_true",

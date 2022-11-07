@@ -50,7 +50,7 @@ class FindTagCommand:
         try:
             transform = self.tf_buffer.lookup_transform(destination_frame, detection_msg.pose.header.frame_id, rospy.Time(0), rospy.Duration(1.0))
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-            return
+            return None
 
         rotated_tag_pose = PoseStamped()
         rotated_tag_pose.header = detection_msg.pose.header

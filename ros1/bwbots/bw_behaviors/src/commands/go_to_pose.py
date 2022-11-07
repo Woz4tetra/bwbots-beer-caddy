@@ -70,6 +70,8 @@ class GoToPoseCommand:
         self.global_frame_id = rospy.get_param("~go_to_pose/global_frame", "map")
         self.robot_frame_id = rospy.get_param("~go_to_pose/robot_frame", "base_link")
 
+        self.settling_time = rospy.Duration(rospy.get_param("~go_to_pose/settling_time", 3.0))
+
         self.goal_pose_msg: Optional[PoseStamped] = None
 
         self.timeout_buffer = rospy.Duration(0.0)
@@ -164,7 +166,7 @@ class GoToPoseCommand:
         goal_pose2d.relative_to(self.robot_state)
 
         timeout = 10.0 * goal_pose2d.distance() / reference_linear_speed
-        timeout += 10.0 * goal_pose2d.theta / reference_angular_speed
+        timeout += 10.0 * abs(goal_pose2d.theta) / reference_angular_speed
         return rospy.Duration(timeout) + self.timeout_buffer
     
     def goal_to_global_frame(self, goal_pose: PoseStamped, global_frame_id):
@@ -196,6 +198,7 @@ class GoToPoseCommand:
         rate = rospy.Rate(self.loop_rate)
         start_time = rospy.Time.now()
         current_time = rospy.Time.now()
+        goal_reached_timer: Optional[rospy.Time] = None
         while current_time - start_time < self.timeout:
             rate.sleep()
             current_time = rospy.Time.now()
@@ -263,8 +266,14 @@ class GoToPoseCommand:
                 rospy.loginfo(f"Cancelling go to pose")
                 break
             if self.controller.at_reference():
-                rospy.loginfo(f"Robot made it to goal. Current pose: {self.robot_state}. Goal pose: {goal_pose2d}")
-                break
+                if goal_reached_timer is None:
+                    goal_reached_timer = current_time
+                    rospy.loginfo("Robot made it to goal. Starting goal reached timer.")
+                if current_time - goal_reached_timer > self.settling_time:
+                    rospy.loginfo(f"Robot made it to goal. Current pose: {self.robot_state}. Goal pose: {goal_pose2d}")
+                    break
+            else:
+                goal_reached_timer = None
         
         if current_time - start_time > self.timeout:
             rospy.loginfo("Go to pose timed out")

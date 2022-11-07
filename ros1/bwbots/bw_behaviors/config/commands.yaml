@@ -5,23 +5,23 @@ find_tag:
 
 go_to_pose:
   controller_type: strafe
-  x_kP: 3.0
+  x_kP: 5.0
   x_kI: 0.0
   x_kD: 0.0
-  y_kP: 1.0
+  y_kP: 10.0
   y_kI: 0.0
   y_kD: 0.0
   linear_min_vel: 0.0
   linear_max_vel: 1.0
-  linear_max_accel: 3.0
-  theta_kP: 3.0
+  linear_max_accel: 1.0
+  theta_kP: 10.0
   theta_kI: 0.0
   theta_kD: 0.0
   ramsete_b: 2.0
   ramsete_zeta: 0.7
   theta_min_vel: 0.05
   theta_max_vel: 3.0
-  theta_max_accel: 6.0
+  theta_max_accel: 1.0
   loop_rate: 50.0
   global_frame: "odom"
   robot_frame: "base_link"

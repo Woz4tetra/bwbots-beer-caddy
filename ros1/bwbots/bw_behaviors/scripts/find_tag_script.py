@@ -12,15 +12,19 @@ from bw_tools.robot_state import Pose2d
 
 def main():
     def action_done(goal_status, result: FindTagResult):
-        rospy.loginfo(f"Action finished with result: {result}. Status: {goal_status}")
+        rospy.loginfo(f"Action finished with result: {result.success}. Status: {goal_status}")
         # tag_result_pub.publish(result.pose)
 
         pose2d = Pose2d.from_ros_pose(result.pose.pose)
-        offset = Pose2d(0.0, -0.1, -1.5708)
+        offset = Pose2d(0.0, -args.offset, 1.5708)
         dock = offset.transform_by(pose2d)
         dock_3d = copy.deepcopy(result.pose)
         dock_3d.pose = dock.to_ros_pose()
-        tag_result_pub.publish(dock_3d)
+        for _ in range(10):
+            tag_result_pub.publish(dock_3d)
+
+        rospy.loginfo(f"Tag header: {result.pose.header.frame_id}")
+        rospy.loginfo(f"Tag location: {{x: {dock.x}, y: {dock.y}, theta: {dock.theta}}}")
 
 
     def feedback_cb(feedback: FindTagFeedback):
@@ -47,6 +51,10 @@ def main():
     parser.add_argument("-r", "--reference-frame",
                         default="odom",
                         help="Frame to publish tags in")
+    parser.add_argument("-o", "--offset",
+                        default=0.0,
+                        type=float,
+                        help="Tag distance offset")
     args = parser.parse_args()
 
     goal = FindTagGoal()
