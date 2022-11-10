@@ -199,6 +199,17 @@ class State:
         return self
 
     @classmethod
+    def stddev(cls, poses: List["Pose2d"]):
+        self = cls()
+        xs = [pose.x for pose in poses]
+        ys = [pose.y for pose in poses]
+        thetas = [pose.theta for pose in poses]
+        self.x = np.std(xs)
+        self.y = np.std(ys)
+        self.theta = np.std(thetas)
+        return self
+
+    @classmethod
     def normalize_theta(cls, theta):
         # normalize theta to -pi..pi
         theta = math.fmod(theta, 2 * math.pi)

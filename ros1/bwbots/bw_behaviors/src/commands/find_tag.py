@@ -107,11 +107,11 @@ class FindTagCommand:
 
         if result.success:
             pose2ds = [Pose2d.from_ros_pose(msg.pose) for msg in tag_poses]
-            filtered_pose = Pose2d.median(pose2ds)
+            median_pose = Pose2d.median(pose2ds)
             result_pose = tag_poses[-1]
-            result_pose.pose = filtered_pose.to_ros_pose()
+            result_pose.pose = median_pose.to_ros_pose()
             result.pose = result_pose
-            rospy.loginfo(f"Final tag pose. 2D: {filtered_pose}. 3D: {result_pose}")
+            rospy.loginfo(f"Final tag pose. 2D: {median_pose}. 3D: {result_pose}")
 
         if result.success:
             self.action_server.set_succeeded(result)
