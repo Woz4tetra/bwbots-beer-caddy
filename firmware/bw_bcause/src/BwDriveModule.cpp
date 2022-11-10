@@ -187,45 +187,49 @@ double BwDriveModule::wrap_angle(double angle)
 void BwDriveModule::compute_state(double vx, double vy, double vt, double dt, double& azimuth, double& wheel_velocity)
 {
     double theta_mag = vt * dt;
+    double v_mag = sqrt(vx * vx + vy * vy);
     double module_vx, module_vy;
+    double radius_of_curvature;
     if (theta_mag == 0.0) {
-        module_vx = vx;
-        module_vy = vy;
-        azimuth = atan2(module_vy, module_vx);
-        wheel_velocity = sqrt(module_vx * module_vx + module_vy * module_vy);
+        radius_of_curvature = 0.0;
     }
     else {
-        double v_mag = sqrt(vx * vx + vy * vy);
-        double d_mag = v_mag * dt;
-        double radius_of_curvature = d_mag / tan(theta_mag);
-        if (radius_of_curvature != radius_of_curvature || isinf(radius_of_curvature)) {
-            module_vx = vx;
-            module_vy = vy;
+        radius_of_curvature = (v_mag * dt) / tan(theta_mag);
+    }
+    
+    if (theta_mag == 0.0 || radius_of_curvature != radius_of_curvature || isinf(radius_of_curvature)) {
+        // Strafe regime
+        module_vx = vx;
+        module_vy = vy;
+        if (abs(v_mag) > 0.0) {
+            // set azimuth if v_mag is > 0.0. Otherwise, use the previous angle
             azimuth = atan2(module_vy, module_vx);
-            wheel_velocity = sqrt(module_vx * module_vx + module_vy * module_vy);
         }
-        else if (abs(radius_of_curvature) < min_radius_of_curvature) {
-            module_vx = vt * -y_location;
-            module_vy = vt * x_location;
-            azimuth = atan2(module_vy, module_vx);
-            wheel_velocity = sqrt(module_vx * module_vx + module_vy * module_vy);
-            if (servo_min_angle < 0.0) {
-                azimuth += M_PI;
-                wheel_velocity = -wheel_velocity;
-            }
+        wheel_velocity = v_mag;
+    }
+    else if (abs(radius_of_curvature) < min_radius_of_curvature) {
+        // Rotate in place regime
+        module_vx = vt * -y_location;
+        module_vy = vt * x_location;
+        azimuth = atan2(module_vy, module_vx);
+        wheel_velocity = sqrt(module_vx * module_vx + module_vy * module_vy);
+        if (servo_min_angle < 0.0) {
+            azimuth += M_PI;
+            wheel_velocity = -wheel_velocity;
         }
-        else {
-            double module_angle = atan2(x_location, radius_of_curvature - y_location);
-            double module_radc = x_location / sin(module_angle) - armature_length;
+    }
+    else {
+        // Ackermann + strafe regime
+        double module_angle = atan2(x_location, radius_of_curvature - y_location);
+        double module_radc = x_location / sin(module_angle) - armature_length;
 
-            module_vx = vx * module_radc / radius_of_curvature * cos(module_angle);
-            module_vy = vy + vx * module_radc / radius_of_curvature * sin(module_angle);
-            azimuth = atan2(module_vy, module_vx);
-            wheel_velocity = sqrt(module_vx * module_vx + module_vy * module_vy);
-            if (servo_min_angle < 0.0) {
-                azimuth += M_PI;
-                wheel_velocity = -wheel_velocity;
-            }
+        module_vx = vx * module_radc / radius_of_curvature * cos(module_angle);
+        module_vy = vy + vx * module_radc / radius_of_curvature * sin(module_angle);
+        azimuth = atan2(module_vy, module_vx);
+        wheel_velocity = sqrt(module_vx * module_vx + module_vy * module_vy);
+        if (servo_min_angle < 0.0) {
+            azimuth += M_PI;
+            wheel_velocity = -wheel_velocity;
         }
     }
 }
@@ -233,6 +237,7 @@ void BwDriveModule::compute_state(double vx, double vy, double vt, double dt, do
 void BwDriveModule::set(double vx, double vy, double vt, double dt)
 {
     double azimuth, wheel_velocity;
+    azimuth = setpoint_angle;
     compute_state(vx, vy, vt, dt, azimuth, wheel_velocity);
 
     azimuth = wrap_angle(azimuth);
