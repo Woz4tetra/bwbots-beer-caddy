@@ -1,6 +1,9 @@
 #include <BwDriveTrain.h>
 
 
+#define DEBUG_SERIAL Serial2
+
+
 BwDriveTrain::BwDriveTrain(
         Adafruit_PWMServoDriver* servos,
         MotorControllerMC33926** motors,
@@ -289,7 +292,7 @@ void BwDriveTrain::get_velocity(double& vx, double& vy, double& vt)
 
     // kinematics_temp = (M' * M)^-1
     if (!Matrix.Invert(kinematics_temp, CHASSIS_STATE_LEN)) {
-        Serial.println("Failed to invert matrix for velocity calculation!");
+        DEBUG_SERIAL.println("Failed to invert matrix for velocity calculation!");
         return;
     }
 

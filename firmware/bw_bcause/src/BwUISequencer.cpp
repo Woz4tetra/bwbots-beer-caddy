@@ -1,5 +1,9 @@
 #include <BwUISequencer.h>
 
+
+#define DEBUG_SERIAL Serial
+
+
 BwUISequencer::BwUISequencer(BwDriveTrain* drive, Adafruit_NeoPixel* led_ring, int num_pixels)
 {
     this->drive = drive;
@@ -79,7 +83,7 @@ int BwUISequencer::update()
         }
         else {
             _selected_serial = MAX_NUM_SEQUENCES + 1;
-            Serial.println("Sequence completed");
+            DEBUG_SERIAL.println("Sequence completed");
             return 0;
         }
     }
@@ -104,12 +108,12 @@ int BwUISequencer::update()
         parameter = _sequences[_selected_serial][_selected_index + 1];
     }
     BwSequenceType_t type = static_cast<BwSequenceType_t>(parameter & 0b1111);
-    Serial.print("Sequence index ");
-    Serial.print(_selected_index);
-    Serial.print(" of ");
-    Serial.print(sequence_length);
-    Serial.print(", type=");
-    Serial.println(type);
+    DEBUG_SERIAL.print("Sequence index ");
+    DEBUG_SERIAL.print(_selected_index);
+    DEBUG_SERIAL.print(" of ");
+    DEBUG_SERIAL.print(sequence_length);
+    DEBUG_SERIAL.print(", type=");
+    DEBUG_SERIAL.println(type);
 
     switch (type)
     {
@@ -137,7 +141,7 @@ int BwUISequencer::update()
         break;
 
     case BW_SEQ_SHOW_LED:
-        Serial.println("Show leds");
+        DEBUG_SERIAL.println("Show leds");
         led_ring->show();
         _selected_index++;
         _prev_status = 1;
@@ -155,20 +159,20 @@ void BwUISequencer::play_tone_from_param(uint64_t parameters)
     uint16_t frequency = (parameters >> 4) & 0xffff;
     uint8_t volume = (parameters >> 20) & 0xff;
     uint8_t channel = (parameters >> 28) & 0b1111;
-    Serial.print("Playing tone. channel=");
-    Serial.print(channel);
-    Serial.print(", freq=");
-    Serial.print(frequency);
-    Serial.print(", volume=");
-    Serial.println(volume);
+    DEBUG_SERIAL.print("Playing tone. channel=");
+    DEBUG_SERIAL.print(channel);
+    DEBUG_SERIAL.print(", freq=");
+    DEBUG_SERIAL.print(frequency);
+    DEBUG_SERIAL.print(", volume=");
+    DEBUG_SERIAL.println(volume);
     set_module_tone(channel, frequency, volume);
 }
 
 void BwUISequencer::stop_tone_from_param(uint64_t parameters)
 {
     uint8_t channel = (parameters >> 28) & 0b1111;
-    Serial.print("Stopping tone. channel=");
-    Serial.println(channel);
+    DEBUG_SERIAL.print("Stopping tone. channel=");
+    DEBUG_SERIAL.println(channel);
     set_module_tone(channel, 0, 0);
 }
 
@@ -176,17 +180,17 @@ void BwUISequencer::set_led_from_param(uint64_t parameters)
 {
     uint32_t color = (parameters >> 4) & 0xffffffff;
     uint16_t index = (uint16_t)((parameters >> 36) & 0xffff);
-    Serial.print("Setting led. index=");
-    Serial.print(index);
-    Serial.print(", color=");
-    Serial.println(color);
+    DEBUG_SERIAL.print("Setting led. index=");
+    DEBUG_SERIAL.print(index);
+    DEBUG_SERIAL.print(", color=");
+    DEBUG_SERIAL.println(color);
     led_ring->setPixelColor(index, color);
 }
 
 uint32_t BwUISequencer::get_delay(uint64_t parameters) {
     uint32_t delay = (uint32_t)((parameters >> 4) & 0xffff);
-    Serial.print("Set delay: ");
-    Serial.println(delay);
+    DEBUG_SERIAL.print("Set delay: ");
+    DEBUG_SERIAL.println(delay);
     return delay;
 }
 

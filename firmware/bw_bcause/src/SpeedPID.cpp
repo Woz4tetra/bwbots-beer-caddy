@@ -1,6 +1,9 @@
 #include <SpeedPID.h>
 
 
+#define DEBUG_SERIAL Serial2
+
+
 SpeedPID::SpeedPID()
 {
     target = 0.0;
@@ -77,11 +80,11 @@ int SpeedPID::compute(double measurement)
     current_time = millis();
 
     if (current_time - prev_update_time == 0) {
-        Serial.println("PID timer didn't change!");
+        DEBUG_SERIAL.println("PID timer didn't change!");
         return limit(out);
     }
     else if (current_time - prev_update_time < 0) {  // edge case for timer looping
-        Serial.println("PID timer overflowed! Resetting.");
+        DEBUG_SERIAL.println("PID timer overflowed! Resetting.");
         prev_update_time = 0;
     }
 

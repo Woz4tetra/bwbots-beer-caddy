@@ -15,10 +15,10 @@
 // Serial
 // ---
 
-#define DEBUG_SERIAL Serial
+#define DEBUG_SERIAL Serial2
 #define DEBUG_BAUD 9600
 
-#define PROTOCOL_SERIAL Serial2
+#define PROTOCOL_SERIAL Serial
 #define PROTOCOL_BAUD 1000000
 
 // ---
