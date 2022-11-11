@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import yaml
 import rospy
 import rospkg
 from datetime import datetime
@@ -191,6 +192,13 @@ class BwLaserSlam:
         self.map_saver_launcher.start()
         self.map_saver_launcher.join(timeout=self.map_saver_wait_time)
         rospy.loginfo("Map saved!")
+        
+        config_path = self.map_path + ".yaml"
+        with open(config_path) as file:
+            config = yaml.safe_load(file)
+            config["image"] = os.path.basename(config["image"])
+        with open(config_path, 'w') as file:
+            yaml.safe_dump(config, file)
 
     # def signal_handler(self, sig, frame):
     #     self.shutdown_hook()
