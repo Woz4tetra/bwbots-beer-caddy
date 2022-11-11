@@ -114,10 +114,10 @@ Adafruit_PWMServoDriver* servos = new Adafruit_PWMServoDriver(0x40 + 0b000010, I
 // Drive train
 // ---
 const double SPEED_TO_COMMAND = 255.0 / 1.0;  // calculated max speed: 0.843 m/s @ 12V
-const double MAX_SERVO_SPEED = 5.950;  // rad/s
+const double MAX_SERVO_SPEED = 6.5;  // calculated max speed: 5.950 rad/s @ 5V
 
-const int DEADZONE_COMMAND = 55;
-const int STANDSTILL_DEADZONE_COMMAND = 150;
+const int DEADZONE_COMMAND = 50;
+const int STANDSTILL_DEADZONE_COMMAND = 110;
 const int MAX_SPEED_COMMAND = 255;
 
 const double ALCOVE_ANGLE = 0.5236;  // 30 degrees
@@ -519,6 +519,7 @@ void setup()
         FRONT_LEFT_ALCOVE,
         FRONT_LEFT_STRAIGHT,
         MAX_SERVO_SPEED,
+        WHEEL_RADIUS,
         true
     );
     drive->set_limits(
@@ -530,6 +531,7 @@ void setup()
         BACK_LEFT_ALCOVE,
         BACK_LEFT_STRAIGHT,
         MAX_SERVO_SPEED,
+        WHEEL_RADIUS,
         false
     );
     drive->set_limits(
@@ -541,6 +543,7 @@ void setup()
         BACK_RIGHT_ALCOVE,
         BACK_RIGHT_STRAIGHT,
         MAX_SERVO_SPEED,
+        WHEEL_RADIUS,
         true
     );
     
@@ -553,6 +556,7 @@ void setup()
         FRONT_RIGHT_ALCOVE,
         FRONT_RIGHT_STRAIGHT,
         MAX_SERVO_SPEED,
+        WHEEL_RADIUS,
         false
     );
 

@@ -69,6 +69,7 @@ class FindTagCommand:
         tag_id.sort()
 
         tag_poses = []
+        computed_pose = Pose2d()
         result = FindTagResult(PoseStamped(), False)
 
         start_time = rospy.Time.now()
@@ -102,16 +103,31 @@ class FindTagCommand:
 
                 tag_poses.append(pose)
             if len(tag_poses) >= self.num_samples:
+                pose2ds = [Pose2d.from_ros_pose(msg.pose) for msg in tag_poses]
+                stddev_pose = Pose2d.stddev(pose2ds)
+                mean_pose = Pose2d.average(pose2ds)
+                lower_limit = mean_pose - stddev_pose
+                upper_limit = mean_pose + stddev_pose
+                filtered_poses = []
+                for pose in pose2ds:
+                    if pose.x < lower_limit.x or pose.y < lower_limit.y or pose.theta < lower_limit.theta:
+                        continue
+                    if pose.x > upper_limit.x or pose.y > upper_limit.y or pose.theta > upper_limit.theta:
+                        continue
+                    filtered_poses.append(pose)
+                if len(filtered_poses) == 0:
+                    rospy.loginfo("All tags fall outside standard deviation bounds. Retrying.")
+                    continue
+
+                computed_pose = Pose2d.median(filtered_poses)
                 result.success = True
                 break
 
         if result.success:
-            pose2ds = [Pose2d.from_ros_pose(msg.pose) for msg in tag_poses]
-            median_pose = Pose2d.median(pose2ds)
             result_pose = tag_poses[-1]
-            result_pose.pose = median_pose.to_ros_pose()
+            result_pose.pose = computed_pose.to_ros_pose()
             result.pose = result_pose
-            rospy.loginfo(f"Final tag pose. 2D: {median_pose}. 3D: {result_pose}")
+            rospy.loginfo(f"Final tag pose. 2D: {computed_pose}. 3D: {result_pose}")
 
         if result.success:
             self.action_server.set_succeeded(result)

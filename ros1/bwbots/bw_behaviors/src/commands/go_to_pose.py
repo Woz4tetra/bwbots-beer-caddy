@@ -189,6 +189,8 @@ class GoToPoseCommand:
         reference_angular_speed: float = goal.reference_angular_speed
         ignore_obstacles = goal.ignore_obstacles
         allow_reverse = goal.allow_reverse
+        rotate_in_place_start = goal.rotate_in_place_start
+        rotate_in_place_end = goal.rotate_in_place_end
 
         self.timeout = rospy.Duration(1.0)  # wait at least 1 second for a goal to come in
 
@@ -254,7 +256,9 @@ class GoToPoseCommand:
                     linear_zero_velocity=self.linear_zero_vel,
                     theta_min_velocity=self.theta_min_vel,
                     theta_zero_velocity=self.theta_zero_vel,
-                    allow_reverse=allow_reverse
+                    allow_reverse=allow_reverse,
+                    rotate_in_place_start=rotate_in_place_start,
+                    rotate_in_place_end=rotate_in_place_end,
                 )
             else:
                 raise ValueError(f"Invalid controller type: {self.controller_type}")
@@ -279,6 +283,8 @@ class GoToPoseCommand:
                     rospy.loginfo(f"Robot made it to goal. Pose error: {goal_pose2d - self.robot_state}")
                     break
             else:
+                if goal_reached_timer is not None:
+                    rospy.loginfo("Robot left goal. Resetting timer.")
                 goal_reached_timer = None
         
         if current_time - start_time > self.timeout:

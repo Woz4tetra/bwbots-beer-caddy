@@ -139,6 +139,7 @@ void BwDriveTrain::set_limits(
     int servo_command_1,
     int servo_command_2,
     double servo_max_velocity,
+    double wheel_radius,
     bool flip_motor_commands)
 {
     if (channel > get_num_motors()) {
@@ -152,6 +153,7 @@ void BwDriveTrain::set_limits(
         servo_command_1,
         servo_command_2,
         servo_max_velocity,
+        wheel_radius,
         flip_motor_commands
     );
     double min_angle = min(abs(wrap_angle(servo_min_angle)), abs(wrap_angle(servo_max_angle)));
@@ -169,7 +171,7 @@ void BwDriveTrain::set_limits(
 void BwDriveTrain::set(unsigned int channel, double azimuth, double wheel_velocity)
 {
     if (channel <= get_num_motors()) {
-        drive_modules[channel]->set_azimuth(azimuth);
+        drive_modules[channel]->set_azimuth(azimuth, dt(prev_drive_time));
         drive_modules[channel]->set_wheel_velocity(wheel_velocity);
     }
 }

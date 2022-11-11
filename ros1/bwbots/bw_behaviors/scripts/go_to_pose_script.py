@@ -41,7 +41,7 @@ def main():
                         type=float,
                         help="Angular tolerance")
     parser.add_argument("-t", "--timeout",
-                        default=1.0,
+                        default=5.0,
                         type=float,
                         help="Action timeout")
     parser.add_argument("-io", "--ignore-obstacles",
@@ -78,6 +78,8 @@ def main():
     goal.reference_linear_speed = args.reference_linear_speed
     goal.reference_angular_speed = args.reference_angular_speed
     goal.allow_reverse = args.allow_reverse
+    goal.rotate_in_place_start = True
+    goal.rotate_in_place_end = True
 
     action.send_goal(goal, done_cb=action_done)
     try:

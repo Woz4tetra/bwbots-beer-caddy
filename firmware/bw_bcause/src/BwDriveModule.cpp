@@ -24,6 +24,7 @@ BwDriveModule::BwDriveModule(
     encoder_position = 0;
     speed_pid = new SpeedPID();
     speed_filter = new SpeedFilter(1.0);
+    wheel_radius = 1.0;
     servo_min_angle = 0.0;
     servo_max_angle = 90.0;
     servo_angle_1 = 0.0;
@@ -32,6 +33,7 @@ BwDriveModule::BwDriveModule(
     servo_command_2 = 300;   // semi neural default
     setpoint_angle = 0.0;
     predicted_angle = 0.0;
+    predicted_velocity = 0.0;
     is_enabled = false;
     flip_motor_commands = false;
     min_strafe_angle = 0.0;
@@ -53,7 +55,7 @@ void BwDriveModule::reset()
     motor->set(0);
 }
 
-void BwDriveModule::set_azimuth(double setpoint)
+void BwDriveModule::set_azimuth(double setpoint, double dt)
 {
     if (setpoint < servo_min_angle) {
         setpoint = servo_min_angle;
@@ -73,7 +75,7 @@ void BwDriveModule::set_azimuth(double setpoint)
         return;
     }
     servos->setPWM(channel, 0, pulse);
-    update_predicted_azimuth();
+    update_predicted_azimuth(dt);
 }
 
 void BwDriveModule::set_enable(bool state) {
@@ -89,6 +91,7 @@ void BwDriveModule::set_limits(
     int servo_command_1,
     int servo_command_2,
     double servo_max_velocity,
+    double wheel_radius,
     bool flip_motor_commands)
 {
     this->servo_min_angle = servo_min_angle;
@@ -98,7 +101,16 @@ void BwDriveModule::set_limits(
     this->servo_command_1 = servo_command_1;
     this->servo_command_2 = servo_command_2;
     this->servo_max_velocity = servo_max_velocity;
+    this->wheel_radius = wheel_radius;
     this->flip_motor_commands = flip_motor_commands;
+    if (servo_min_angle < 0.0) {
+        setpoint_angle = 0.0;
+        predicted_angle = 0.0;
+    }
+    else {
+        setpoint_angle = M_PI;
+        predicted_angle = M_PI;
+    }
 }
 
 void BwDriveModule::set_strafe_limits(double min_strafe_angle, double max_strafe_angle)
@@ -130,18 +142,22 @@ double BwDriveModule::get_wheel_position() {
     return (double)(encoder_position) * output_ratio;
 }
 
-void BwDriveModule::update_predicted_azimuth() {
-    predicted_angle = setpoint_angle;
-    // double error = setpoint_angle - predicted_angle;
-    // if (abs(error) < 0.1) { // TODO: make this configurable
-    //     predicted_angle = setpoint_angle;
-    // }
-    // double delta_time = dt();
-    // double servo_delta = error * delta_time;  // TODO: add ramping constant
-    // if (abs(servo_delta) > servo_max_velocity) {
-    //     servo_delta = SpeedPID::sign(error) * servo_max_velocity * delta_time;
-    // }
-    // predicted_angle += servo_delta;
+void BwDriveModule::update_predicted_azimuth(double dt) {
+    if (!is_enabled) {
+        predicted_angle = setpoint_angle;
+        predicted_velocity = 0.0;
+        return;
+    }
+    double error = setpoint_angle - predicted_angle;
+    if (abs(error) < 0.1) {
+        predicted_angle = setpoint_angle;
+    }
+
+    predicted_velocity = 2.0 * error * servo_max_velocity;
+    if (abs(predicted_velocity) > servo_max_velocity) {
+        predicted_velocity = SpeedPID::sign(predicted_velocity) * servo_max_velocity;
+    }
+    predicted_angle += predicted_velocity * dt;
 }
 
 void BwDriveModule::set_wheel_velocity(double velocity)
@@ -246,7 +262,15 @@ void BwDriveModule::set(double vx, double vy, double vt, double dt)
         wheel_velocity = -wheel_velocity;
     }
 
-    set_azimuth(azimuth);
+    if (abs(predicted_velocity) > 0.001) {
+        double delta = predicted_velocity * wheel_radius;
+        if (flip_motor_commands) {
+            delta *= -1.0;
+        }
+        wheel_velocity += delta;
+    }
+
+    set_azimuth(azimuth, dt);
     set_wheel_velocity(wheel_velocity);
 }
 

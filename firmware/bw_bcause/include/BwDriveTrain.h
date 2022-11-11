@@ -75,6 +75,7 @@ public:
         int servo_command_1,
         int servo_command_2,
         double servo_max_velocity,
+        double wheel_radius,
         bool flip_motor_commands
     );
 };

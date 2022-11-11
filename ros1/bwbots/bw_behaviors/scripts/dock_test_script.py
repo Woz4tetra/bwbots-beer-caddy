@@ -3,6 +3,7 @@ import rospy
 import actionlib
 
 from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import Twist
 
 from bw_interfaces.msg import FindTagAction, FindTagGoal, FindTagFeedback, FindTagResult
 from bw_interfaces.msg import GoToPoseAction, GoToPoseGoal, GoToPoseResult
@@ -37,10 +38,12 @@ def main():
         pose_goal.goal.header.frame_id = tag_goal.reference_frame_id
         pose_goal.xy_tolerance = kwargs.get("xy_tolerance", 0.05)
         pose_goal.yaw_tolerance = kwargs.get("yaw_tolerance", 0.15)
-        pose_goal.timeout = kwargs.get("timeout", rospy.Duration(2.0))
+        pose_goal.timeout = rospy.Duration(kwargs.get("timeout", 2.0))
         pose_goal.reference_linear_speed = kwargs.get("reference_linear_speed", 0.5)
         pose_goal.reference_angular_speed = kwargs.get("reference_angular_speed", 3.0)
         pose_goal.allow_reverse = kwargs.get("allow_reverse", True)
+        pose_goal.rotate_in_place_start = kwargs.get("rotate_in_place_start", True)
+        pose_goal.rotate_in_place_end = kwargs.get("rotate_in_place_end", True)
         go_to_pose_action.send_goal(pose_goal, done_cb=pose_action_done)
         go_to_pose_action.wait_for_result()
         rospy.loginfo(f"Go to pose result: {pose_result.success}")
@@ -54,6 +57,7 @@ def main():
 
     tag_sample_pub = rospy.Publisher("/bw/tag_sample", PoseStamped, queue_size=10)
     tag_result_pub = rospy.Publisher("/bw/tag_pose", PoseStamped, queue_size=10)
+    cmd_vel_pub = rospy.Publisher("/bw/cmd_vel", Twist, queue_size=10)
     
     find_tag_action = actionlib.SimpleActionClient("/bw/find_tag", FindTagAction)
     go_to_pose_action = actionlib.SimpleActionClient("/bw/go_to_pose", GoToPoseAction)
@@ -64,6 +68,9 @@ def main():
     tag_goal = FindTagGoal()
     tag_goal.tag_id = []
     tag_goal.reference_frame_id = "odom"
+    
+    point_forward_twist = Twist()
+    point_forward_twist.linear.x = 0.02
 
     try:
         rospy.sleep(1.5)
@@ -71,18 +78,23 @@ def main():
         find_tag_action.send_goal(tag_goal, done_cb=tag_action_done, feedback_cb=feedback_cb)
         find_tag_action.wait_for_result()
 
-        if not go_to_tag(-0.5, xy_tolerance=0.05, yaw_tolerance=0.15, reference_linear_speed=0.5, reference_angular_speed=3.0, allow_reverse=True):
+        if not go_to_tag(-0.45, xy_tolerance=0.1, yaw_tolerance=0.01, timeout=10.0, reference_linear_speed=0.35, reference_angular_speed=3.0, allow_reverse=True):
             return
+    
+        for _ in range(10):
+            cmd_vel_pub.publish(point_forward_twist)
+            rospy.sleep(0.005)
+        cmd_vel_pub.publish(Twist())
 
         rospy.sleep(1.5)
 
         find_tag_action.send_goal(tag_goal, done_cb=tag_action_done, feedback_cb=feedback_cb)
         find_tag_action.wait_for_result()
 
-        if not go_to_tag(-0.35, xy_tolerance=0.03, yaw_tolerance=0.1, reference_linear_speed=0.4, reference_angular_speed=0.8, allow_reverse=False):
+        if not go_to_tag(-0.35, xy_tolerance=0.02, yaw_tolerance=0.03, reference_linear_speed=0.35, reference_angular_speed=3.0, allow_reverse=False, rotate_in_place_start=False, rotate_in_place_end=False):
             return
 
-        if not go_to_tag(-0.1, xy_tolerance=0.1, yaw_tolerance=0.25, reference_linear_speed=0.5, reference_angular_speed=0.1, allow_reverse=False):
+        if not go_to_tag(-0.075, xy_tolerance=0.05, yaw_tolerance=0.5, reference_linear_speed=0.5, reference_angular_speed=0.01, allow_reverse=False, rotate_in_place_start=False, rotate_in_place_end=False):
             return
 
     except KeyboardInterrupt:

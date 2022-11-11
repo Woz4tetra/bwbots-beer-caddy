@@ -57,7 +57,7 @@ class ProfiledPIDController(PIDController):
         * @return The controller's next output.
         """
         if setpoint is not None:
-            measurement -= setpoint
+            self.set_goal(setpoint)
 
         if self.is_continuous_input_enabled():
             # Get error which is smallest distance between goal and measurement
