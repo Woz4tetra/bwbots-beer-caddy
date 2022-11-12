@@ -40,6 +40,7 @@
 #include "bw_interfaces/PlaySequence.h"
 #include "bw_interfaces/StopSequence.h"
 #include "bw_interfaces/BwSequence.h"
+#include "bw_interfaces/BwSequenceState.h"
 
 #include "tunnel_protocol.h"
 #include "bw_serial_tunnel.h"
@@ -77,6 +78,7 @@ private:
     ros::Publisher _button_pub;
     ros::Publisher _is_enabled_pub;
     ros::Publisher _module_pub;
+    ros::Publisher _sequence_state_pub;
 
     // Subscribers
     ros::Subscriber _twist_sub;

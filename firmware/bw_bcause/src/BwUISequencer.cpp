@@ -84,6 +84,7 @@ int BwUISequencer::update()
         else {
             _selected_serial = MAX_NUM_SEQUENCES + 1;
             DEBUG_SERIAL.println("Sequence completed");
+            _prev_status = 0;
             return 0;
         }
     }
