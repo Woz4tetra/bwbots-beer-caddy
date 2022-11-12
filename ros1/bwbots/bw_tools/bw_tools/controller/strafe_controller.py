@@ -60,8 +60,8 @@ class StrafeController(Controller):
         
         if self.state == StrafeControllerState.INITIAL_TURN:
             if rotate_in_place_start:
-                vel = Velocity(theta=self.theta_controller.calculate(0.0, pose_error.theta))
-                if abs(self.pose_error.theta) < self.pose_tolerance.theta:
+                vel = Velocity(theta=self.theta_controller.calculate(0.0, self.pose_error.heading()))
+                if abs(self.pose_error.heading()) < self.pose_tolerance.theta:
                     self.state = StrafeControllerState.STRAFING
             else:
                 self.state = StrafeControllerState.STRAFING

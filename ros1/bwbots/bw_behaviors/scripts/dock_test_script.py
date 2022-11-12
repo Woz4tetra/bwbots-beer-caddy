@@ -111,33 +111,32 @@ def main():
     waypoint_action.wait_for_server()
 
     tag_goal = FindTagGoal()
-    tag_goal.tag_id = []
-    tag_goal.reference_frame_id = "map"
+    tag_goal.tag_id = [11]
+    tag_goal.reference_frame_id = "odom"
     
     try:
-        if not go_to_waypoint("dock_prep"):
-            return
+        # if not go_to_waypoint("dock_prep"):
+        #     return
 
-        rospy.sleep(1.5)
+        rospy.sleep(3.0)
 
         find_tag_action.send_goal(tag_goal, done_cb=tag_action_done, feedback_cb=feedback_cb)
         find_tag_action.wait_for_result()
 
-        if not go_to_tag(-0.5, xy_tolerance=0.1, yaw_tolerance=0.01, timeout=10.0, reference_linear_speed=0.35, reference_angular_speed=3.0, allow_reverse=True):
+        if not go_to_tag(-0.5, xy_tolerance=0.1, yaw_tolerance=0.01, timeout=10.0, reference_linear_speed=5.0, reference_angular_speed=3.0, allow_reverse=True):
             return
     
         drive_straight(0.02, 0.25)
         stop_driving()
 
-        rospy.sleep(1.5)
+        rospy.sleep(3.0)
 
         find_tag_action.send_goal(tag_goal, done_cb=tag_action_done, feedback_cb=feedback_cb)
         find_tag_action.wait_for_result()
 
-        if not go_to_tag(-0.2, xy_tolerance=0.05, yaw_tolerance=0.05, reference_linear_speed=1.0, reference_angular_speed=3.0, allow_reverse=False, rotate_in_place_start=False, rotate_in_place_end=False):
+        if not go_to_tag(-0.1, xy_tolerance=0.05, yaw_tolerance=0.05, reference_linear_speed=10.0, reference_angular_speed=3.0, allow_reverse=False, rotate_in_place_start=False, rotate_in_place_end=False):
             return
 
-        drive_straight(0.75, 0.35)
         stop_driving()
 
     except KeyboardInterrupt:

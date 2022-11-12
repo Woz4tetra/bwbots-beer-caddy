@@ -3,7 +3,7 @@
     <arg name="node_namespace" default="apriltag_ros_continuous_node" />
     <arg name="camera_frame" default="camera_link" />
 
-    <arg name="throttle_rate" default="5" />
+    <arg name="throttle_rate" default="10" />
 
     <arg name="image_topic" default="image_raw" />
     <arg name="info_topic" default="camera_info" />

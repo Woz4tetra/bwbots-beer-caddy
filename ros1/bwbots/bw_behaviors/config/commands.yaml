@@ -1,7 +1,6 @@
 find_tag:
-  num_samples: 10
   timeout: 5.0
-  stale_tag_time: 0.25
+  stale_tag_time: 2.0
 
 go_to_pose:
   controller_type: strafe

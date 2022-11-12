@@ -13,7 +13,7 @@ behaviors:
 tags:
   package: "bw_tags"
   path: "stereo_tags.launch"
-  on_start: false
+  on_start: true
 
 zed:
   package: "bw_zed"

@@ -204,6 +204,7 @@ class GoToPoseCommand:
         start_time = rospy.Time.now()
         current_time = rospy.Time.now()
         goal_reached_timer: Optional[rospy.Time] = None
+        success = False
         while current_time - start_time < self.timeout:
             rate.sleep()
             current_time = rospy.Time.now()
@@ -281,6 +282,7 @@ class GoToPoseCommand:
                     rospy.loginfo("Robot made it to goal. Starting goal reached timer.")
                 if current_time - goal_reached_timer > self.settling_time:
                     rospy.loginfo(f"Robot made it to goal. Pose error: {goal_pose2d - self.robot_state}")
+                    success = True
                     break
             else:
                 if goal_reached_timer is not None:
@@ -292,18 +294,12 @@ class GoToPoseCommand:
 
         self.controller.set_enabled(False)
         if self.robot_state is None:
-            success = False
             distance = 0.0
             angle_error = 0.0
             rospy.loginfo("Never received robot's position")
         else:
             distance = self.robot_state.distance(goal_pose2d)
             angle_error = abs(self.robot_state.theta - goal_pose2d.theta)
-
-            success = (
-                distance < xy_tolerance and
-                angle_error < yaw_tolerance
-            )
         result = GoToPoseResult(success)
 
         rospy.loginfo(f"Distance tolerance{' not' if distance >= xy_tolerance else ''} met: {distance} >= {xy_tolerance}")
