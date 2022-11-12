@@ -43,5 +43,9 @@ public:
     bool set_element(uint8_t serial, uint16_t index, uint64_t parameter);
     bool play_sequence(uint8_t serial, bool loop_sequence, bool from_flash);
     void stop_sequence();
+    uint8_t get_status() { return (uint8_t)_prev_status; }
+    uint16_t get_index() { return _selected_index; }
+    uint8_t get_current_sequence() { return _selected_serial; }
+    bool is_current_from_flash() { return _from_flash; }
     int update();
 };

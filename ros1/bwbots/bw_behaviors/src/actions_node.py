@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 import rospy
-
-from commands.go_to_waypoint import GoToWaypointCommand
 from commands.find_tag import FindTagCommand
 from commands.go_to_pose import GoToPoseCommand
+from commands.go_to_waypoint import GoToWaypointCommand
 from commands.shuffle_until_charging import ShuffleUntilChargingCommand
+from commands.run_sequence import RunSequenceCommand
 
 
 def main():
@@ -20,6 +20,7 @@ def main():
     commands["find_tag"] = FindTagCommand()
     commands["go_to_pose"] = GoToPoseCommand()
     commands["shuffle_until_charging"] = ShuffleUntilChargingCommand()
+    commands["run_sequence"] = RunSequenceCommand()
 
     rospy.spin()
 

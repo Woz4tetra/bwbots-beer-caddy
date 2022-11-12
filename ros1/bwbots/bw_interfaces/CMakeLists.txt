@@ -56,6 +56,7 @@ add_message_files(
   LoadCell.msg
   BwSequence.msg
   BwSequenceElement.msg
+  BwSequenceState.msg
   Waypoint.msg
   WaypointArray.msg
 )
@@ -82,6 +83,7 @@ add_action_files(
   FollowWaypoints.action
   GoToPose.action
   ShuffleUntilCharging.action
+  RunSequence.action
 )
 
 ## Generate added messages and services with any dependencies listed here

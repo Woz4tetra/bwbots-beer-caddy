@@ -81,6 +81,7 @@ BwTunnel::BwTunnel(ros::NodeHandle* nodehandle) :
     _odom_reset_srv = nh.advertiseService("odom_reset_service", &BwTunnel::odomResetCallback, this);
     _play_sequence_srv = nh.advertiseService("play_sequence", &BwTunnel::playSequenceCallback, this);
     _stop_sequence_srv = nh.advertiseService("stop_sequence", &BwTunnel::stopSequenceCallback, this);
+    _sequence_state_pub = nh.advertise<bw_interfaces::BwSequenceState>("sequence_state", 10);
 
     begin();
 
@@ -160,6 +161,23 @@ void BwTunnel::packetCallback(PacketResult* result)
         std_msgs::Bool msg;
         msg.data = enable_state;
         _is_enabled_pub.publish(msg);
+    }
+    else if (category.compare("|seq") == 0) {
+        bool status;
+        uint8_t sequence;
+        bool is_from_flash;
+        uint16_t index;
+        if (!result->getBool(status))  { ROS_ERROR("Failed to get status"); return; }
+        if (!result->getUInt8(sequence))  { ROS_ERROR("Failed to get sequence"); return; }
+        if (!result->getBool(is_from_flash))  { ROS_ERROR("Failed to get is_from_flash"); return; }
+        if (!result->getUInt16(index))  { ROS_ERROR("Failed to get index"); return; }
+
+        bw_interfaces::BwSequenceState state;
+        state.serial = sequence;
+        state.is_from_flash = is_from_flash;
+        state.is_running = status;
+        state.index = index;
+        _sequence_state_pub.publish(state);
     }
 }
 

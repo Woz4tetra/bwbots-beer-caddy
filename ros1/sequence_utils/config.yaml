@@ -15,3 +15,6 @@ megalovania:
 ruins:
   tracks: [0, 1, 2, 3, 4, 5, 6, 7]
   num_leds: 24
+nokia:
+  tracks: [0, 1, 5, 6, 7]
+  num_leds: 24

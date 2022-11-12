@@ -322,6 +322,20 @@ bool is_moving(
 }
 
 // ---
+// Sequence functions
+// ---
+
+void report_sequence()
+{
+    tunnel->writePacket("|seq", "bcbg",
+        sequencer->get_status() > 0,
+        sequencer->get_current_sequence(),
+        sequencer->is_current_from_flash(),
+        sequencer->get_index()
+    );
+}
+
+// ---
 // Power management functions
 // ---
 
@@ -615,6 +629,7 @@ void loop()
         stop_motors();
         Serial.println("Switching to global control mode");
         sequencer->stop_sequence();
+        report_sequence();
     }
 
     int sequencer_state = sequencer->update();
@@ -623,6 +638,7 @@ void loop()
     }
     bool is_sequence_running = sequencer_state > 0;
     if (was_sequencer_active != is_sequence_running) {
+        report_sequence();
         was_sequencer_active = is_sequence_running;
         if (is_sequence_running) {
             Serial.println("Sequence started");
@@ -658,6 +674,9 @@ void loop()
                 set_motor_enable(false);
                 was_disabled_by_command = false;
             }
+        }
+        else if (control_mode == CONTROL_TONE) {
+            report_sequence();
         }
 
         drive->get_velocity(odom_vx, odom_vy, odom_vt);
