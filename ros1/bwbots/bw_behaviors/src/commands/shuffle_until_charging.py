@@ -39,7 +39,8 @@ class ShuffleUntilChargingCommand:
         self.cmd_vel_pub.publish(twist)
     
     def action_callback(self, goal: ShuffleUntilChargingGoal):
-        timeout = rospy.Duration(goal.timeout.data)
+        timeout = goal.timeout
+        rospy.loginfo(f"Shuffling until charging for {timeout.to_sec()} seconds")
 
         self.prev_charger_state = None
 
@@ -52,32 +53,51 @@ class ShuffleUntilChargingCommand:
             rate.sleep()
             current_time = rospy.Time.now()
 
+            if self.action_server.is_preempt_requested():
+                rospy.loginfo(f"Cancelling shuffle")
+                break
+
             if self.prev_charger_state is None:
                 self.prev_charger_state = self.charger_state
+                if self.charger_state.is_charging:
+                    self.prev_is_charging_time = current_time
             if self.charger_state.is_charging:
                 if self.charger_state.is_charging != self.prev_charger_state.is_charging:
+                    rospy.loginfo(f"Charge state: {self.charger_state.is_charging}")
                     self.prev_is_charging_time = current_time
+                    self.prev_charger_state.is_charging = self.charger_state.is_charging
                 elif current_time - self.prev_is_charging_time > self.is_charging_cooldown:
+                    rospy.loginfo("Robot is charging!")
                     break
             
             if current_time > next_switch_time:
                 attempts += 1
-                next_switch_time += self.shuffle_interval
+                if attempts % 2 == 0:
+                    shuffle_interval = self.shuffle_interval
+                else:
+                    shuffle_interval = self.shuffle_interval / 2.0
+                next_switch_time = current_time + shuffle_interval
             
-            if attempts % 2 == 0:
-                self.publish_speed(self.speed)
+            if self.charger_state.is_charging:
+                self.publish_speed(0.0)
             else:
-                self.publish_speed(-self.speed)
+                if attempts % 2 == 0:
+                    self.publish_speed(self.speed)
+                else:
+                    self.publish_speed(-self.speed)
 
             feedback = ShuffleUntilChargingFeedback()
             feedback.attempts = attempts
             self.action_server.publish_feedback(feedback)
 
+        self.publish_speed(0.0)
+
         success = self.charger_state.is_charging
 
         result = ShuffleUntilChargingResult(success)
-        self.action_server.publish_result(result)
         if result.success:
-            self.action_server.set_succeeded()
+            rospy.loginfo("Robot successfully docked!")
+            self.action_server.set_succeeded(result)
         else:
-            self.action_server.set_aborted()
+            rospy.loginfo("Robot failed to dock!")
+            self.action_server.set_aborted(result)

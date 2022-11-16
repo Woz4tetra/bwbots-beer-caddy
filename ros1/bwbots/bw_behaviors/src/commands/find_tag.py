@@ -25,6 +25,9 @@ class FindTagCommand:
         self.stored_frame = rospy.get_param("~find_tag/stored_frame", "map")
         self.stddev_limit = rospy.get_param("~find_tag/stddev_limit", 3.0)
 
+        self.detections = {}
+        self.computed_poses = {}
+
         self.left_tag_sub = rospy.Subscriber("/apriltag_left/tag_detections", AprilTagDetectionArray, self.tag_callback, queue_size=10)
         self.right_tag_sub = rospy.Subscriber("/apriltag_right/tag_detections", AprilTagDetectionArray, self.tag_callback, queue_size=10)
         self.filtered_tag_pub = rospy.Publisher("/apriltag/filtered_tag_detections", AprilTagDetectionArray, queue_size=10)
@@ -40,8 +43,6 @@ class FindTagCommand:
             execute_cb=self.action_callback, 
             auto_start=False
         )
-        self.detections = {}
-        self.computed_poses = {}
         self.action_server.start()
         rospy.loginfo("find_tag is ready")
     

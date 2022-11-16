@@ -27,7 +27,8 @@ class ControllerType(Enum):
     RAMSETE = "ramsete"
     HOLONOMIC = "holonomic"
     NONHOLONOMIC = "nonholonomic"
-    STRAFE = "strafe"
+    STRAFE1 = "strafe1"
+    STRAFE2 = "strafe2"
 
 
 class GoToPoseCommand:
@@ -37,7 +38,6 @@ class GoToPoseCommand:
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=10)
         self.goal_pose_pub = rospy.Publisher("go_to_pose_goal", PoseStamped, queue_size=10)
         self.goal_pose_sub = None
-        self.controller_type = ControllerType(rospy.get_param("~go_to_pose/controller_type", "ramsete"))
 
         self.x_kP = rospy.get_param("~go_to_pose/x_kP", 1.0)
         self.x_kI = rospy.get_param("~go_to_pose/x_kI", 0.0)
@@ -47,22 +47,14 @@ class GoToPoseCommand:
         self.y_kI = rospy.get_param("~go_to_pose/y_kI", 0.0)
         self.y_kD = rospy.get_param("~go_to_pose/y_kD", 0.0)
 
-        self.linear_min_vel = rospy.get_param("~go_to_pose/linear_min_vel", 0.0)
-        self.linear_zero_vel = rospy.get_param("~go_to_pose/linear_zero_vel", 0.0)
-        self.linear_max_vel = rospy.get_param("~go_to_pose/linear_max_vel", 1.0)
-        self.linear_max_accel = rospy.get_param("~go_to_pose/linear_max_accel", 3.0)
-
         self.theta_kP = rospy.get_param("~go_to_pose/theta_kP", 1.0)
         self.theta_kI = rospy.get_param("~go_to_pose/theta_kI", 0.0)
         self.theta_kD = rospy.get_param("~go_to_pose/theta_kD", 0.0)
 
+        self.linear_y_min_vel = rospy.get_param("~go_to_pose/linear_y_min_vel", 0.015)
+
         self.ramsete_b = rospy.get_param("~go_to_pose/ramsete_b", 2.0)
         self.ramsete_zeta = rospy.get_param("~go_to_pose/ramsete_zeta", 0.7)
-
-        self.theta_min_vel = rospy.get_param("~go_to_pose/theta_min_vel", 0.0)
-        self.theta_zero_vel = rospy.get_param("~go_to_pose/theta_zero_vel", 0.0)
-        self.theta_max_vel = rospy.get_param("~go_to_pose/theta_max_vel", 3.0)
-        self.theta_max_accel = rospy.get_param("~go_to_pose/theta_max_accel", 6.0)
 
         self.strafe_angle_limit = rospy.get_param("~go_to_pose/strafe_angle_limit", math.pi / 2.0)
 
@@ -81,33 +73,6 @@ class GoToPoseCommand:
 
         self.reference_linear_speed = 0.0  # Stored from last goal callback
         self.reference_angular_speed = 0.0  # Stored from last goal callback
-
-        linear_constraints = Constraints(self.linear_max_vel, self.linear_max_accel)
-        theta_constraints = Constraints(self.theta_max_vel, self.theta_max_accel)
-
-        if self.controller_type == ControllerType.HOLONOMIC:
-            self.controller = HolonomicDriveController(
-                ProfiledPIDController(self.x_kP, self.x_kI, self.x_kD, linear_constraints, self.loop_period),
-                ProfiledPIDController(self.y_kP, self.y_kI, self.y_kD, linear_constraints, self.loop_period),
-                ProfiledPIDController(self.theta_kP, self.theta_kI, self.theta_kD, theta_constraints, self.loop_period)
-            )
-        elif self.controller_type == ControllerType.RAMSETE:
-            self.controller = RamseteController(self.ramsete_b, self.ramsete_zeta)
-        elif self.controller_type == ControllerType.NONHOLONOMIC:
-            self.controller = NonHolonomicDriveController(
-                PIDController(self.x_kP, self.x_kI, self.x_kD, self.loop_period),
-                PIDController(self.y_kP, self.y_kI, self.y_kD, self.loop_period),
-                ProfiledPIDController(self.theta_kP, self.theta_kI, self.theta_kD, theta_constraints, self.loop_period)
-            )
-        elif self.controller_type == ControllerType.STRAFE:
-            self.controller = StrafeController(
-                ProfiledPIDController(self.x_kP, self.x_kI, self.x_kD, linear_constraints, self.loop_period),
-                ProfiledPIDController(self.y_kP, self.y_kI, self.y_kD, linear_constraints, self.loop_period),
-                PIDController(self.theta_kP, self.theta_kI, self.theta_kD, self.loop_period),
-                self.strafe_angle_limit
-            )
-        else:
-            raise ValueError(f"Invalid controller type: {self.controller_type}")
 
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
@@ -179,6 +144,38 @@ class GoToPoseCommand:
         global_pose = tf2_geometry_msgs.do_transform_pose(goal_pose, transform)
         return global_pose
 
+    def init_controller(self, controller_type, linear_constraints, theta_constraints):
+        if controller_type == ControllerType.HOLONOMIC:
+            return HolonomicDriveController(
+                ProfiledPIDController(self.x_kP, self.x_kI, self.x_kD, linear_constraints, self.loop_period),
+                ProfiledPIDController(self.y_kP, self.y_kI, self.y_kD, linear_constraints, self.loop_period),
+                ProfiledPIDController(self.theta_kP, self.theta_kI, self.theta_kD, theta_constraints, self.loop_period)
+            )
+        elif controller_type == ControllerType.RAMSETE:
+            return RamseteController(self.ramsete_b, self.ramsete_zeta)
+        elif controller_type == ControllerType.NONHOLONOMIC:
+            return NonHolonomicDriveController(
+                PIDController(self.x_kP, self.x_kI, self.x_kD, self.loop_period),
+                PIDController(self.y_kP, self.y_kI, self.y_kD, self.loop_period),
+                ProfiledPIDController(self.theta_kP, self.theta_kI, self.theta_kD, theta_constraints, self.loop_period)
+            )
+        elif controller_type == ControllerType.STRAFE1:
+            return StrafeController(
+                ProfiledPIDController(self.x_kP, self.x_kI, self.x_kD, linear_constraints, self.loop_period),
+                ProfiledPIDController(self.y_kP, self.y_kI, self.y_kD, linear_constraints, self.loop_period),
+                PIDController(self.theta_kP, self.theta_kI, self.theta_kD, self.loop_period),
+                self.strafe_angle_limit
+            )
+        elif controller_type == ControllerType.STRAFE2:
+            return StrafeController(
+                PIDController(self.x_kP, self.x_kI, self.x_kD, self.loop_period),
+                PIDController(self.y_kP, self.y_kI, self.y_kD, self.loop_period),
+                PIDController(self.theta_kP, self.theta_kI, self.theta_kD, self.loop_period),
+                self.strafe_angle_limit
+            )
+        else:
+            raise ValueError(f"Invalid controller type: {controller_type}")
+
     def action_callback(self, goal: GoToPoseGoal):
         rospy.loginfo(f"Going to pose: {goal}")
 
@@ -190,13 +187,28 @@ class GoToPoseCommand:
         ignore_obstacles = goal.ignore_obstacles
         allow_reverse = goal.allow_reverse
         rotate_in_place_start = goal.rotate_in_place_start
+        rotate_while_driving = goal.rotate_while_driving
         rotate_in_place_end = goal.rotate_in_place_end
+        linear_max_vel = goal.linear_max_vel
+        linear_max_accel = goal.linear_max_accel
+        theta_max_vel = goal.theta_max_vel
+        theta_max_accel = goal.theta_max_accel
+        linear_min_vel = goal.linear_min_vel
+        linear_zero_vel = goal.linear_zero_vel
+        theta_min_vel = goal.theta_min_vel
+        theta_zero_vel = goal.theta_zero_vel
+        controller_type = ControllerType(goal.controller_type)
+
+        linear_constraints = Constraints(linear_max_vel, linear_max_accel)
+        theta_constraints = Constraints(theta_max_vel, theta_max_accel)
+        
+        controller = self.init_controller(controller_type, linear_constraints, theta_constraints)
 
         self.timeout = rospy.Duration(1.0)  # wait at least 1 second for a goal to come in
 
-        self.controller.set_enabled(True)
-        self.controller.set_tolerance(Pose2d(xy_tolerance, xy_tolerance, yaw_tolerance))
-        self.controller.reset()
+        controller.set_enabled(True)
+        controller.set_tolerance(Pose2d(xy_tolerance, xy_tolerance, yaw_tolerance))
+        controller.reset()
 
         self.goal_pose_msg = None
 
@@ -224,21 +236,21 @@ class GoToPoseCommand:
             goal_pose.pose = goal_pose2d.to_ros_pose()
             self.goal_pose_pub.publish(goal_pose)
 
-            if self.controller_type == ControllerType.HOLONOMIC:
-                velocity_command: Velocity = self.controller.calculate(
+            if controller_type == ControllerType.HOLONOMIC:
+                velocity_command: Velocity = controller.calculate(
                     current_pose=self.robot_state, 
                     pose_ref=goal_pose2d, 
                     linear_velocity_ref=reference_linear_speed
                 )
-            elif self.controller_type == ControllerType.RAMSETE:
-                velocity_command: Velocity = self.controller.calculate(
+            elif controller_type == ControllerType.RAMSETE:
+                velocity_command: Velocity = controller.calculate(
                     current_pose=self.robot_state, 
                     pose_ref=goal_pose2d, 
                     linear_velocity_ref=reference_linear_speed, 
                     angular_velocity_ref=reference_angular_speed
                 )
-            elif self.controller_type == ControllerType.NONHOLONOMIC:
-                velocity_command: Velocity = self.controller.calculate(
+            elif controller_type == ControllerType.NONHOLONOMIC:
+                velocity_command: Velocity = controller.calculate(
                     current_pose=self.robot_state, 
                     pose_ref=goal_pose2d, 
                     linear_velocity_ref=reference_linear_speed, 
@@ -247,22 +259,24 @@ class GoToPoseCommand:
                     theta_min_velocity=self.theta_min_vel,
                     allow_reverse=allow_reverse
                 )
-            elif self.controller_type == ControllerType.STRAFE:
-                velocity_command: Velocity = self.controller.calculate(
+            elif controller_type == ControllerType.STRAFE1 or controller_type == ControllerType.STRAFE2:
+                velocity_command: Velocity = controller.calculate(
                     current_pose=self.robot_state, 
                     pose_ref=goal_pose2d, 
                     linear_velocity_ref=reference_linear_speed, 
                     angular_velocity_ref=reference_angular_speed,
-                    linear_min_velocity=self.linear_min_vel,
-                    linear_zero_velocity=self.linear_zero_vel,
-                    theta_min_velocity=self.theta_min_vel,
-                    theta_zero_velocity=self.theta_zero_vel,
+                    linear_x_min_velocity=linear_min_vel,
+                    linear_y_min_velocity=self.linear_y_min_vel,
+                    linear_zero_velocity=linear_zero_vel,
+                    theta_min_velocity=theta_min_vel,
+                    theta_zero_velocity=theta_zero_vel,
                     allow_reverse=allow_reverse,
                     rotate_in_place_start=rotate_in_place_start,
+                    rotate_while_driving=rotate_while_driving,
                     rotate_in_place_end=rotate_in_place_end,
                 )
             else:
-                raise ValueError(f"Invalid controller type: {self.controller_type}")
+                raise ValueError(f"Invalid controller type: {controller_type}")
             rospy.logdebug(f"Robot pose: {self.robot_state}")
             rospy.logdebug(f"Goal pose: {goal_pose2d}")
             rospy.logdebug(f"Velocity command: {velocity_command}")
@@ -276,7 +290,7 @@ class GoToPoseCommand:
             if self.action_server.is_preempt_requested():
                 rospy.loginfo(f"Cancelling go to pose")
                 break
-            if self.controller.at_reference():
+            if controller.at_reference():
                 if goal_reached_timer is None:
                     goal_reached_timer = current_time
                     rospy.loginfo("Robot made it to goal. Starting goal reached timer.")
@@ -292,7 +306,7 @@ class GoToPoseCommand:
         if current_time - start_time > self.timeout:
             rospy.loginfo("Go to pose timed out")
 
-        self.controller.set_enabled(False)
+        controller.set_enabled(False)
         if self.robot_state is None:
             distance = 0.0
             angle_error = 0.0

@@ -8,6 +8,7 @@ from geometry_msgs.msg import Twist
 from bw_interfaces.msg import FindTagAction, FindTagGoal, FindTagFeedback, FindTagResult
 from bw_interfaces.msg import GoToPoseAction, GoToPoseGoal, GoToPoseResult
 from bw_interfaces.msg import FollowWaypointsAction, FollowWaypointsGoal, FollowWaypointsResult
+from bw_interfaces.msg import ShuffleUntilChargingAction, ShuffleUntilChargingGoal, ShuffleUntilChargingResult
 from bw_interfaces.srv import GetWaypoints
 
 from bw_tools.robot_state import Pose2d
@@ -36,14 +37,18 @@ def main():
         rospy.loginfo(f"Waypoint action finished with result: {result.success}. Status: {goal_status}")
         waypoint_result = result
 
+    def shuffle_action_done(goal_status, result: ShuffleUntilChargingResult):
+        rospy.loginfo(f"Shuffle action finished with result: {result.success}. Status: {goal_status}")
+
     def feedback_cb(feedback: FindTagFeedback):
         tag_sample_pub.publish(feedback.sample)
     
     def go_to_tag(distance_offset, **kwargs):
-        offset = Pose2d(0.0, distance_offset, 1.5708)
+        offset = Pose2d(0.05, distance_offset, 1.5708)
         pose2d = offset.transform_by(tag_pose)
 
         pose_goal = GoToPoseGoal()
+        pose_goal.controller_type = kwargs.get("controller_type", "strafe1")
         pose_goal.goal.pose = pose2d.to_ros_pose()
         pose_goal.goal.header.frame_id = tag_goal.reference_frame_id
         pose_goal.xy_tolerance = kwargs.get("xy_tolerance", 0.05)
@@ -53,7 +58,16 @@ def main():
         pose_goal.reference_angular_speed = kwargs.get("reference_angular_speed", 3.0)
         pose_goal.allow_reverse = kwargs.get("allow_reverse", True)
         pose_goal.rotate_in_place_start = kwargs.get("rotate_in_place_start", True)
+        pose_goal.rotate_while_driving = kwargs.get("rotate_while_driving", True)
         pose_goal.rotate_in_place_end = kwargs.get("rotate_in_place_end", True)
+        pose_goal.linear_max_vel = kwargs.get("linear_max_vel", 1.0)
+        pose_goal.linear_max_accel = kwargs.get("linear_max_accel", 2.0)
+        pose_goal.linear_min_vel = kwargs.get("linear_min_vel", 0.015)
+        pose_goal.linear_zero_vel = kwargs.get("linear_zero_vel", 0.014)
+        pose_goal.theta_max_vel = kwargs.get("theta_max_vel", 3.0)
+        pose_goal.theta_max_accel = kwargs.get("theta_max_accel", 1.0)
+        pose_goal.theta_min_vel = kwargs.get("theta_min_vel", 0.015)
+        pose_goal.theta_zero_vel = kwargs.get("theta_zero_vel", 0.0001)
         go_to_pose_action.send_goal(pose_goal, done_cb=pose_action_done)
         go_to_pose_action.wait_for_result()
         return pose_result.success
@@ -105,14 +119,20 @@ def main():
     waypoint_action = actionlib.SimpleActionClient("/bw/follow_waypoints", FollowWaypointsAction)
     find_tag_action = actionlib.SimpleActionClient("/bw/find_tag", FindTagAction)
     go_to_pose_action = actionlib.SimpleActionClient("/bw/go_to_pose", GoToPoseAction)
-    rospy.loginfo("Connecting to action server...")
+    shuffle_action = actionlib.SimpleActionClient("/bw/shuffle_until_charging", ShuffleUntilChargingAction)
+    rospy.loginfo("Connecting to action servers...")
     find_tag_action.wait_for_server()
     go_to_pose_action.wait_for_server()
     waypoint_action.wait_for_server()
+    shuffle_action.wait_for_server()
+    rospy.loginfo("Action servers connected!")
 
     tag_goal = FindTagGoal()
     tag_goal.tag_id = [11]
     tag_goal.reference_frame_id = "odom"
+    
+    shuffle_goal = ShuffleUntilChargingGoal()
+    shuffle_goal.timeout = rospy.Duration(20.0)
     
     try:
         # if not go_to_waypoint("dock_prep"):
@@ -123,7 +143,19 @@ def main():
         find_tag_action.send_goal(tag_goal, done_cb=tag_action_done, feedback_cb=feedback_cb)
         find_tag_action.wait_for_result()
 
-        if not go_to_tag(-0.5, xy_tolerance=0.1, yaw_tolerance=0.01, timeout=10.0, reference_linear_speed=5.0, reference_angular_speed=3.0, allow_reverse=True):
+        if not go_to_tag(
+                -0.5,
+                controller_type="strafe1",
+                linear_min_vel=0.05,
+                xy_tolerance=0.025,
+                yaw_tolerance=0.025,
+                timeout=10.0,
+                reference_linear_speed=5.0,
+                rotate_in_place_start=True,
+                rotate_while_driving=False,
+                rotate_in_place_end=True,
+                reference_angular_speed=2.0,
+                allow_reverse=True):
             return
     
         drive_straight(0.02, 0.25)
@@ -134,8 +166,22 @@ def main():
         find_tag_action.send_goal(tag_goal, done_cb=tag_action_done, feedback_cb=feedback_cb)
         find_tag_action.wait_for_result()
 
-        if not go_to_tag(-0.1, xy_tolerance=0.05, yaw_tolerance=0.05, reference_linear_speed=10.0, reference_angular_speed=3.0, allow_reverse=False, rotate_in_place_start=False, rotate_in_place_end=False):
-            return
+        go_to_tag(
+            -0.05,
+            controller_type="strafe2",
+            xy_tolerance=0.05,
+            yaw_tolerance=0.1,
+            linear_min_vel=0.4,
+            reference_linear_speed=10.0,
+            reference_angular_speed=3.0,
+            linear_max_accel=5.0,
+            allow_reverse=False,
+            rotate_in_place_start=False,
+            rotate_while_driving=True,
+            rotate_in_place_end=False)
+
+        shuffle_action.send_goal(shuffle_goal, done_cb=shuffle_action_done)
+        shuffle_action.wait_for_result()
 
         stop_driving()
 
@@ -143,6 +189,7 @@ def main():
         rospy.loginfo("Cancelling goal")
         find_tag_action.cancel_goal()
         go_to_pose_action.cancel_goal()
+        shuffle_action.cancel_goal()
         rospy.sleep(1.0)
 
 

@@ -10,19 +10,11 @@ go_to_pose:
   y_kP: 1.1
   y_kI: 0.0
   y_kD: 0.0
-  linear_min_vel: 0.015
-  linear_zero_vel: 0.014
-  linear_max_vel: 1.0
-  linear_max_accel: 2.0
   theta_kP: 3.0
   theta_kI: 0.0
   theta_kD: 0.0
   ramsete_b: 2.0
   ramsete_zeta: 0.7
-  theta_zero_vel: 0.00001
-  theta_min_vel: 0.015
-  theta_max_vel: 3.0
-  theta_max_accel: 1.0
   loop_rate: 50.0
   global_frame: "odom"
   robot_frame: "base_link"
@@ -33,6 +25,6 @@ go_to_waypoint:
 
 shuffle_until_charging:
   is_charging_cooldown: 1.0
-  speed: 0.3
+  speed: 0.35
   loop_rate: 10.0
-  interval: 0.5
+  interval: 0.75

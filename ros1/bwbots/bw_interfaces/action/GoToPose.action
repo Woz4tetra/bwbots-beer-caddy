@@ -7,7 +7,17 @@ float64 reference_linear_speed
 float64 reference_angular_speed
 bool allow_reverse
 bool rotate_in_place_start
+bool rotate_while_driving
 bool rotate_in_place_end
+float64 linear_max_vel
+float64 linear_max_accel
+float64 linear_min_vel
+float64 linear_zero_vel
+float64 theta_max_vel
+float64 theta_max_accel
+float64 theta_min_vel
+float64 theta_zero_vel
+string controller_type
 ---
 bool success
 ---
