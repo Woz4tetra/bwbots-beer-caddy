@@ -28,10 +28,10 @@ max_vel_x: 0.65  # 1.0
 min_vel_x: -0.4  # -1.0
 
 # The maximum y velocity for the robot in m/s
-max_vel_y: 0.1
+max_vel_y: 0.0
 
 # The minimum y velocity for the robot in m/s
-min_vel_y: -0.1
+min_vel_y: 0.0
 
 # The absolute value of the maximum rotational velocity for the robot in rad/s
 max_vel_theta: 5.0  # 5.0
