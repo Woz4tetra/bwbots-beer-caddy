@@ -146,7 +146,7 @@ def main():
         if not go_to_tag(
                 -0.5,
                 controller_type="strafe1",
-                linear_min_vel=0.05,
+                linear_min_vel=0.1,
                 xy_tolerance=0.025,
                 yaw_tolerance=0.025,
                 timeout=10.0,
