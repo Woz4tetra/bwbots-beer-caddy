@@ -9,6 +9,7 @@ from bw_interfaces.msg import FindTagAction, FindTagGoal, FindTagFeedback, FindT
 from bw_interfaces.msg import GoToPoseAction, GoToPoseGoal, GoToPoseResult
 from bw_interfaces.msg import FollowWaypointsAction, FollowWaypointsGoal, FollowWaypointsResult
 from bw_interfaces.msg import ShuffleUntilChargingAction, ShuffleUntilChargingGoal, ShuffleUntilChargingResult
+from bw_interfaces.msg import RunSequenceAction, RunSequenceGoal, RunSequenceFeedback, RunSequenceResult
 from bw_interfaces.srv import GetWaypoints
 
 from bw_tools.robot_state import Pose2d
@@ -122,11 +123,13 @@ def main():
     find_tag_action = actionlib.SimpleActionClient("/bw/find_tag", FindTagAction)
     go_to_pose_action = actionlib.SimpleActionClient("/bw/go_to_pose", GoToPoseAction)
     shuffle_action = actionlib.SimpleActionClient("/bw/shuffle_until_charging", ShuffleUntilChargingAction)
+    sequence_action = actionlib.SimpleActionClient("/bw/run_sequence", RunSequenceAction)
     rospy.loginfo("Connecting to action servers...")
     find_tag_action.wait_for_server()
     go_to_pose_action.wait_for_server()
     waypoint_action.wait_for_server()
     shuffle_action.wait_for_server()
+    sequence_action.wait_for_server()
     rospy.loginfo("Action servers connected!")
 
     tag_goal = FindTagGoal()
@@ -190,6 +193,15 @@ def main():
         shuffle_action.wait_for_result()
 
         stop_driving()
+        
+        sequence_goal = RunSequenceGoal()
+
+        sequence_goal.serial = 14
+        sequence_goal.loop = False
+        sequence_goal.from_flash = True
+
+        sequence_action.send_goal(sequence_goal)
+        sequence_action.wait_for_result()
 
     except KeyboardInterrupt:
         rospy.loginfo("Cancelling goal")

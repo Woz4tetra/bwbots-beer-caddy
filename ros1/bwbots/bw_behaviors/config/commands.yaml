@@ -24,7 +24,7 @@ go_to_waypoint:
   move_base_namespace: /move_base
 
 shuffle_until_charging:
-  is_charging_cooldown: 1.0
+  is_charging_cooldown: 3.0
   speed: 0.35
   loop_rate: 10.0
   interval: 0.75
