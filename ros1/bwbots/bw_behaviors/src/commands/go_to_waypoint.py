@@ -16,6 +16,7 @@ class GoToWaypointCommand:
 
         self.current_waypoint = Waypoint()
         self.is_move_base_done = False
+        self.move_base_succeeded = False
         self.action_server = actionlib.SimpleActionServer(
             "follow_waypoints",
             FollowWaypointsAction,
@@ -59,11 +60,18 @@ class GoToWaypointCommand:
             mb_goal.target_pose.pose = waypoint.pose
             self.current_waypoint = waypoint
             self.is_move_base_done = False
+            self.move_base_succeeded = False
             self.move_base.send_goal(mb_goal, feedback_cb=lambda feedback: self.move_base_feedback(feedback), done_cb=self.move_base_done)
             wait_result = self.wait_for_move_base()
+            mb_state = self.move_base.get_state()
             if self.action_server.is_preempt_requested() or \
                     wait_result != GoalStatus.SUCCEEDED or \
-                    not self.move_base.get_result():
+                    not self.move_base_succeeded:
+                rospy.loginfo(
+                    f"Failed to get to waypoint. is preempt requested: {self.action_server.is_preempt_requested()}. "
+                    f"Move base wait result: {wait_result}. "
+                    f"Move base state: {mb_state}"
+                )
                 result = FollowWaypointsResult(False)
                 break
         if result.success:
@@ -80,3 +88,4 @@ class GoToWaypointCommand:
     def move_base_done(self, goal_status: GoalStatus, result: MoveBaseResult):
         rospy.loginfo("move_base finished: %s. %s" % (goal_status, result))
         self.is_move_base_done = True
+        self.move_base_succeeded = goal_status == GoalStatus.SUCCEEDED

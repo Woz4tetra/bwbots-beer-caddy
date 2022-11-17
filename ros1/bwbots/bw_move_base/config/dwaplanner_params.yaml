@@ -16,16 +16,16 @@ acc_lim_y: 0.0  # 5.0
 acc_lim_theta: 5.0  # 5.0
 
 # The absolute value of the maximum translational velocity for the robot in m/s
-max_vel_trans: 0.65  # max speed 1.0 m/s
+max_vel_trans: 0.5  # max speed 1.0 m/s
 
 # The absolute value of the minimum translational velocity for the robot in m/s
-min_vel_trans: 0.1  # 0.05
+min_vel_trans: 0.25  # 0.05
 
 # The maximum x velocity for the robot in m/s.
-max_vel_x: 0.65  # 1.0
+max_vel_x: 0.5  # 1.0
 
 # The minimum x velocity for the robot in m/s, negative for backwards motion.
-min_vel_x: -0.4  # -1.0
+min_vel_x: -0.25  # -1.0
 
 # The maximum y velocity for the robot in m/s
 max_vel_y: 0.0
@@ -40,10 +40,10 @@ max_vel_theta: 5.0  # 5.0
 min_vel_theta: 1.5  # 0.4
 
 # Below what maximum velocity we consider the robot to be stopped in translation
-trans_stopped_vel: 0.2  # 0.1
+trans_stopped_vel: 0.1  # 0.1
 
 # Below what maximum rotation velocity we consider the robot to be stopped in rotation
-theta_stopped_vel: 1.0
+theta_stopped_vel: 0.1
 
 ## Goal Tolerance Parameters ##
 
@@ -59,7 +59,7 @@ xy_goal_tolerance: 0.15
 latch_xy_goal_tolerance: false
 
 # The weight for penalizing any changes in robot heading
-twirling_scale: 0.001  # 0.0
+twirling_scale: 0.0  # 0.0
 
 
 ## Forward Simulation Parameters ##

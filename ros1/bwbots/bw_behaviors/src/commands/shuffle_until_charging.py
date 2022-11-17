@@ -66,7 +66,7 @@ class ShuffleUntilChargingCommand:
                     rospy.loginfo(f"Charge state: {self.charger_state.is_charging}")
                     self.prev_is_charging_time = current_time
                     self.prev_charger_state.is_charging = self.charger_state.is_charging
-                elif current_time - self.prev_is_charging_time > self.is_charging_cooldown:
+                elif current_time - self.prev_is_charging_time > self.is_charging_cooldown and attempts > 1:
                     rospy.loginfo("Robot is charging!")
                     break
             

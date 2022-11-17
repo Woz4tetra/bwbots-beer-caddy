@@ -102,6 +102,8 @@ def main():
 
         waypoint_action.send_goal(goal, done_cb=waypoint_action_done)
         waypoint_action.wait_for_result()
+        rospy.sleep(0.05)
+        rospy.loginfo(f"Waypoint result: {waypoint_result}")
         return waypoint_result.success
 
     rospy.init_node(
@@ -135,8 +137,9 @@ def main():
     shuffle_goal.timeout = rospy.Duration(20.0)
     
     try:
-        # if not go_to_waypoint("dock_prep"):
-        #     return
+        if not go_to_waypoint("dock_prep"):
+            rospy.loginfo("Failed to get to waypoint")
+            return
 
         rospy.sleep(3.0)
 
@@ -179,6 +182,9 @@ def main():
             rotate_in_place_start=False,
             rotate_while_driving=True,
             rotate_in_place_end=False)
+        
+        stop_driving()
+        rospy.sleep(0.5)
 
         shuffle_action.send_goal(shuffle_goal, done_cb=shuffle_action_done)
         shuffle_action.wait_for_result()
