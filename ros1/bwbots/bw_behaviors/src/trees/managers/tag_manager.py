@@ -1,0 +1,70 @@
+import math
+import rospy
+from dataclasses import dataclass
+from typing import Dict, List, Optional
+from geometry_msgs.msg import Pose
+from geometry_msgs.msg import PoseStamped
+from bw_tools.robot_state import Pose2d
+
+
+@dataclass
+class Tag:
+    name: str
+    tag_id: List[int]
+    reference_frame: str
+    pose: Optional[Pose] = None
+    timestamp: Optional[rospy.Time] = None
+
+
+class TagManager:
+    def __init__(self, valid_tag_window: rospy.Duration) -> None:
+        self.tags: Dict[str, Tag] = {}
+        self.valid_tag_window = valid_tag_window
+
+    def register_tag(self, **kwargs) -> None:
+        if "name" in kwargs and "tag_id" in kwargs and "reference_frame" in kwargs:
+            name = kwargs.get("name")
+            tag_id = kwargs.get("tag_id")
+            reference_frame = kwargs.get("reference_frame")
+            pose = kwargs.get("pose", None)
+            timestamp = kwargs.get("timestamp", None)
+            tag = Tag(name, tag_id, reference_frame, pose, timestamp)
+        elif "tag" in kwargs:
+            tag = kwargs.get("tag")
+        else:
+            raise ValueError(f"Invalid parameters: {kwargs}")
+        self.tags[tag.name] = tag
+
+    def set_tag(self, name, pose_stamped: Optional[PoseStamped]) -> None:
+        if pose_stamped is None:
+            self.tags[name].pose = None
+            self.tags[name].timestamp = None
+        else:
+            self.tags[name].pose = pose_stamped.pose
+            self.tags[name].timestamp = pose_stamped.header.stamp
+            self.tags[name].reference_frame = pose_stamped.header.frame_id
+
+    def unset_tag(self, name: str) -> None:
+        self.set_tag(name, None)
+
+    def is_tag_valid(self, name, valid_tag_window: Optional[rospy.Duration] = None) -> bool:
+        if self.tags[name].timestamp is None or self.tags[name].pose is None:
+            return False
+        if valid_tag_window is None:
+            valid_tag_window = self.valid_tag_window
+        return rospy.Time.now() - self.tags[name].timestamp < valid_tag_window
+
+    def get_tag(self, name) -> Tag:
+        return self.tags[name]
+
+    def get_offset_tag(self, name: str, x_offset: float, y_offset: float) -> Optional[PoseStamped]:
+        if self.is_tag_valid(name):
+            return None
+        tag_pose_stamped = self.get_tag(name)
+        tag_pose2d = Pose2d.from_ros_pose(tag_pose_stamped.pose)
+        offset = Pose2d(y_offset, x_offset, math.pi / 2.0)
+        rotate_tag_pose2d = offset.transform_by(tag_pose2d)
+        rotate_tag_pose_stamped = PoseStamped()
+        rotate_tag_pose_stamped.header = tag_pose_stamped.header
+        rotate_tag_pose_stamped.pose = rotate_tag_pose2d.to_ros_pose()
+        return rotate_tag_pose_stamped

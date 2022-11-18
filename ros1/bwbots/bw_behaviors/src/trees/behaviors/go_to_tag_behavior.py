@@ -4,16 +4,16 @@ import py_trees_ros
 
 from bw_interfaces.msg import GoToPoseAction, GoToPoseGoal
 
-from .util import get_offset_tag
+from managers.tag_manager import TagManager
 
 
 
 class GoToTagBehavior(py_trees_ros.actions.ActionClient):
-    def __init__(self, x_offset, y_offset, blackboard_name, **kwargs):
+    def __init__(self, x_offset: float, y_offset: float, tag_name: str, tag_manager: TagManager, **kwargs):
         self.x_offset = x_offset
         self.y_offset = y_offset
-        self.blackboard_name = blackboard_name
-        self.blackboard = py_trees.blackboard.Blackboard()
+        self.tag_name = tag_name
+        self.tag_manager = tag_manager
         
         self.action_goal = GoToPoseGoal()
         self.action_goal.controller_type = kwargs.get("controller_type", "strafe1")
@@ -44,6 +44,8 @@ class GoToTagBehavior(py_trees_ros.actions.ActionClient):
 
     def update(self):
         if not self.sent_goal:
-            dock_tag_pose_stamped = get_offset_tag(self.blackboard.get(self.blackboard_name), self.x_offset, self.y_offset)
+            dock_tag_pose_stamped = self.tag_manager.get_offset_tag(self.tag_name, self.x_offset, self.y_offset)
+            if dock_tag_pose_stamped is None:
+                return py_trees.Status.FAILURE
             self.action_goal.goal.pose = dock_tag_pose_stamped.pose
             self.action_goal.goal.header.frame_id = dock_tag_pose_stamped.header.frame_id

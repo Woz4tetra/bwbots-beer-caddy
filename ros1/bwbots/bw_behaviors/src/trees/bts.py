@@ -12,11 +12,13 @@ from trees.behaviors.follow_tag_pose import FollowTagBehavior
 from trees.behaviors.rotate_in_place_behavior import RotateInPlaceBehavior
 from trees.behaviors.stop_driving_behavior import StopDrivingBehavior
 from trees.behaviors.go_to_pose_behavior import GoToPoseBehavior
-from trees.behaviors.is_dock_tag_near_behavior import IsDockTagNearBehavior
+from trees.behaviors.is_tag_near_behavior import IsTagNearBehavior
 from trees.behaviors.save_tag_as_waypoint_behavior import SaveTagAsWaypoint
 
 from trees.decorators.stop_driving_decorator import StopDrivingDecorator
 from trees.decorators.repeat_n_times_decorator import RepeatNTimesDecorator
+
+from managers.tag_manager import TagManager
 
 
 class BehaviorTrees:
@@ -28,6 +30,13 @@ class BehaviorTrees:
         self.robot_frame = "base_link"
         self.dock_prep_waypoint = "dock_prep"
         self.bt_cache = {}
+        
+        self.tag_manager = TagManager()
+        self.tag_manager.register_tag(
+            name=self.dock_tag_name,
+            tag_id=self.dock_tag_id,
+            reference_frame=self.dock_reference_frame
+        )
 
     def check_cache(self, name, init_fn):
         if name in self.bt_cache:
@@ -44,6 +53,7 @@ class BehaviorTrees:
             -0.5,
             0.05,
             self.dock_tag_name,
+            self.tag_manager,
             controller_type="strafe1",
             linear_min_vel=0.1,
             xy_tolerance=0.025,
@@ -62,6 +72,7 @@ class BehaviorTrees:
             -0.05,
             0.05,
             self.dock_tag_name,
+            self.tag_manager,
             controller_type="strafe2",
             xy_tolerance=0.05,
             yaw_tolerance=0.1,
@@ -76,7 +87,7 @@ class BehaviorTrees:
         ))
     
     def find_tag(self):
-        return self.check_cache("find_tag", lambda: FindTagBehavior(self.dock_tag_id, self.dock_reference_frame, self.dock_tag_name))
+        return self.check_cache("find_tag", lambda: FindTagBehavior(self.dock_tag_name, self.tag_manager))
         
     def shuffle_until_charging(self):
         shuffle_goal = ShuffleUntilChargingGoal()
@@ -89,7 +100,7 @@ class BehaviorTrees:
         ))
 
     def follow_tag(self):
-        return self.check_cache("follow_tag", lambda: FollowTagBehavior(0.0, -0.7, self.dock_tag_name))
+        return self.check_cache("follow_tag", lambda: FollowTagBehavior(0.0, -0.7, self.dock_tag_name, self.tag_manager))
 
     def rotate_in_place(self):
         return self.check_cache("rotate_in_place", lambda: RotateInPlaceBehavior(0.25, 10.0))
@@ -121,10 +132,10 @@ class BehaviorTrees:
         ))
     
     def is_dock_tag_near(self):
-        return self.check_cache("is_dock_tag_near", lambda: IsDockTagNearBehavior(self.dock_tag_id, self.robot_frame, 1.0))
+        return self.check_cache("is_dock_tag_near", lambda: IsTagNearBehavior(self.robot_frame, self.dock_tag_name, self.tag_manager, 1.0))
     
     def save_tag_as_waypoint(self):
-        return self.check_cache("save_tag_as_waypoint", lambda: SaveTagAsWaypoint(-0.7, 0.0, self.dock_prep_waypoint, self.global_frame))
+        return self.check_cache("save_tag_as_waypoint", lambda: SaveTagAsWaypoint(-0.7, 0.0, self.global_frame, self.dock_tag_name, self.tag_manager))
 
     def dock(self):
         return py_trees.composites.Sequence("Dock", [

@@ -11,7 +11,7 @@ class RotateInPlaceBehavior(py_trees.behaviour.Behaviour):
         self.start_time = rospy.Time()
         self.cmd_vel_pub = rospy.Publisher(topic, Twist, queue_size=10)
         super().__init__("Rotate Indefinitely")
-    
+
     def initialise(self):
         self.start_time = rospy.Time.now()
     
