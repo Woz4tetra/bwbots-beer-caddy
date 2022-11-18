@@ -9,9 +9,9 @@ from bw_interfaces.msg import Waypoint
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseResult
 
 
-class GoToWaypointCommand:
+class FollowWaypoint:
     def __init__(self) -> None:
-        self.move_base_namespace = rospy.get_param("~go_to_waypoint/move_base_namespace", "/move_base")
+        self.move_base_namespace = rospy.get_param("~follow_pose/move_base_namespace", "/move_base")
         self.move_base = actionlib.SimpleActionClient(self.move_base_namespace, MoveBaseAction)
 
         self.current_waypoint = Waypoint()

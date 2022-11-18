@@ -3,5 +3,7 @@
         <node name="bw_behaviors" pkg="bw_behaviors" type="actions_node.py" output="screen" required="false">
             <rosparam file="$(find bw_behaviors)/config/commands.yaml" command="load" ns=""/>
         </node>
+        <node name="bw_behaviors" pkg="bw_behaviors" type="dock_tree_node.py" output="screen" required="false"/>
+        <node name="bw_behaviors" pkg="bw_behaviors" type="undock_tree_node.py" output="screen" required="false"/>
     </group>
 </launch>

@@ -44,6 +44,7 @@ packages=(
     https://github.com/iralabdisco/ira_laser_tools.git
     https://github.com/ros-perception/pointcloud_to_laserscan.git
     https://github.com/CCNYRoboticsLab/imu_tools.git
+    https://github.com/splintered-reality/py_trees_ros.git
 )
 
 branches=(
@@ -81,6 +82,7 @@ branches=(
     ros1-master  # https://github.com/iralabdisco/ira_laser_tools.git
     lunar-devel  # https://github.com/ros-perception/pointcloud_to_laserscan.git
     noetic  # https://github.com/CCNYRoboticsLab/imu_tools.git
+    release/0.6.x      # https://github.com/splintered-reality/py_trees_ros.git
 )
 
 len=${#packages[@]}

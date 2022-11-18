@@ -2,7 +2,7 @@
 import rospy
 from commands.find_tag import FindTagCommand
 from commands.go_to_pose import GoToPoseCommand
-from commands.go_to_waypoint import GoToWaypointCommand
+from commands.follow_waypoint import FollowWaypoint
 from commands.shuffle_until_charging import ShuffleUntilChargingCommand
 from commands.run_sequence import RunSequenceCommand
 
@@ -16,7 +16,7 @@ def main():
         # log_level=rospy.DEBUG
     )
     
-    commands["go_to_waypoint"] = GoToWaypointCommand()
+    commands["follow_waypoint"] = FollowWaypoint()
     commands["find_tag"] = FindTagCommand()
     commands["go_to_pose"] = GoToPoseCommand()
     commands["shuffle_until_charging"] = ShuffleUntilChargingCommand()
