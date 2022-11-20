@@ -5,6 +5,7 @@ from commands.go_to_pose import GoToPoseCommand
 from commands.follow_waypoint import FollowWaypoint
 from commands.shuffle_until_charging import ShuffleUntilChargingCommand
 from commands.run_sequence import RunSequenceCommand
+from commands.set_robot_state import SetRobotStateCommand
 
 
 def main():
@@ -21,6 +22,7 @@ def main():
     commands["go_to_pose"] = GoToPoseCommand()
     commands["shuffle_until_charging"] = ShuffleUntilChargingCommand()
     commands["run_sequence"] = RunSequenceCommand()
+    commands["set_robot_state"] = SetRobotStateCommand()
 
     rospy.spin()
 

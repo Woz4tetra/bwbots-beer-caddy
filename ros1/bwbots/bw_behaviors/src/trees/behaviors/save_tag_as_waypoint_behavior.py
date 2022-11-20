@@ -9,10 +9,10 @@ from bw_interfaces.srv import SaveWaypoint
 
 from bw_interfaces.msg import Waypoint
 
-from managers.tag_manager import TagManager
+from trees.managers.tag_manager import TagManager
 
 
-class SaveTagAsWaypoint(py_trees.behaviour.Behaviour):
+class SaveTagAsWaypointBehavior(py_trees.behaviour.Behaviour):
     def __init__(self, x_offset: float, y_offset: float, global_frame_id: str, tag_name: str, tag_manager: TagManager):
         self.x_offset = x_offset
         self.y_offset = y_offset
@@ -23,6 +23,7 @@ class SaveTagAsWaypoint(py_trees.behaviour.Behaviour):
         
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
+        super().__init__("Save tag as waypoint")
 
     def setup(self, timeout):
         self.save_waypoint_srv = rospy.ServiceProxy("/bw/bw_waypoints/save_waypoint", SaveWaypoint)

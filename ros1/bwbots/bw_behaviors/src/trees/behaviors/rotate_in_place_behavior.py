@@ -5,9 +5,9 @@ from geometry_msgs.msg import Twist
 
 
 class RotateInPlaceBehavior(py_trees.behaviour.Behaviour):
-    def __init__(self, angular_velocity: float, timeout: rospy.Duration, topic="/bw/cmd_vel"):
+    def __init__(self, angular_velocity: float, timeout: float, topic="cmd_vel"):
         self.angular_velocity = angular_velocity
-        self.timeout = timeout
+        self.timeout = rospy.Duration(timeout)
         self.start_time = rospy.Time()
         self.cmd_vel_pub = rospy.Publisher(topic, Twist, queue_size=10)
         super().__init__("Rotate Indefinitely")
@@ -20,5 +20,5 @@ class RotateInPlaceBehavior(py_trees.behaviour.Behaviour):
             return py_trees.Status.FAILURE
         twist = Twist()
         twist.angular.z = self.angular_velocity
-        self.cmd_vel_pub(twist)
+        self.cmd_vel_pub.publish(twist)
         return py_trees.Status.RUNNING

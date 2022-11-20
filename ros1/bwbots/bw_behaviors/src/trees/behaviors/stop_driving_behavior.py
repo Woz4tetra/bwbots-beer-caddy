@@ -6,7 +6,7 @@ from geometry_msgs.msg import Twist
 
 
 class StopDrivingBehavior(py_trees.behaviour.Behaviour):
-    def __init__(self, topic="/bw/cmd_vel", pause: Optional[rospy.Duration] = None):
+    def __init__(self, topic="cmd_vel", pause: Optional[rospy.Duration] = None):
         self.topic = topic
         self.cmd_vel_pub: Optional[Twist] = None
         self.start_time = rospy.Time()

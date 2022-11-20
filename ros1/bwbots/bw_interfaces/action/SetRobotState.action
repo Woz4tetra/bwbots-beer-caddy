@@ -1,0 +1,5 @@
+bool enabled
+duration timeout
+---
+bool success
+---

@@ -176,6 +176,8 @@ This is to fix an issue with the RTABmap build. Fix -lCUDA_cublas_device_LIBRARY
   `Do you want to install the Python API (recommended)` -> `y`
   `Please specify your python executable: ` -> `python3`
 
+## py_trees
+- `sudo -H python3 -m pip install py_trees==0.7.6`
 
 # ROS Installation
 

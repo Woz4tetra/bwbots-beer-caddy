@@ -41,6 +41,7 @@ class RunSequenceCommand:
             self.state = None
             self.feedback.index = -1
         
+        aborted = False
         while True:
             if self.state is None:
                 continue
@@ -54,15 +55,16 @@ class RunSequenceCommand:
                     break
 
             if self.action_server.is_preempt_requested():
+                aborted = True
                 self.stop_sequence()
                 result.success = True
                 break
             rospy.sleep(0.1)
 
-        if result.success:
-            self.action_server.set_succeeded(result)
+        if aborted:
+            self.action_server.set_aborted(result, "Cancelling sequence")
         else:
-            self.action_server.set_aborted(result, "Failed to finish sequence")
+            self.action_server.set_succeeded(result)
         self.is_active = False
 
     def sequence_state_callback(self, msg):

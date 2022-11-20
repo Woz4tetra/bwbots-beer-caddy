@@ -1,7 +1,7 @@
 import math
 import rospy
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict, Tuple, Optional
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import PoseStamped
 from bw_tools.robot_state import Pose2d
@@ -10,7 +10,7 @@ from bw_tools.robot_state import Pose2d
 @dataclass
 class Tag:
     name: str
-    tag_id: List[int]
+    tag_id: Tuple[int]
     reference_frame: str
     pose: Optional[Pose] = None
     timestamp: Optional[rospy.Time] = None
@@ -24,7 +24,7 @@ class TagManager:
     def register_tag(self, **kwargs) -> None:
         if "name" in kwargs and "tag_id" in kwargs and "reference_frame" in kwargs:
             name = kwargs.get("name")
-            tag_id = kwargs.get("tag_id")
+            tag_id = tuple(kwargs.get("tag_id"))
             reference_frame = kwargs.get("reference_frame")
             pose = kwargs.get("pose", None)
             timestamp = kwargs.get("timestamp", None)

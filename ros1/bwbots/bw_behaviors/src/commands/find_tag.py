@@ -117,6 +117,7 @@ class FindTagCommand:
     def action_callback(self, goal: FindTagGoal):
         tag_id: List[int] = list(goal.tag_id)
         reference_frame: str = goal.reference_frame_id
+        timeout: rospy.Duration = goal.timeout
 
         rospy.loginfo(f"Finding tag: {goal}")
 
@@ -127,11 +128,19 @@ class FindTagCommand:
 
         start_time = rospy.Time.now()
         current_time = rospy.Time.now()
-        while current_time - start_time < self.timeout:
+        aborted = False
+        if timeout.to_sec() <= 0.0:
+            timeout = self.timeout
+            rospy.loginfo(f"Using default timeout: {timeout}")
+        while current_time - start_time < timeout:
             current_time = rospy.Time.now()
+            if self.action_server.is_preempt_requested():
+                self.action_server.set_aborted(result)
+                aborted = True
+                break
 
-            for tag_id, messages in self.detections.items():
-                if len(tag_id) != 0 and frozen_tag_id != tag_id:
+            for det_tag_id, messages in self.detections.items():
+                if len(det_tag_id) != 0 and frozen_tag_id != det_tag_id:
                     continue
                 for msg in messages:
                     feedback_pose = PoseStamped()
@@ -143,15 +152,17 @@ class FindTagCommand:
                     feedback.num_samples = len(messages)
                     self.action_server.publish_feedback(feedback)
             
-            if len(tag_id) == 0:
+            if len(frozen_tag_id) == 0:
                 poses = []
-                for tag_id, (timestamp, pose2d) in self.computed_poses.items():
+                for timestamp, pose2d in self.computed_poses.values():
                     poses.append(pose2d)
                 computed_pose = Pose2d.average(poses)
                 rospy.loginfo(f"Computed average of all tags: {computed_pose}")
             else:
-                timestamp, computed_pose = self.computed_poses[tag_id]
-                rospy.loginfo(f"Computed average of {tag_id} samples: {computed_pose}")
+                if frozen_tag_id not in self.computed_poses:
+                    continue
+                timestamp, computed_pose = self.computed_poses[frozen_tag_id]
+                rospy.loginfo(f"Computed average of {frozen_tag_id} samples: {computed_pose}")
             
             if current_time - timestamp > self.stale_tag_time:
                 rospy.loginfo("Computed pose is too old. Trying again.")
@@ -174,9 +185,11 @@ class FindTagCommand:
             result.success = True
             break
 
-        if result.success:
-            rospy.loginfo(f"Found tag: {result}")
-            self.action_server.set_succeeded(result)
+        if aborted:
+            self.action_server.set_aborted(result, "Interrupted while finding tag")
         else:
-            rospy.loginfo(f"Failed to find tag: {result}")
-            self.action_server.set_aborted(result)
+            if result.success:
+                rospy.loginfo(f"Found tag: {result}")
+            else:
+                rospy.loginfo(f"Failed to find tag: {result}")
+            self.action_server.set_succeeded(result)

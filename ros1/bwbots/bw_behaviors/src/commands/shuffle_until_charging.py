@@ -49,11 +49,13 @@ class ShuffleUntilChargingCommand:
         next_switch_time = start_time + self.shuffle_interval
         current_time = rospy.Time.now()
         attempts = 0
+        aborted = False
         while current_time - start_time < timeout:
             rate.sleep()
             current_time = rospy.Time.now()
 
             if self.action_server.is_preempt_requested():
+                aborted = True
                 rospy.loginfo(f"Cancelling shuffle")
                 break
 
@@ -95,9 +97,12 @@ class ShuffleUntilChargingCommand:
         success = self.charger_state.is_charging
 
         result = ShuffleUntilChargingResult(success)
-        if result.success:
-            rospy.loginfo("Robot successfully docked!")
-            self.action_server.set_succeeded(result)
+        
+        if aborted:
+            self.action_server.set_aborted(result, "Interrupted while shuffling")
         else:
-            rospy.loginfo("Robot failed to dock!")
-            self.action_server.set_aborted(result)
+            if result.success:
+                rospy.loginfo("Robot successfully docked!")
+            else:
+                rospy.loginfo("Robot failed to dock!")
+            self.action_server.set_succeeded(result)

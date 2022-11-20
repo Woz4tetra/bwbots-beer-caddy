@@ -82,8 +82,10 @@ add_action_files(
   FindTag.action
   FollowWaypoints.action
   GoToPose.action
-  ShuffleUntilCharging.action
+  RunBehavior.action
   RunSequence.action
+  SetRobotState.action
+  ShuffleUntilCharging.action
 )
 
 ## Generate added messages and services with any dependencies listed here

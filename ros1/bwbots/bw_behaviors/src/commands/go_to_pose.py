@@ -217,6 +217,7 @@ class GoToPoseCommand:
         current_time = rospy.Time.now()
         goal_reached_timer: Optional[rospy.Time] = None
         success = False
+        aborted = False
         while current_time - start_time < self.timeout:
             rate.sleep()
             current_time = rospy.Time.now()
@@ -289,6 +290,7 @@ class GoToPoseCommand:
             )
             if self.action_server.is_preempt_requested():
                 rospy.loginfo(f"Cancelling go to pose")
+                aborted = True
                 break
             if controller.at_reference():
                 if goal_reached_timer is None:
@@ -319,10 +321,12 @@ class GoToPoseCommand:
         rospy.loginfo(f"Distance tolerance{' not' if distance >= xy_tolerance else ''} met: {distance} >= {xy_tolerance}")
         rospy.loginfo(f"Angle tolerance{' not' if angle_error >= yaw_tolerance else ''} met: {angle_error} >= {yaw_tolerance}")
 
-        if result.success:
-            rospy.loginfo("Return success for go to pose")
-            self.action_server.set_succeeded(result)
+        if aborted:
+            self.action_server.set_aborted(result, "Interrupted while going to a pose")
         else:
-            rospy.loginfo("Return failure for go to pose")
-            self.action_server.set_aborted(result, "Failed to go to pose")
+            if result.success:
+                rospy.loginfo("Return success for go to pose")
+            else:
+                rospy.loginfo("Return failure for go to pose")
+            self.action_server.set_succeeded(result)
         self.robot_state = None

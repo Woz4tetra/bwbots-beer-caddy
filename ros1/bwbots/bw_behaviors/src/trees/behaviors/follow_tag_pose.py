@@ -5,7 +5,7 @@ from bw_interfaces.msg import FollowWaypointsAction, FollowWaypointsGoal
 from bw_interfaces.msg import WaypointArray
 from bw_interfaces.msg import Waypoint
 
-from managers.tag_manager import TagManager
+from trees.managers.tag_manager import TagManager
 
 
 class FollowTagBehavior(py_trees_ros.actions.ActionClient):

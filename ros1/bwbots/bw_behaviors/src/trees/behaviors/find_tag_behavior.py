@@ -7,20 +7,20 @@ from geometry_msgs.msg import PoseStamped
 
 from bw_interfaces.msg import FindTagAction, FindTagGoal, FindTagResult
 
-from managers.tag_manager import TagManager
+from trees.managers.tag_manager import TagManager
 
 
 class FindTagBehavior(py_trees_ros.actions.ActionClient):
-    def __init__(self, tag_name: str, tag_manager: TagManager):
+    def __init__(self, tag_name: str, tag_manager: TagManager, timeout: float):
         self.tag_manager = tag_manager
         self.tag_name = tag_name
         tag = self.tag_manager.get_tag(self.tag_name)
         goal = FindTagGoal()
         goal.tag_id = tag.tag_id
         goal.reference_frame_id = tag.reference_frame
+        goal.timeout = rospy.Duration(timeout)
 
         self.tag_result_pub: Optional[rospy.Publisher] = None
-        self.blackboard = py_trees.blackboard.Blackboard()
 
         super().__init__("Find tag",
             FindTagAction,

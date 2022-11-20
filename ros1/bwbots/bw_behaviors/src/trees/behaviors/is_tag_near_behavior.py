@@ -7,8 +7,8 @@ from geometry_msgs.msg import PoseStamped
 
 from bw_tools.robot_state import Pose2d
 
-from managers.tag_manager import TagManager
-from managers.tag_manager import Tag
+from trees.managers.tag_manager import TagManager
+from trees.managers.tag_manager import Tag
 
 
 class IsTagNearBehavior(py_trees.behaviour.Behaviour):

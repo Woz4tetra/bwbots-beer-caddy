@@ -1,9 +1,11 @@
 <launch>
     <group ns="bw" >
-        <node name="bw_behaviors" pkg="bw_behaviors" type="actions_node.py" output="screen" required="false">
+        <node name="bw_commands" pkg="bw_behaviors" type="actions_node.py" output="screen" required="false">
             <rosparam file="$(find bw_behaviors)/config/commands.yaml" command="load" ns=""/>
+            <remap from="cmd_vel" to="cmd_vel_nav"/>
         </node>
-        <node name="bw_behaviors" pkg="bw_behaviors" type="dock_tree_node.py" output="screen" required="false"/>
-        <node name="bw_behaviors" pkg="bw_behaviors" type="undock_tree_node.py" output="screen" required="false"/>
+        <node name="bw_bts" pkg="bw_behaviors" type="trees_node.py" output="screen" required="false">
+            <remap from="cmd_vel" to="cmd_vel_nav"/>
+        </node>
     </group>
 </launch>

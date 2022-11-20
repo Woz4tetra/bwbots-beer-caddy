@@ -73,11 +73,9 @@ class FollowWaypoint:
                     f"Move base state: {mb_state}"
                 )
                 result = FollowWaypointsResult(False)
-                break
-        if result.success:
-            self.action_server.set_succeeded(result)
-        else:
-            self.action_server.set_aborted(result, "Failed to get to a waypoint")
+                self.action_server.set_aborted(result, "Interrupted while going to a waypoint")
+                return
+        self.action_server.set_succeeded(result)
 
     def move_base_feedback(self, mb_feedback):
         feedback = FollowWaypointsFeedback()

@@ -7,11 +7,6 @@
 
 topics:
 -
-  name    : follow_object
-  topic   : /bw/cmd_vel_follow
-  timeout : 1.0
-  priority: 20
--
   name    : navigation
   topic   : /bw/cmd_vel_nav
   timeout : 1.0

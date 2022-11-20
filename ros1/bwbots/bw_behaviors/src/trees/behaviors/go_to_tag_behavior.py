@@ -4,7 +4,7 @@ import py_trees_ros
 
 from bw_interfaces.msg import GoToPoseAction, GoToPoseGoal
 
-from managers.tag_manager import TagManager
+from trees.managers.tag_manager import TagManager
 
 
 

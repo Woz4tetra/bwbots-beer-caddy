@@ -45,6 +45,8 @@ packages=(
     https://github.com/ros-perception/pointcloud_to_laserscan.git
     https://github.com/CCNYRoboticsLab/imu_tools.git
     https://github.com/splintered-reality/py_trees_ros.git
+    https://github.com/splintered-reality/py_trees_msgs.git
+    https://github.com/splintered-reality/rqt_py_trees.git
 )
 
 branches=(
@@ -82,7 +84,9 @@ branches=(
     ros1-master  # https://github.com/iralabdisco/ira_laser_tools.git
     lunar-devel  # https://github.com/ros-perception/pointcloud_to_laserscan.git
     noetic  # https://github.com/CCNYRoboticsLab/imu_tools.git
-    release/0.6.x      # https://github.com/splintered-reality/py_trees_ros.git
+    release/0.6.x  # https://github.com/splintered-reality/py_trees_ros.git
+    release/0.3.x  # https://github.com/splintered-reality/py_trees_msgs.git
+    devel  # https://github.com/splintered-reality/rqt_py_trees.git
 )
 
 len=${#packages[@]}
@@ -99,7 +103,7 @@ if [ ! -z ${APPLY_PATCHES} ]; then
 fi
 
 cd ${DEPENDENCIES_WS}
-catkin_make -j5
+catkin_make -j5  -DCATKIN_WHITELIST_PACKAGES="" -DCATKIN_BLACKLIST_PACKAGES=""
 success=$?
 if [[ $success -eq 0 ]];
 then

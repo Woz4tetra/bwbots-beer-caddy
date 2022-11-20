@@ -1,5 +1,6 @@
 int32[] tag_id
 string reference_frame_id
+duration timeout
 ---
 geometry_msgs/PoseStamped pose
 bool success
