@@ -31,6 +31,11 @@ private:
     mtx_type* module_vector;
     static const unsigned int CHASSIS_STATE_LEN = 3;
     unsigned int kinematics_channels_len;
+    double epsilon;
+
+    SpeedPID* vx_pid;
+    SpeedPID* vy_pid;
+    SpeedPID* vt_pid;
 
     uint32_t prev_drive_time;
     uint32_t prev_odom_time;
@@ -55,8 +60,12 @@ public:
     void reset();
     void stop();
     void drive(double vx, double vy, double vt);
+    void drive_with_feedback(double vx, double vy, double vt, double meas_vx, double meas_vy, double meas_vt);
     void set(unsigned int channel, double angle, double velocity);
-    SpeedPID* get_pid(unsigned int channel);
+    SpeedPID* get_vx_pid() { return vx_pid; }
+    SpeedPID* get_vy_pid() { return vy_pid; }
+    SpeedPID* get_vt_pid() { return vt_pid; }
+    SpeedPID* get_motor_pid(unsigned int channel);
     SpeedFilter* get_filter(unsigned int channel);
     BwDriveModule* get_module(unsigned int channel);
     unsigned int get_num_motors();

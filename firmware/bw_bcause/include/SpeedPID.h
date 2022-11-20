@@ -14,10 +14,10 @@ private:
 public:
     double Kp, Ki, Kd;
     double K_ff;  // feedforward constant
-    int deadzone_command;
-    int standstill_deadzone_command;
+    double deadzone_command;
+    double standstill_deadzone_command;
     double error_sum_clamp;
-    int command_min, command_max;
+    double command_min, command_max;
     double epsilon;  // values that are basically zero
 
     SpeedPID();
@@ -25,8 +25,8 @@ public:
     void set_target(double target);
     double get_target();
     void reset();
-    int limit(double value);
-    int compute(double measurement);
+    double limit(double value);
+    double compute(double measurement);
     double get_last_command()  { return out; };
 
     static double sign(double x);

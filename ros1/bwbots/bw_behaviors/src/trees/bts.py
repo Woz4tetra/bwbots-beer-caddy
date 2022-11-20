@@ -15,12 +15,15 @@ from trees.behaviors.go_to_pose_behavior import GoToPoseBehavior
 from trees.behaviors.is_tag_near_behavior import IsTagNearBehavior
 from trees.behaviors.save_tag_as_waypoint_behavior import SaveTagAsWaypointBehavior
 from trees.behaviors.set_robot_state_behavior import SetRobotStateBehavior
+from trees.behaviors.is_charging_behavior import IsChargingBehavior
+from trees.behaviors.set_pose_to_waypoint_behavior import SetPoseToWaypointBehavior
 
 from trees.decorators.stop_driving_decorator import StopDrivingDecorator
 from trees.decorators.repeat_n_times_decorator import RepeatNTimesDecorator
 from trees.decorators.pause_before_running import PauseBeforeRunning
 
 from trees.managers.tag_manager import TagManager
+from trees.managers.waypoint_manager import WaypointManager
 
 
 class BehaviorTrees:
@@ -39,6 +42,8 @@ class BehaviorTrees:
             tag_id=self.dock_tag_id,
             reference_frame=self.dock_reference_frame
         )
+        
+        self.waypoint_manager = WaypointManager()
 
     def check_cache(self, name, init_fn):
         if name in self.bt_cache:
@@ -48,7 +53,7 @@ class BehaviorTrees:
             return self.bt_cache[name]
 
     def drive_to_dock_prep(self):
-        return self.check_cache("drive_to_dock_prep", lambda: FollowWaypointBehavior(self.dock_prep_waypoint))
+        return self.check_cache("drive_to_dock_prep", lambda: FollowWaypointBehavior(self.dock_prep_waypoint, self.waypoint_manager))
     
     def go_to_tag_stage1(self):
         return self.check_cache("go_to_tag_stage1", lambda: GoToTagBehavior(
@@ -56,18 +61,20 @@ class BehaviorTrees:
             0.05,
             self.dock_tag_name,
             self.tag_manager,
+            frame_id=self.dock_reference_frame,
             controller_type="strafe1",
-            linear_min_vel=0.25,
+            linear_min_vel=0.1,
             theta_min_vel=0.02,
             xy_tolerance=0.025,
             yaw_tolerance=0.025,
             timeout=10.0,
-            reference_linear_speed=1.0,
+            reference_linear_speed=0.5,
             rotate_in_place_start=True,
             rotate_while_driving=False,
             rotate_in_place_end=True,
             reference_angular_speed=2.0,
-            allow_reverse=False
+            allow_reverse=False,
+            failure_on_pose_failure=False
         ))
         
     def go_to_tag_stage2(self):
@@ -76,9 +83,10 @@ class BehaviorTrees:
             0.05,
             self.dock_tag_name,
             self.tag_manager,
+            frame_id=self.dock_reference_frame,
             controller_type="strafe2",
             xy_tolerance=0.05,
-            yaw_tolerance=0.1,
+            yaw_tolerance=0.25,
             linear_min_vel=0.4,
             theta_min_vel=0.02,
             reference_linear_speed=10.0,
@@ -87,7 +95,8 @@ class BehaviorTrees:
             allow_reverse=False,
             rotate_in_place_start=False,
             rotate_while_driving=True,
-            rotate_in_place_end=False
+            rotate_in_place_end=False,
+            failure_on_pose_failure=True
         ))
     
     def find_tag(self):
@@ -138,14 +147,23 @@ class BehaviorTrees:
     def is_dock_tag_near(self):
         return self.check_cache("is_dock_tag_near", lambda: IsTagNearBehavior(self.robot_frame, self.dock_tag_name, self.tag_manager, 1.0))
     
+    def save_prep_as_waypoint(self):
+        return self.check_cache("save_prep_as_waypoint", lambda: SaveTagAsWaypointBehavior(-0.7, 0.0, self.global_frame, self.dock_prep_waypoint, self.dock_tag_name, self.tag_manager))
+
     def save_tag_as_waypoint(self):
-        return self.check_cache("save_tag_as_waypoint", lambda: SaveTagAsWaypointBehavior(-0.7, 0.0, self.global_frame, self.dock_prep_waypoint, self.dock_tag_name, self.tag_manager))
+        return self.check_cache("save_tag_as_waypoint", lambda: SaveTagAsWaypointBehavior(0.0, 0.0, self.global_frame, self.dock_tag_name, self.dock_tag_name, self.tag_manager))
 
     def enable_motors(self):
         return self.check_cache("enable_motors", lambda: SetRobotStateBehavior(True))
 
     def disable_motors(self):
         return self.check_cache("disable_motors", lambda: SetRobotStateBehavior(False))
+
+    def is_charging(self):
+        return self.check_cache("is_charging", lambda: IsChargingBehavior())
+
+    def set_robot_to_dock_tag(self):
+        return self.check_cache("set_robot_to_dock_tag", lambda: SetPoseToWaypointBehavior(self.dock_tag_name, self.waypoint_manager))
 
     def test(self):
         return py_trees.composites.Sequence("Test", [
@@ -156,6 +174,7 @@ class BehaviorTrees:
 
     def dock(self):
         return py_trees.composites.Sequence("Dock", [
+            py_trees.decorators.Inverter(self.is_charging()),
             self.enable_motors(),
             self.drive_to_dock_prep(),
             RepeatNTimesDecorator(py_trees.composites.Selector("Search tag stage 0", [
@@ -167,6 +186,7 @@ class BehaviorTrees:
                 ]),
                 self.search_for_tag()
             ]), attempts=2),
+            self.save_tag_as_waypoint(),
             self.go_to_tag_stage2(),
             self.shuffle_until_charging(),
             self.disable_motors()
@@ -175,12 +195,15 @@ class BehaviorTrees:
     def undock(self):
         return py_trees.composites.Sequence("Undock", [
             self.enable_motors(),
+            self.set_robot_to_dock_tag(),
             self.drive_backwards(),
+            py_trees.decorators.Inverter(self.is_charging()),
             py_trees.composites.Selector("Verify tag precense", [
                 RepeatNTimesDecorator(py_trees.composites.Selector("Search for tag", [
                     PauseBeforeRunning(self.find_tag(), 3.0), self.search_for_tag()
                 ]), attempts=2),
                 self.is_dock_tag_near(),
             ]),
-            self.save_tag_as_waypoint()
+            self.save_tag_as_waypoint(),
+            self.save_prep_as_waypoint()
         ])

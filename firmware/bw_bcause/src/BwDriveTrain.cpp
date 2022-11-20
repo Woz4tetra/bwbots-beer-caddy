@@ -41,6 +41,7 @@ BwDriveTrain::BwDriveTrain(
     chassis_vector = new mtx_type[CHASSIS_STATE_LEN * 1];
     module_vector = new mtx_type[kinematics_channels_len * 1];
     drive_modules = new BwDriveModule*[get_num_motors()];
+    epsilon = 1E-3;
 
     for (unsigned int index = 0; index < kinematics_channels_len * CHASSIS_STATE_LEN; index++) {
         inverse_kinematics[index] = 0.0;
@@ -83,6 +84,10 @@ BwDriveTrain::BwDriveTrain(
         inverse_kinematics[x_row + 1] = 1.0;
         inverse_kinematics[x_row + 2] = 0.0;  // filled in later
     }
+
+    vx_pid = new SpeedPID();
+    vy_pid = new SpeedPID();
+    vt_pid = new SpeedPID();
 }
 
 unsigned int BwDriveTrain::get_num_motors() {
@@ -176,6 +181,29 @@ void BwDriveTrain::set(unsigned int channel, double azimuth, double wheel_veloci
     }
 }
 
+void BwDriveTrain::drive_with_feedback(double vx, double vy, double vt, double meas_vx, double meas_vy, double meas_vt)
+{
+    double new_vx;
+    double new_vy;
+    double new_vt;
+    vx_pid->set_target(vx);
+    vy_pid->set_target(vy);
+    vt_pid->set_target(vt);
+    new_vx = vx_pid->compute(meas_vx);
+    new_vy = vy_pid->compute(meas_vy);
+    new_vt = vt_pid->compute(meas_vt);
+
+    if (abs(vx) < epsilon) {
+        new_vx = 0.0;
+    }
+    if (abs(vy) < epsilon) {
+        new_vy = 0.0;
+    }
+    if (abs(vt) < epsilon) {
+        new_vt = 0.0;
+    }
+    drive(new_vx, new_vy, new_vt);
+}
 
 void BwDriveTrain::drive(double vx, double vy, double vt)
 {
@@ -389,7 +417,7 @@ double BwDriveTrain::get_azimuth(unsigned int channel)
     }
 }
 
-SpeedPID* BwDriveTrain::get_pid(unsigned int channel)
+SpeedPID* BwDriveTrain::get_motor_pid(unsigned int channel)
 {
     if (channel > get_num_motors()) {
         return NULL;

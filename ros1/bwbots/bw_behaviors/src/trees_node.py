@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+
+# Tutorial on behavior trees: https://roboticseabass.com/2021/05/08/introduction-to-behavior-trees/
+
 import sys
 from typing import Dict, Optional
 import rospy

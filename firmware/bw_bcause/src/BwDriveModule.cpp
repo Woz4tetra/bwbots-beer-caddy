@@ -53,6 +53,8 @@ void BwDriveModule::reset()
     speed_pid->reset();
     speed_filter->reset();
     motor->set(0);
+    predicted_angle = setpoint_angle;
+    predicted_velocity = 0.0;
 }
 
 void BwDriveModule::set_azimuth(double setpoint, double dt)
@@ -143,11 +145,6 @@ double BwDriveModule::get_wheel_position() {
 }
 
 void BwDriveModule::update_predicted_azimuth(double dt) {
-    if (!is_enabled) {
-        predicted_angle = setpoint_angle;
-        predicted_velocity = 0.0;
-        return;
-    }
     double error = setpoint_angle - predicted_angle;
     if (abs(error) < 0.1) {
         predicted_angle = setpoint_angle;
@@ -165,7 +162,7 @@ void BwDriveModule::set_wheel_velocity(double velocity)
     speed_pid->set_target(velocity);
     update_wheel_position();
     update_wheel_velocity();
-    int command = speed_pid->compute(speed_filter->get_velocity());
+    int command = (int)speed_pid->compute(speed_filter->get_velocity());
     if (!is_enabled) {
         return;
     }

@@ -118,7 +118,7 @@ const double VOLTAGE_COMPENSATION_DENOMINATOR = 12.0;  // voltage the feedforwar
 const double MAX_SERVO_SPEED = 6.5;  // calculated max speed: 5.950 rad/s @ 5V
 
 const int DEADZONE_COMMAND = 50;
-const int STANDSTILL_DEADZONE_COMMAND = 110;
+const int STANDSTILL_DEADZONE_COMMAND = 120;
 const int MAX_SPEED_COMMAND = 255;
 
 const double ALCOVE_ANGLE = 0.5236;  // 30 degrees
@@ -180,8 +180,8 @@ float load_voltage = 0.0f;
 
 bool was_charging = false;
 
-const float DISABLE_THRESHOLD = 7.0;
-const float CHARGE_CURRENT_THRESHOLD = 0.1;  // amps
+const float DISABLE_THRESHOLD = 9.5;
+const float CHARGE_CURRENT_THRESHOLD = 0.15;  // amps
 Adafruit_INA219 charge_ina(0x40 + 0b01);
 
 // ---
@@ -211,7 +211,7 @@ uint32_t prev_nonglobal_time = 0;
 const uint32_t NONGLOBAL_CONTROL_TIMEOUT_MS = 5000;
 
 bool was_disabled_by_command = true;
-const double MOVEMENT_EPSILON = 5E-3;
+const double MOVEMENT_EPSILON = 0.025;
 uint32_t prev_movement_time = 0;
 const uint32_t MOVEMENT_DISABLE_TIMEOUT_MS = 3000;
 
@@ -325,7 +325,7 @@ bool is_moving(
 void set_voltage_compensation(double compensation)
 {
     for (unsigned int channel = 0; channel < drive->get_num_motors(); channel++) {
-        drive->get_pid(channel)->K_ff = SPEED_TO_COMMAND * compensation;
+        drive->get_motor_pid(channel)->K_ff = SPEED_TO_COMMAND * compensation;
     }
 }
 
@@ -517,17 +517,53 @@ void setup()
     set_builtin_led(true);
     set_button_led(true);
 
+    SpeedPID* vx_pid = drive->get_vx_pid();
+    vx_pid->Kp = 1.0;
+    vx_pid->Ki = 0.0;
+    vx_pid->Kd = 0.0;
+    vx_pid->K_ff = 1.0;
+    vx_pid->deadzone_command = 0.0;
+    vx_pid->standstill_deadzone_command = 0.0;
+    vx_pid->error_sum_clamp = 100.0;
+    vx_pid->command_min = -10.0;
+    vx_pid->command_max = 10.0;
+
+    SpeedPID* vy_pid = drive->get_vy_pid();
+    vy_pid->Kp = 1.0;
+    vy_pid->Ki = 0.0;
+    vy_pid->Kd = 0.0;
+    vy_pid->K_ff = 1.0;
+    vy_pid->deadzone_command = 0.0;
+    vy_pid->standstill_deadzone_command = 0.0;
+    vy_pid->error_sum_clamp = 100.0;
+    vy_pid->command_min = -10.0;
+    vy_pid->command_max = 10.0;
+
+    SpeedPID* vt_pid = drive->get_vt_pid();
+    vt_pid->Kp = 1.5;
+    vt_pid->Ki = 0.15;
+    vt_pid->Kd = 0.0;
+    vt_pid->K_ff = 1.0;
+    vt_pid->deadzone_command = 0.0;
+    vt_pid->standstill_deadzone_command = 0.0;
+    vt_pid->error_sum_clamp = 100000.0;
+    vt_pid->command_min = -15.0;
+    vt_pid->command_max = 15.0;
+
     for (unsigned int channel = 0; channel < drive->get_num_motors(); channel++) {
-        SpeedPID* pid = drive->get_pid(channel);
-        pid->Kp = 100.0;
-        pid->Ki = 0.001;
-        pid->Kd = 0.01;
+        SpeedPID* pid = drive->get_motor_pid(channel);
+        // pid->Kp = 100.0;
+        // pid->Ki = 0.001;
+        // pid->Kd = 0.01;
+        pid->Kp = 1.0;
+        pid->Ki = 0.0;
+        pid->Kd = 0.0;
         pid->K_ff = SPEED_TO_COMMAND;
-        pid->deadzone_command = DEADZONE_COMMAND;
-        pid->standstill_deadzone_command = STANDSTILL_DEADZONE_COMMAND;
+        pid->deadzone_command = (double)DEADZONE_COMMAND;
+        pid->standstill_deadzone_command = (double)STANDSTILL_DEADZONE_COMMAND;
         pid->error_sum_clamp = 100.0;
-        pid->command_min = -MAX_SPEED_COMMAND;
-        pid->command_max = MAX_SPEED_COMMAND;
+        pid->command_min = (double)(-MAX_SPEED_COMMAND);
+        pid->command_max = (double)(MAX_SPEED_COMMAND);
         SpeedFilter* filter = drive->get_filter(channel);
         filter->Kf = 0.99;
     }
@@ -666,7 +702,7 @@ void loop()
                 stop_motors();
             }
             else {
-                drive->drive(vx_command, vy_command, vt_command);
+                drive->drive_with_feedback(vx_command, vy_command, vt_command, odom_vx, odom_vy, odom_vt);
             }
 
             if (is_moving(vx_command, vy_command, vt_command, odom_vx, odom_vy, odom_vt)) {

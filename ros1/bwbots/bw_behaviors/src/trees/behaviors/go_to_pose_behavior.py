@@ -2,18 +2,18 @@ import rospy
 import py_trees
 import py_trees_ros
 
-from bw_interfaces.msg import GoToPoseAction, GoToPoseGoal
+from bw_interfaces.msg import GoToPoseAction, GoToPoseGoal, GoToPoseResult
 
 from bw_tools.robot_state import Pose2d
 
 
 class GoToPoseBehavior(py_trees_ros.actions.ActionClient):
-    def __init__(self, pose2d: Pose2d, frame_id="odom", **kwargs):
-        self.blackboard = py_trees.blackboard.Blackboard()
-        
+    def __init__(self, pose2d: Pose2d, frame_id="odom", failure_on_pose_failure=True, **kwargs):
         super().__init__("Go to pose",
             GoToPoseAction,
             action_namespace="/bw/go_to_pose")
+
+        self.failure_on_pose_failure = failure_on_pose_failure
 
         self.action_goal = GoToPoseGoal()
         self.action_goal.goal.header.frame_id = frame_id
@@ -36,3 +36,13 @@ class GoToPoseBehavior(py_trees_ros.actions.ActionClient):
         self.action_goal.theta_max_accel = kwargs.get("theta_max_accel", 1.0)
         self.action_goal.theta_min_vel = kwargs.get("theta_min_vel", 0.015)
         self.action_goal.theta_zero_vel = kwargs.get("theta_zero_vel", 0.0001)
+
+    def update(self):
+        action_result = super().update()
+        if self.failure_on_pose_failure and action_result == py_trees.Status.SUCCESS:
+            result: GoToPoseResult = self.action_client.get_result()
+            if result.success:
+                return py_trees.Status.SUCCESS
+            else:
+                return py_trees.Status.FAILURE
+        return action_result
