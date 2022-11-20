@@ -17,9 +17,9 @@ class Tag:
 
 
 class TagManager:
-    def __init__(self, valid_tag_window: rospy.Duration) -> None:
+    def __init__(self, valid_tag_window: float) -> None:
         self.tags: Dict[str, Tag] = {}
-        self.valid_tag_window = valid_tag_window
+        self.valid_tag_window = rospy.Duration(valid_tag_window)
 
     def register_tag(self, **kwargs) -> None:
         if "name" in kwargs and "tag_id" in kwargs and "reference_frame" in kwargs:
@@ -58,13 +58,13 @@ class TagManager:
         return self.tags[name]
 
     def get_offset_tag(self, name: str, x_offset: float, y_offset: float) -> Optional[PoseStamped]:
-        if self.is_tag_valid(name):
+        if not self.is_tag_valid(name):
             return None
-        tag_pose_stamped = self.get_tag(name)
-        tag_pose2d = Pose2d.from_ros_pose(tag_pose_stamped.pose)
+        tag = self.get_tag(name)
+        tag_pose2d = Pose2d.from_ros_pose(tag.pose)
         offset = Pose2d(y_offset, x_offset, math.pi / 2.0)
         rotate_tag_pose2d = offset.transform_by(tag_pose2d)
         rotate_tag_pose_stamped = PoseStamped()
-        rotate_tag_pose_stamped.header = tag_pose_stamped.header
+        rotate_tag_pose_stamped.header.frame_id = tag.reference_frame
         rotate_tag_pose_stamped.pose = rotate_tag_pose2d.to_ros_pose()
         return rotate_tag_pose_stamped

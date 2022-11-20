@@ -18,16 +18,11 @@ class TreesNode:
     def __init__(self) -> None:
         rospy.init_node("dock_tree")
         bts =  BehaviorTrees()
-        self.roots: Dict[str: py_trees_ros.trees.BehaviourTree] = {
+        self.roots: Dict[str: py_trees.behaviour.Behaviour] = {
             "dock": bts.dock(),
             "undock": bts.undock(),
             "test": bts.test(),
         }
-        self.is_setup = {key: False for key in self.roots}
-
-        for tree in self.roots.values():
-            rospy.on_shutdown(functools.partial(TreesNode.shutdown, tree))
-
         self.action_server = actionlib.SimpleActionServer(
             "run_behavior",
             RunBehaviorAction,
@@ -39,13 +34,14 @@ class TreesNode:
         
     def action_callback(self, goal: RunBehaviorGoal):
         rospy.loginfo(f"Running behavior {goal.behavior}")
-        tree = self.roots[goal.behavior]
-        if not self.is_setup[goal.behavior]:
-            if tree.setup(timeout=15):
-                self.is_setup[goal.behavior] = True
-            else:
-                console.logerror("failed to setup the tree, aborting.")
-                sys.exit(1)
+        behavior = self.roots[goal.behavior]
+
+        tree = py_trees_ros.trees.BehaviourTree(behavior)
+        rospy.on_shutdown(functools.partial(TreesNode.shutdown, tree))
+        if not tree.setup(timeout=15):
+            console.logerror("failed to setup the tree, aborting.")
+            sys.exit(1)
+
         status: Optional[py_trees.Status] = None
         aborted = False
         if goal.tick_rate > 0.0:
@@ -80,6 +76,10 @@ class TreesNode:
             else:
                 rospy.loginfo(f"{goal.behavior} failed!")
             self.action_server.set_succeeded(result)
+        tree.destroy()
+        tree._cleanup()
+        tree.blackboard_exchange.unregister_services()
+        del tree
 
     def run(self):
         rospy.spin()

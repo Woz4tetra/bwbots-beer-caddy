@@ -114,6 +114,7 @@ Adafruit_PWMServoDriver* servos = new Adafruit_PWMServoDriver(0x40 + 0b000010, I
 // Drive train
 // ---
 const double SPEED_TO_COMMAND = 255.0 / 1.0;  // calculated max speed: 0.843 m/s @ 12V
+const double VOLTAGE_COMPENSATION_DENOMINATOR = 12.0;  // voltage the feedforward constant is tuned to
 const double MAX_SERVO_SPEED = 6.5;  // calculated max speed: 5.950 rad/s @ 5V
 
 const int DEADZONE_COMMAND = 50;
@@ -319,6 +320,13 @@ bool is_moving(
         abs(odom_vy) > MOVEMENT_EPSILON ||
         abs(odom_vt) > MOVEMENT_EPSILON
     );
+}
+
+void set_voltage_compensation(double compensation)
+{
+    for (unsigned int channel = 0; channel < drive->get_num_motors(); channel++) {
+        drive->get_pid(channel)->K_ff = SPEED_TO_COMMAND * compensation;
+    }
 }
 
 // ---
@@ -679,6 +687,7 @@ void loop()
             report_sequence();
         }
 
+        set_voltage_compensation(VOLTAGE_COMPENSATION_DENOMINATOR / (double)load_voltage);
         drive->get_velocity(odom_vx, odom_vy, odom_vt);
         drive->get_position(odom_x, odom_y, odom_t, odom_vx, odom_vy, odom_vt);
         tunnel->writePacket("od", "eeefff",

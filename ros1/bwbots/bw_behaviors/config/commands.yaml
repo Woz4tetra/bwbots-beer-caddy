@@ -25,6 +25,6 @@ follow_pose:
 
 shuffle_until_charging:
   is_charging_cooldown: 3.0
-  speed: 0.35
+  speed: 0.25
   loop_rate: 10.0
   interval: 0.75

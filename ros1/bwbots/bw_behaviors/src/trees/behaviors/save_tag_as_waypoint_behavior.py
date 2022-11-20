@@ -13,21 +13,18 @@ from trees.managers.tag_manager import TagManager
 
 
 class SaveTagAsWaypointBehavior(py_trees.behaviour.Behaviour):
-    def __init__(self, x_offset: float, y_offset: float, global_frame_id: str, tag_name: str, tag_manager: TagManager):
+    def __init__(self, x_offset: float, y_offset: float, global_frame_id: str, waypoint_name: str, tag_name: str, tag_manager: TagManager):
         self.x_offset = x_offset
         self.y_offset = y_offset
         self.tag_name = tag_name
+        self.waypoint_name = waypoint_name
         self.tag_manager = tag_manager
         self.global_frame_id = global_frame_id
-        self.save_waypoint_srv: Optional[rospy.ServiceProxy] = None
+        self.save_waypoint_srv = rospy.ServiceProxy("/bw/bw_waypoints/save_waypoint", SaveWaypoint)
         
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
         super().__init__("Save tag as waypoint")
-
-    def setup(self, timeout):
-        self.save_waypoint_srv = rospy.ServiceProxy("/bw/bw_waypoints/save_waypoint", SaveWaypoint)
-        super().setup(timeout)
 
     def update(self):
         if self.save_waypoint_srv is None:
@@ -44,9 +41,9 @@ class SaveTagAsWaypointBehavior(py_trees.behaviour.Behaviour):
         tag_waypoint = tf2_geometry_msgs.do_transform_pose(tag_pose_stamped, transform)
 
         waypoint = Waypoint()
-        waypoint.name = self.tag_name
+        waypoint.name = self.waypoint_name
         waypoint.header.frame_id = self.global_frame_id
-        waypoint.pose = tag_waypoint
+        waypoint.pose = tag_waypoint.pose
         result = self.save_waypoint_srv(waypoint)
         if not result.success:
             rospy.logwarn("Failed to save tag waypoint")

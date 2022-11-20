@@ -210,7 +210,7 @@ void BwDriveModule::compute_state(double vx, double vy, double vt, double dt, do
         radius_of_curvature = 0.0;
     }
     else {
-        radius_of_curvature = (v_mag * dt) / tan(theta_mag);
+        radius_of_curvature = SpeedPID::sign(vx) * (v_mag * dt) / tan(theta_mag);
     }
     
     if (theta_mag == 0.0 || radius_of_curvature != radius_of_curvature || isinf(radius_of_curvature)) {

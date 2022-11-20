@@ -5,13 +5,13 @@ from geometry_msgs.msg import Twist
 
 
 class StopDrivingDecorator(py_trees.decorators.Decorator):
-    def __init__(self, child, topic="/bw/cmd_vel"):
+    def __init__(self, child, topic="cmd_vel"):
         self.start_time = rospy.Time()
         self.cmd_vel_pub = rospy.Publisher(topic, Twist, queue_size=10)
         super().__init__(child, py_trees.common.Name.AUTO_GENERATED)
     
     def update(self):
-        result = super().update()
+        result = self.decorated.status
         if result == py_trees.Status.FAILURE or result == py_trees.Status.SUCCESS:
-            self.cmd_vel_pub(Twist())
+            self.cmd_vel_pub.publish(Twist())
         return result

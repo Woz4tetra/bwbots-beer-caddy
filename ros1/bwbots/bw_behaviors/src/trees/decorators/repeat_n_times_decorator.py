@@ -8,7 +8,7 @@ class RepeatNTimesDecorator(py_trees.decorators.Decorator):
         super().__init__(child, py_trees.common.Name.AUTO_GENERATED)
     
     def update(self):
-        result = super().update()
+        result = self.decorated.status
         if result == py_trees.Status.SUCCESS:
             return result
         elif result == py_trees.Status.FAILURE:

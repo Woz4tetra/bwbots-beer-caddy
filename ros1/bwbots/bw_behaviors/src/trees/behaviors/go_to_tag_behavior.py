@@ -15,6 +15,10 @@ class GoToTagBehavior(py_trees_ros.actions.ActionClient):
         self.tag_name = tag_name
         self.tag_manager = tag_manager
         
+        super().__init__("Go to tag",
+            GoToPoseAction,
+            action_namespace="/bw/go_to_pose")
+
         self.action_goal = GoToPoseGoal()
         self.action_goal.controller_type = kwargs.get("controller_type", "strafe1")
         self.action_goal.xy_tolerance = kwargs.get("xy_tolerance", 0.05)
@@ -35,17 +39,11 @@ class GoToTagBehavior(py_trees_ros.actions.ActionClient):
         self.action_goal.theta_min_vel = kwargs.get("theta_min_vel", 0.015)
         self.action_goal.theta_zero_vel = kwargs.get("theta_zero_vel", 0.0001)
 
-        super().__init__("Go to tag",
-            GoToPoseAction,
-            action_namespace="/bw/go_to_pose")
-
-    def setup(self, timeout):
-        return super().setup(timeout)
-
     def update(self):
         if not self.sent_goal:
-            dock_tag_pose_stamped = self.tag_manager.get_offset_tag(self.tag_name, self.x_offset, self.y_offset)
-            if dock_tag_pose_stamped is None:
+            tag_pose_stamped = self.tag_manager.get_offset_tag(self.tag_name, self.x_offset, self.y_offset)
+            if tag_pose_stamped is None:
                 return py_trees.Status.FAILURE
-            self.action_goal.goal.pose = dock_tag_pose_stamped.pose
-            self.action_goal.goal.header.frame_id = dock_tag_pose_stamped.header.frame_id
+            self.action_goal.goal.pose = tag_pose_stamped.pose
+            self.action_goal.goal.header.frame_id = tag_pose_stamped.header.frame_id
+        return super().update()

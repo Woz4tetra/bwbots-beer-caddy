@@ -19,10 +19,8 @@ class FollowTagBehavior(py_trees_ros.actions.ActionClient):
             FollowWaypointsAction,
             action_namespace="/bw/follow_waypoints")
 
-    def setup(self, timeout):
-        return super().setup(timeout)
-
     def update(self):
+        action_result = super().update()
         if not self.sent_goal:
             tag_pose_stamped = self.tag_manager.get_offset_tag(self.tag_name, self.x_offset, self.y_offset)
             if tag_pose_stamped is None:
@@ -38,3 +36,4 @@ class FollowTagBehavior(py_trees_ros.actions.ActionClient):
 
             self.action_goal = FollowWaypointsGoal()
             self.action_goal.waypoints = waypoint_array
+        return action_result

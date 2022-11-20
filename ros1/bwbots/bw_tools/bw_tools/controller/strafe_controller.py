@@ -95,7 +95,7 @@ class StrafeController(Controller):
                 if abs(self.pose_error.x) >= self.pose_tolerance.x or \
                     abs(self.pose_error.y) >= self.pose_tolerance.y:
                     self.state = StrafeControllerState.STRAFING
-                vel = Velocity(theta=self.theta_controller.calculate(0.0, pose_error.theta))
+                vel = Velocity(x=0.0, y=0.0, theta=self.theta_controller.calculate(0.0, pose_error.theta))
             else:
                 if not self.at_reference():
                     self.state = StrafeControllerState.STRAFING

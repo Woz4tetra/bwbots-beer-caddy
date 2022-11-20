@@ -18,6 +18,7 @@ from trees.behaviors.set_robot_state_behavior import SetRobotStateBehavior
 
 from trees.decorators.stop_driving_decorator import StopDrivingDecorator
 from trees.decorators.repeat_n_times_decorator import RepeatNTimesDecorator
+from trees.decorators.pause_before_running import PauseBeforeRunning
 
 from trees.managers.tag_manager import TagManager
 
@@ -56,16 +57,17 @@ class BehaviorTrees:
             self.dock_tag_name,
             self.tag_manager,
             controller_type="strafe1",
-            linear_min_vel=0.1,
+            linear_min_vel=0.25,
+            theta_min_vel=0.02,
             xy_tolerance=0.025,
             yaw_tolerance=0.025,
             timeout=10.0,
-            reference_linear_speed=5.0,
+            reference_linear_speed=1.0,
             rotate_in_place_start=True,
             rotate_while_driving=False,
             rotate_in_place_end=True,
             reference_angular_speed=2.0,
-            allow_reverse=True
+            allow_reverse=False
         ))
         
     def go_to_tag_stage2(self):
@@ -78,6 +80,7 @@ class BehaviorTrees:
             xy_tolerance=0.05,
             yaw_tolerance=0.1,
             linear_min_vel=0.4,
+            theta_min_vel=0.02,
             reference_linear_speed=10.0,
             reference_angular_speed=3.0,
             linear_max_accel=5.0,
@@ -104,13 +107,13 @@ class BehaviorTrees:
         return self.check_cache("follow_tag", lambda: FollowTagBehavior(0.0, -0.7, self.dock_tag_name, self.tag_manager))
 
     def rotate_in_place(self):
-        return self.check_cache("rotate_in_place", lambda: RotateInPlaceBehavior(2.0, 10.0))
+        return self.check_cache("rotate_in_place", lambda: RotateInPlaceBehavior(1.5, 10.0))
 
     def search_for_tag(self):
         return self.check_cache("search_for_tag", lambda: py_trees.composites.Parallel(
             "Search for tag",
             policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE,
-            children=[self.rotate_in_place(), self.find_tag()]
+            children=[self.rotate_in_place(), StopDrivingDecorator(self.find_tag())]
         ))
     
     def stop_driving(self):
@@ -136,7 +139,7 @@ class BehaviorTrees:
         return self.check_cache("is_dock_tag_near", lambda: IsTagNearBehavior(self.robot_frame, self.dock_tag_name, self.tag_manager, 1.0))
     
     def save_tag_as_waypoint(self):
-        return self.check_cache("save_tag_as_waypoint", lambda: SaveTagAsWaypointBehavior(-0.7, 0.0, self.global_frame, self.dock_tag_name, self.tag_manager))
+        return self.check_cache("save_tag_as_waypoint", lambda: SaveTagAsWaypointBehavior(-0.7, 0.0, self.global_frame, self.dock_prep_waypoint, self.dock_tag_name, self.tag_manager))
 
     def enable_motors(self):
         return self.check_cache("enable_motors", lambda: SetRobotStateBehavior(True))
@@ -145,13 +148,14 @@ class BehaviorTrees:
         return self.check_cache("disable_motors", lambda: SetRobotStateBehavior(False))
 
     def test(self):
-        return py_trees_ros.trees.BehaviourTree(py_trees.composites.Sequence("Test", [
+        return py_trees.composites.Sequence("Test", [
             self.enable_motors(),
             self.search_for_tag()
-        ]))
+        ])
+        # return self.shuffle_until_charging()
 
     def dock(self):
-        return py_trees_ros.trees.BehaviourTree(py_trees.composites.Sequence("Dock", [
+        return py_trees.composites.Sequence("Dock", [
             self.enable_motors(),
             self.drive_to_dock_prep(),
             RepeatNTimesDecorator(py_trees.composites.Selector("Search tag stage 0", [
@@ -159,25 +163,24 @@ class BehaviorTrees:
             ]), attempts=2),
             RepeatNTimesDecorator(py_trees.composites.Selector("Search tag stage 1", [
                 py_trees.composites.Sequence("Go to tag stage 1", [
-                    self.go_to_tag_stage1(), self.find_tag()
+                    self.go_to_tag_stage1(), PauseBeforeRunning(self.find_tag(), 3.0)
                 ]),
                 self.search_for_tag()
             ]), attempts=2),
             self.go_to_tag_stage2(),
             self.shuffle_until_charging(),
             self.disable_motors()
-        ]))
+        ])
     
     def undock(self):
-        return py_trees_ros.trees.BehaviourTree(py_trees.composites.Sequence("Undock", [
+        return py_trees.composites.Sequence("Undock", [
             self.enable_motors(),
             self.drive_backwards(),
             py_trees.composites.Selector("Verify tag precense", [
                 RepeatNTimesDecorator(py_trees.composites.Selector("Search for tag", [
-                    self.find_tag(), self.search_for_tag()
+                    PauseBeforeRunning(self.find_tag(), 3.0), self.search_for_tag()
                 ]), attempts=2),
                 self.is_dock_tag_near(),
-                self.follow_tag()
             ]),
             self.save_tag_as_waypoint()
-        ]))
+        ])

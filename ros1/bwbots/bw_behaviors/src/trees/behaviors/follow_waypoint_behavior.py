@@ -13,7 +13,7 @@ class FollowWaypointBehavior(py_trees_ros.actions.ActionClient):
             FollowWaypointsAction,
             action_namespace="/bw/follow_waypoints")
         self.waypoint_name = waypoint_name
-        self.get_waypoints_srv: Optional[rospy.ServiceProxy] = None
+        self.get_waypoints_srv = rospy.ServiceProxy("/bw/bw_waypoints/get_waypoints", GetWaypoints)
 
     def get_waypoint(self, name):
         rospy.loginfo(f"Requesting locations of waypoint: {name}")
@@ -27,10 +27,6 @@ class FollowWaypointBehavior(py_trees_ros.actions.ActionClient):
         rospy.loginfo(f"Waypoint locations: {result}")
         waypoints_array = result.waypoints
         return waypoints_array
-
-    def setup(self, timeout):
-        self.get_waypoints_srv = rospy.ServiceProxy("/bw/bw_waypoints/get_waypoints", GetWaypoints)
-        super().setup(timeout)
 
     def update(self):
         if not self.sent_goal:

@@ -11,6 +11,10 @@ class GoToPoseBehavior(py_trees_ros.actions.ActionClient):
     def __init__(self, pose2d: Pose2d, frame_id="odom", **kwargs):
         self.blackboard = py_trees.blackboard.Blackboard()
         
+        super().__init__("Go to pose",
+            GoToPoseAction,
+            action_namespace="/bw/go_to_pose")
+
         self.action_goal = GoToPoseGoal()
         self.action_goal.goal.header.frame_id = frame_id
         self.action_goal.goal.pose = pose2d.to_ros_pose()
@@ -32,7 +36,3 @@ class GoToPoseBehavior(py_trees_ros.actions.ActionClient):
         self.action_goal.theta_max_accel = kwargs.get("theta_max_accel", 1.0)
         self.action_goal.theta_min_vel = kwargs.get("theta_min_vel", 0.015)
         self.action_goal.theta_zero_vel = kwargs.get("theta_zero_vel", 0.0001)
-
-        super().__init__("Go to pose",
-            GoToPoseAction,
-            action_namespace="/bw/go_to_pose")

@@ -20,28 +20,26 @@ class FindTagBehavior(py_trees_ros.actions.ActionClient):
         goal.reference_frame_id = tag.reference_frame
         goal.timeout = rospy.Duration(timeout)
 
-        self.tag_result_pub: Optional[rospy.Publisher] = None
+        self.tag_result_pub = rospy.Publisher("/bw/tag_pose", PoseStamped, queue_size=10)
 
         super().__init__("Find tag",
             FindTagAction,
             goal,
             action_namespace="/bw/find_tag")
 
-    def setup(self, timeout):
-        self.tag_result_pub = rospy.Publisher("/bw/tag_pose", PoseStamped, queue_size=10)
-        return super().setup(timeout)
-
     def update(self):
         action_result = super().update()
         if action_result == py_trees.Status.SUCCESS:
-            if self.tag_manager.is_tag_valid(self.tag_name):
-                return py_trees.Status.FAILURE
-            
+
             result: FindTagResult = self.action_client.get_result()
             self.tag_result_pub.publish(result.pose)
             self.tag_manager.set_tag(self.tag_name, result.pose)
 
             rospy.loginfo(f"{self.tag_name} found: {result.success}")
+            if result.success and self.tag_manager.is_tag_valid(self.tag_name):
+                return py_trees.Status.SUCCESS
+            else:
+                return py_trees.Status.FAILURE
         else:
             self.tag_manager.unset_tag(self.tag_name)
         return action_result
