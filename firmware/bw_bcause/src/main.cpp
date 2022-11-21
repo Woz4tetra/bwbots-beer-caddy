@@ -39,6 +39,10 @@ const int BUILTIN_LED = 13;
 
 const int BUTTON_IN = 15;
 bool prev_button_state = false;
+uint8_t button_led_value = 0;
+uint8_t prev_button_sequence_state = 0;
+uint8_t button_sequence_index = 0;
+uint8_t button_sequence_length = 0;
 
 // ---
 // Drive controllers
@@ -211,9 +215,11 @@ uint32_t prev_nonglobal_time = 0;
 const uint32_t NONGLOBAL_CONTROL_TIMEOUT_MS = 5000;
 
 bool was_disabled_by_command = true;
-const double MOVEMENT_EPSILON = 0.025;
+const double MOVEMENT_EPSILON = 0.01;
 uint32_t prev_movement_time = 0;
 const uint32_t MOVEMENT_DISABLE_TIMEOUT_MS = 3000;
+
+uint32_t prev_button_sequence_time = 0;
 
 // ---
 // Sequencer
@@ -222,21 +228,57 @@ const uint32_t MOVEMENT_DISABLE_TIMEOUT_MS = 3000;
 bool was_sequencer_active = false;
 BwUISequencer* sequencer;
 
+// ---
+// Function headers
+// ---
+
+// Button functions
+void set_status_led(uint8_t value);
+void set_builtin_led(uint8_t value);
+void set_button_led(uint8_t value);
+bool read_button();
+void write_button_state();
+bool did_button_press(bool comparison_state);
+void flash_button_sequence(uint8_t sequence, uint8_t length, uint32_t ramp_delay, uint32_t sustain_time);
+void update_button_led(bool state, control_mode_t mode);
+
+// Drive functions
+void set_motor_enable(bool enabled);
+bool get_motor_enable();
+void write_enable_state();
+void set_control_mode(control_mode_t new_mode);
+void stop_motors();
+bool is_moving(
+    double vx_command, double vy_command, double vt_command,
+    double odom_vx, double odom_vy, double odom_vt);
+bool is_moving(
+    double vx_command, double vy_command, double vt_command);
+void set_voltage_compensation(double compensation);
+
+// Sequence functions
+void report_sequence();
+
+// Power management functions
+void update_ina();
+
+// Packet callback
+void packetCallback(PacketResult* result);
 
 // ---
 // Button functions
 // ---
 
-void set_status_led(bool state) {
-    digitalWrite(STATUS_LED, state);
+void set_status_led(uint8_t value) {
+    analogWrite(STATUS_LED, value);
 }
 
-void set_builtin_led(bool state) {
-    digitalWrite(BUILTIN_LED, state);
+void set_builtin_led(uint8_t value) {
+    analogWrite(BUILTIN_LED, value);
 }
 
-void set_button_led(bool state) {
-    digitalWrite(BUTTON_LED, state);
+void set_button_led(uint8_t value) {
+    button_led_value = value;
+    analogWrite(BUTTON_LED, value);
 }
 
 bool read_button() {
@@ -249,7 +291,6 @@ void write_button_state() {
 
 bool did_button_press(bool comparison_state) {
     bool state = read_button();
-    set_button_led(!state);
     if (state != prev_button_state) {
         prev_button_state = state;
         write_button_state();
@@ -260,20 +301,75 @@ bool did_button_press(bool comparison_state) {
     }
 }
 
+void reset_button_sequence() {
+    button_sequence_index = 0;
+}
+
+void flash_button_sequence(uint8_t sequence, uint8_t length, uint32_t ramp_delay, uint32_t sustain_time)
+{
+    button_sequence_length = length;
+    button_sequence_index = button_sequence_index % button_sequence_length;
+
+    uint8_t state = (sequence >> (button_sequence_length - 1 - button_sequence_index)) & 0b1;
+    uint32_t dt = current_time - prev_button_sequence_time;
+    uint8_t value = 0;
+    if (dt < ramp_delay) {
+        if (prev_button_sequence_state != state) {
+            value = (uint8_t)(255 * ((float)dt / (float)ramp_delay));
+        }
+        else {
+            value = 255;
+        }
+    }
+    else if (dt < ramp_delay + sustain_time) {
+        value = 255;
+    }
+    else {
+        value = 255;
+        button_sequence_index++;
+        prev_button_sequence_time = current_time;
+        prev_button_sequence_state = state;
+    }
+
+    if (!state) {
+        value = 255 - value;
+    }
+
+    set_status_led(value);
+    set_builtin_led(value);
+    set_button_led(value);
+}
+
+void update_button_led(bool state, control_mode_t mode) {
+    if (state) {
+        set_button_led(0);
+    }
+    else if (get_motor_enable() || !was_disabled_by_command) {
+        switch (mode)
+        {
+        case CONTROL_GLOBAL:
+            flash_button_sequence(0b01, 2, 150, 150);
+            break;
+        case CONTROL_INDIVIDUAL:
+            flash_button_sequence(0b01, 2, 150, 500);
+            break;
+        case CONTROL_TONE:
+            flash_button_sequence(0b01010, 5, 150, 150);
+            break;
+        default:
+            break;
+        }
+    }
+    else {
+        set_status_led(255);
+        set_builtin_led(255);
+        set_button_led(255);
+    }
+}
+
 // ---
 // Drive functions
 // ---
-
-void write_enable_state() {
-    tunnel->writePacket("en", "b", drive->get_enable());
-}
-
-void set_control_mode(control_mode_t new_mode) {
-    control_mode = new_mode;
-    if (control_mode != CONTROL_GLOBAL) {
-        prev_nonglobal_time = current_time;
-    }
-}
 
 void set_motor_enable(bool enabled)
 {
@@ -294,6 +390,21 @@ void set_motor_enable(bool enabled)
         sequencer->stop_sequence();
     }
     set_control_mode(CONTROL_GLOBAL);
+}
+
+bool get_motor_enable() {
+    return drive->get_enable();
+}
+
+void write_enable_state() {
+    tunnel->writePacket("en", "b", get_motor_enable());
+}
+
+void set_control_mode(control_mode_t new_mode) {
+    control_mode = new_mode;
+    if (control_mode != CONTROL_GLOBAL) {
+        prev_nonglobal_time = current_time;
+    }
 }
 
 void stop_motors()
@@ -319,6 +430,16 @@ bool is_moving(
         abs(odom_vx) > MOVEMENT_EPSILON ||
         abs(odom_vy) > MOVEMENT_EPSILON ||
         abs(odom_vt) > MOVEMENT_EPSILON
+    );
+}
+
+bool is_moving(
+    double vx_command, double vy_command, double vt_command)
+{
+    return (
+        abs(vx_command) > MOVEMENT_EPSILON ||
+        abs(vy_command) > MOVEMENT_EPSILON ||
+        abs(vt_command) > MOVEMENT_EPSILON
     );
 }
 
@@ -395,7 +516,7 @@ void packetCallback(PacketResult* result)
         set_motor_enable(enabled);
     }
     else if (category.equals("?en")) {
-        tunnel->writePacket("en", "b", drive->get_enable());
+        tunnel->writePacket("en", "b", get_motor_enable());
     }
     else if (category.equals("mo")) {
         uint8_t channel;
@@ -513,9 +634,9 @@ void setup()
     pinMode(BUTTON_LED, OUTPUT);
     pinMode(BUILTIN_LED, OUTPUT);
 
-    set_status_led(true);
-    set_builtin_led(true);
-    set_button_led(true);
+    set_status_led(255);
+    set_builtin_led(255);
+    set_button_led(255);
 
     SpeedPID* vx_pid = drive->get_vx_pid();
     vx_pid->Kp = 1.0;
@@ -646,11 +767,12 @@ void loop()
     current_time = millis();
     packetCallback(tunnel->readPacket());
     if (did_button_press(true)) {
-        set_motor_enable(!drive->get_enable());
+        set_motor_enable(!get_motor_enable());
         stop_motors();
         drive->drive(vx_command, vy_command, vt_command);
     }
 
+    update_button_led(prev_button_state, control_mode);
     update_ina();
 
     bool is_charging = current_A > CHARGE_CURRENT_THRESHOLD;
@@ -705,14 +827,14 @@ void loop()
                 drive->drive_with_feedback(vx_command, vy_command, vt_command, odom_vx, odom_vy, odom_vt);
             }
 
-            if (is_moving(vx_command, vy_command, vt_command, odom_vx, odom_vy, odom_vt)) {
+            if (is_moving(vx_command, vy_command, vt_command)) {
                 prev_movement_time = current_time;
-                if (!drive->get_enable() && !was_disabled_by_command) {
+                if (!get_motor_enable() && !was_disabled_by_command) {
                     DEBUG_SERIAL.println("Re-enabling because robot started moving");
                     set_motor_enable(true);
                 }
             }
-            else if (drive->get_enable() && 
+            else if (get_motor_enable() && 
                     current_time - prev_movement_time > MOVEMENT_DISABLE_TIMEOUT_MS) {
                 DEBUG_SERIAL.println("Disabling because robot isn't moving");
                 set_motor_enable(false);
