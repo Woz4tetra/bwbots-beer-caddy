@@ -38,11 +38,20 @@ const int BUILTIN_LED = 13;
 // ---
 
 const int BUTTON_IN = 15;
-bool prev_button_state = false;
+bool button_state = false;
+bool prev_button_read_state = false;
+uint32_t last_debounce_time = 0;
+uint32_t DEBOUNCE_DELAY = 50;
+uint32_t button_press_counter = 0;
+uint32_t button_press_counter_result = 0;
+uint32_t last_sequence_press_time = 0;
+uint32_t SEQUENCE_PRESS_DELAY = 500;
+
 uint8_t button_led_value = 0;
 uint8_t prev_button_sequence_state = 0;
 uint8_t button_sequence_index = 0;
 uint8_t button_sequence_length = 0;
+uint32_t prev_button_sequence_time = 0;
 
 // ---
 // Drive controllers
@@ -197,7 +206,7 @@ const int NUM_PIXELS = 24;
 Adafruit_NeoPixel led_ring(NUM_PIXELS, LED_RING, NEO_GRBW + NEO_KHZ800);
 
 // ---
-// Timers
+// Control timers
 // ---
 
 uint32_t current_time = 0;
@@ -219,8 +228,6 @@ const double MOVEMENT_EPSILON = 0.01;
 uint32_t prev_movement_time = 0;
 const uint32_t MOVEMENT_DISABLE_TIMEOUT_MS = 3000;
 
-uint32_t prev_button_sequence_time = 0;
-
 // ---
 // Sequencer
 // ---
@@ -238,7 +245,10 @@ void set_builtin_led(uint8_t value);
 void set_button_led(uint8_t value);
 bool read_button();
 void write_button_state();
-bool did_button_press(bool comparison_state);
+int update_button_state();
+void write_button_presses();
+void write_button_presses_result();
+bool get_button_state();
 void flash_button_sequence(uint8_t sequence, uint8_t length, uint32_t ramp_delay, uint32_t sustain_time);
 void update_button_led(bool state, control_mode_t mode);
 
@@ -286,19 +296,50 @@ bool read_button() {
 }
 
 void write_button_state() {
-    tunnel->writePacket("bu", "b", prev_button_state);
+    tunnel->writePacket("bu", "b", button_state);
 }
 
-bool did_button_press(bool comparison_state) {
+int update_button_state() {
     bool state = read_button();
-    if (state != prev_button_state) {
-        prev_button_state = state;
-        write_button_state();
-        return state == comparison_state;
+    if (state != prev_button_read_state) {
+        DEBUG_SERIAL.print("Button state: ");
+        DEBUG_SERIAL.println(state);
+        last_debounce_time = current_time;
     }
-    else {
-        return false;
+    prev_button_read_state = state;
+
+    if (current_time - last_debounce_time > DEBOUNCE_DELAY) {
+        if (state != button_state) {
+            button_state = state;
+            write_button_state();
+            if (button_state) {
+                last_sequence_press_time = current_time;
+                button_press_counter++;
+                write_button_presses();
+            }
+        }
+        else {
+            button_state = state;
+        }
     }
+    if (current_time - last_sequence_press_time > SEQUENCE_PRESS_DELAY && button_press_counter != 0) {
+        button_press_counter_result = button_press_counter;
+        button_press_counter = 0;
+        write_button_presses();
+    }
+    return button_press_counter;
+}
+
+void write_button_presses() {
+    tunnel->writePacket("bp", "d", button_press_counter);
+}
+
+void write_button_presses_result() {
+    tunnel->writePacket("br", "d", button_press_counter_result);
+}
+
+bool get_button_state() {
+    return button_state;
 }
 
 void reset_button_sequence() {
@@ -763,13 +804,19 @@ void loop()
 {
     current_time = millis();
     packetCallback(tunnel->readPacket());
-    if (did_button_press(true)) {
+    int num_presses = update_button_state();
+
+    if (button_press_counter_result == 1) {
         set_motor_enable(!get_motor_enable());
         stop_motors();
         drive->drive(vx_command, vy_command, vt_command);
     }
+    if (num_presses == 0 && button_press_counter_result > 0) {
+        write_button_presses_result();
+        button_press_counter_result = 0;
+    }
 
-    update_button_led(prev_button_state, control_mode);
+    update_button_led(button_state, control_mode);
     update_ina();
 
     bool is_charging = current_A > CHARGE_CURRENT_THRESHOLD;

@@ -76,6 +76,8 @@ private:
     vector<ros::Publisher>* _raw_joint_pubs;
     ros::Publisher _charge_pub;
     ros::Publisher _button_pub;
+    ros::Publisher _button_counter_pub;
+    ros::Publisher _button_counter_result_pub;
     ros::Publisher _is_enabled_pub;
     ros::Publisher _module_pub;
     ros::Publisher _sequence_state_pub;

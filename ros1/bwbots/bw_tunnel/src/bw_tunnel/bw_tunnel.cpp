@@ -64,6 +64,8 @@ BwTunnel::BwTunnel(ros::NodeHandle* nodehandle) :
 
     _charge_pub = nh.advertise<bw_interfaces::ChargeState>("charger", 10);
     _button_pub = nh.advertise<std_msgs::Bool>("button_pressed", 10);
+    _button_counter_pub = nh.advertise<std_msgs::Int32>("button_counter", 10);
+    _button_counter_result_pub = nh.advertise<std_msgs::Int32>("button_counter_result", 10);
     _is_enabled_pub = nh.advertise<std_msgs::Bool>("are_motors_enabled", 10);
     _module_pub = nh.advertise<bw_interfaces::BwDriveModule>("module", 50);
 
@@ -153,6 +155,22 @@ void BwTunnel::packetCallback(PacketResult* result)
         std_msgs::Bool msg;
         msg.data = button_state;
         _button_pub.publish(msg);
+    }
+    else if (category.compare("bp") == 0) {
+        int32_t counter;
+        if (!result->getInt32(counter))  { ROS_ERROR("Failed to get counter"); return; }
+
+        std_msgs::Int32 msg;
+        msg.data = counter;
+        _button_counter_pub.publish(msg);
+    }
+    else if (category.compare("br") == 0) {
+        int32_t counter;
+        if (!result->getInt32(counter))  { ROS_ERROR("Failed to get counter"); return; }
+
+        std_msgs::Int32 msg;
+        msg.data = counter;
+        _button_counter_result_pub.publish(msg);
     }
     else if (category.compare("en") == 0) {
         bool enable_state;
