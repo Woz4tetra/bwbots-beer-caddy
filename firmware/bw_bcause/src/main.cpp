@@ -673,12 +673,9 @@ void setup()
 
     for (unsigned int channel = 0; channel < drive->get_num_motors(); channel++) {
         SpeedPID* pid = drive->get_motor_pid(channel);
-        // pid->Kp = 100.0;
-        // pid->Ki = 0.001;
-        // pid->Kd = 0.01;
-        pid->Kp = 1.0;
-        pid->Ki = 0.0;
-        pid->Kd = 0.0;
+        pid->Kp = 100.0;
+        pid->Ki = 0.001;
+        pid->Kd = 0.01;
         pid->K_ff = SPEED_TO_COMMAND;
         pid->deadzone_command = (double)DEADZONE_COMMAND;
         pid->standstill_deadzone_command = (double)STANDSTILL_DEADZONE_COMMAND;
@@ -824,7 +821,7 @@ void loop()
                 stop_motors();
             }
             else {
-                drive->drive_with_feedback(vx_command, vy_command, vt_command, odom_vx, odom_vy, odom_vt);
+                drive->drive(vx_command, vy_command, vt_command);
             }
 
             if (is_moving(vx_command, vy_command, vt_command)) {

@@ -402,11 +402,13 @@ Visualization Manager:
       Name: MarkerArray
       Namespaces:
         posdock_prep: true
+        posdock_tag: true
         postest1: true
         postest2: true
         postest3: true
         postest4: true
         textdock_prep: true
+        textdock_tag: true
         texttest1: true
         texttest2: true
         texttest3: true
@@ -531,7 +533,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.7004693746566772
+      Distance: 11.93562126159668
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -539,17 +541,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -6.262848854064941
-        Y: 1.9984757900238037
-        Z: 0.06986444443464279
+        X: -1.9301081895828247
+        Y: 1.2492846250534058
+        Z: -2.1040682792663574
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5803985595703125
+      Pitch: 1.195397973060608
       Target Frame: <Fixed Frame>
-      Yaw: 5.748593330383301
+      Yaw: 0.03541160374879837
     Saved: ~
 Window Geometry:
   Camera:

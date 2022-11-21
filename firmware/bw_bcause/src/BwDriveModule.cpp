@@ -235,11 +235,12 @@ void BwDriveModule::compute_state(double vx, double vy, double vt, double dt, do
         // Ackermann + strafe regime
         double module_angle = atan2(x_location, radius_of_curvature - y_location);
         double module_radc = x_location / sin(module_angle) - armature_length;
+        double module_hypo = SpeedPID::sign(vx) * module_radc / radius_of_curvature;
 
-        module_vx = vx * module_radc / radius_of_curvature * cos(module_angle);
-        module_vy = vy + vx * module_radc / radius_of_curvature * sin(module_angle);
+        module_vx = module_hypo * cos(module_angle);
+        module_vy = module_hypo * sin(module_angle);
         azimuth = atan2(module_vy, module_vx);
-        wheel_velocity = sqrt(module_vx * module_vx + module_vy * module_vy);
+        wheel_velocity = v_mag;
         if (servo_min_angle < 0.0) {
             azimuth += M_PI;
             wheel_velocity = -wheel_velocity;
