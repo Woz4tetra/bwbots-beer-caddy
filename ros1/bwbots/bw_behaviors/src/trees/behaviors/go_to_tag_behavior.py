@@ -33,7 +33,7 @@ class GoToTagBehavior(py_trees_ros.actions.ActionClient):
         self.action_goal.linear_max_vel = kwargs.get("linear_max_vel", 1.0)
         self.action_goal.linear_max_accel = kwargs.get("linear_max_accel", 2.0)
         self.action_goal.linear_min_vel = kwargs.get("linear_min_vel", 0.015)
-        self.action_goal.linear_zero_vel = kwargs.get("linear_zero_vel", 0.014)
+        self.action_goal.linear_zero_vel = kwargs.get("linear_zero_vel", 0.0001)
         self.action_goal.theta_max_vel = kwargs.get("theta_max_vel", 3.0)
         self.action_goal.theta_max_accel = kwargs.get("theta_max_accel", 1.0)
         self.action_goal.theta_min_vel = kwargs.get("theta_min_vel", 0.015)

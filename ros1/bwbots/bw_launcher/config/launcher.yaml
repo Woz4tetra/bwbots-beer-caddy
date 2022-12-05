@@ -8,7 +8,7 @@ move_base:
 behaviors:
   package: "bw_behaviors"
   path: "bw_behaviors.launch"
-  on_start: false
+  on_start: true
 
 tags:
   package: "bw_tags"

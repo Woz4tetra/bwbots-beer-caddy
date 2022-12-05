@@ -58,7 +58,7 @@ class BehaviorTrees:
     def go_to_tag_stage1(self):
         return self.check_cache("go_to_tag_stage1", lambda: GoToTagBehavior(
             -0.5,
-            0.05,
+            0.075,
             self.dock_tag_name,
             self.tag_manager,
             frame_id=self.dock_reference_frame,
@@ -66,7 +66,7 @@ class BehaviorTrees:
             linear_min_vel=0.1,
             theta_min_vel=0.02,
             xy_tolerance=0.025,
-            yaw_tolerance=0.025,
+            yaw_tolerance=0.0125,
             timeout=10.0,
             reference_linear_speed=0.5,
             rotate_in_place_start=True,
@@ -80,7 +80,7 @@ class BehaviorTrees:
     def go_to_tag_stage2(self):
         return self.check_cache("go_to_tag_stage2", lambda: GoToTagBehavior(
             -0.05,
-            0.05,
+            0.075,
             self.dock_tag_name,
             self.tag_manager,
             frame_id=self.dock_reference_frame,
@@ -178,7 +178,7 @@ class BehaviorTrees:
             self.enable_motors(),
             self.drive_to_dock_prep(),
             RepeatNTimesDecorator(py_trees.composites.Selector("Search tag stage 0", [
-                self.find_tag(), self.search_for_tag(), self.rotate_in_place(), self.follow_tag()
+                PauseBeforeRunning(self.find_tag(), 3.0), self.search_for_tag(), self.rotate_in_place(), self.follow_tag()
             ]), attempts=2),
             RepeatNTimesDecorator(py_trees.composites.Selector("Search tag stage 1", [
                 py_trees.composites.Sequence("Go to tag stage 1", [

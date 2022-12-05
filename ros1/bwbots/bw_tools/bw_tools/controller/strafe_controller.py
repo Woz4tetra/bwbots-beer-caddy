@@ -13,7 +13,7 @@ class StrafeControllerState(Enum):
     END_TURN = auto()
 
 class StrafeController(Controller):
-    def __init__(self, x_controller: PIDController, y_controller: PIDController, theta_controller: PIDController, strafe_angle_limit: float) -> None:
+    def __init__(self, x_controller: PIDController, y_controller: Optional[PIDController], theta_controller: PIDController, strafe_angle_limit: float) -> None:
         """
         * Constructs a strafe controller.
         *
@@ -28,6 +28,8 @@ class StrafeController(Controller):
         self.theta_controller = theta_controller
         self.strafe_angle_limit = strafe_angle_limit
         self.state = StrafeControllerState.START
+        assert self.x_controller is not None
+        assert self.theta_controller is not None
 
     def reset(self):
         self.state = StrafeControllerState.START
@@ -79,7 +81,7 @@ class StrafeController(Controller):
                 vt = 0.0
             vel = Velocity(
                 x=self.x_controller.calculate(0.0, pose_error.x),
-                y=self.y_controller.calculate(0.0, pose_error.y),
+                y=0.0 if self.y_controller is None else self.y_controller.calculate(0.0, pose_error.y),
                 theta=vt
             )
             if rotate_while_driving:

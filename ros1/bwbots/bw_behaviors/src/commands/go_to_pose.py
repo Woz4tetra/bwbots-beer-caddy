@@ -169,7 +169,8 @@ class GoToPoseCommand:
         elif controller_type == ControllerType.STRAFE2:
             return StrafeController(
                 PIDController(self.x_kP, self.x_kI, self.x_kD, self.loop_period),
-                PIDController(self.y_kP, self.y_kI, self.y_kD, self.loop_period),
+                # PIDController(self.y_kP, self.y_kI, self.y_kD, self.loop_period),
+                None,
                 PIDController(self.theta_kP, self.theta_kI, self.theta_kD, self.loop_period),
                 self.strafe_angle_limit
             )

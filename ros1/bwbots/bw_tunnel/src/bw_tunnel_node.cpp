@@ -1,5 +1,5 @@
 
-#include "bw_tunnel/bw_tunnel.h"
+#include "bw_tunnel.h"
 
 int main(int argc, char **argv)
 {

@@ -65,6 +65,9 @@ public:
     SpeedPID* get_vx_pid() { return vx_pid; }
     SpeedPID* get_vy_pid() { return vy_pid; }
     SpeedPID* get_vt_pid() { return vt_pid; }
+    void set_vx_pid(SpeedPID* pid) { vx_pid = pid; }
+    void set_vy_pid(SpeedPID* pid) { vy_pid = pid; }
+    void set_vt_pid(SpeedPID* pid) { vt_pid = pid; }
     SpeedPID* get_motor_pid(unsigned int channel);
     SpeedFilter* get_filter(unsigned int channel);
     BwDriveModule* get_module(unsigned int channel);

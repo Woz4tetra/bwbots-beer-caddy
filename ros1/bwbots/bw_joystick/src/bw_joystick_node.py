@@ -40,7 +40,8 @@ class BwJoystick:
         self.linear_y_axis = rospy.get_param("~linear_y_axis", "left/X").split("/")
         self.angular_axis = rospy.get_param("~angular_axis", "right/X").split("/")
 
-        self.linear_scale = float(rospy.get_param("~linear_scale", 1.0))
+        self.linear_x_scale = float(rospy.get_param("~linear_x_scale", 1.0))
+        self.linear_y_scale = float(rospy.get_param("~linear_y_scale", 1.0))
         self.angular_scale = float(rospy.get_param("~angular_scale", 1.0))
 
         self.deadzone_joy_val = float(rospy.get_param("~deadzone_joy_val", 0.05))
@@ -80,8 +81,8 @@ class BwJoystick:
 
         self.cmd_vel_timer = rospy.Time.now()
         if any(self.joystick.check_list(self.joystick.did_axis_change, self.linear_x_axis, self.linear_y_axis, self.angular_axis)):
-            linear_x_val = self.joystick.deadband_axis(self.linear_x_axis, self.deadzone_joy_val, self.linear_scale)
-            linear_y_val = self.joystick.deadband_axis(self.linear_y_axis, self.deadzone_joy_val, self.linear_scale)
+            linear_x_val = self.joystick.deadband_axis(self.linear_x_axis, self.deadzone_joy_val, self.linear_x_scale)
+            linear_y_val = self.joystick.deadband_axis(self.linear_y_axis, self.deadzone_joy_val, self.linear_y_scale)
             angular_val = self.joystick.deadband_axis(self.angular_axis, self.deadzone_joy_val, self.angular_scale)
             self.set_twist(linear_x_val, linear_y_val, angular_val)
         
@@ -93,7 +94,7 @@ class BwJoystick:
             rospy.loginfo("Disabling")
         
         if any(self.joystick.check_list(self.joystick.is_button_down, "main/A", "main/B", "main/X", "main/Y")):
-            velocity = self.joystick.deadband_axis(self.linear_x_axis, self.deadzone_joy_val, self.linear_scale)
+            velocity = self.joystick.deadband_axis(self.linear_x_axis, self.deadzone_joy_val, self.linear_x_scale)
             channel = 0
             if self.joystick.is_button_down("main/A"):
                 channel = 0

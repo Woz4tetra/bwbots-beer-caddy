@@ -186,12 +186,27 @@ void BwDriveTrain::drive_with_feedback(double vx, double vy, double vt, double m
     double new_vx;
     double new_vy;
     double new_vt;
-    vx_pid->set_target(vx);
-    vy_pid->set_target(vy);
-    vt_pid->set_target(vt);
-    new_vx = vx_pid->compute(meas_vx);
-    new_vy = vy_pid->compute(meas_vy);
-    new_vt = vt_pid->compute(meas_vt);
+    if (vx_pid == NULL) {
+        new_vx = vx;
+    }
+    else {
+        vx_pid->set_target(vx);
+        new_vx = vx_pid->compute(meas_vx);
+    }
+    if (vy_pid == NULL) {
+        new_vy = vy;
+    }
+    else {
+        vy_pid->set_target(vy);
+        new_vy = vy_pid->compute(meas_vy);
+    }
+    if (vt_pid == NULL) {
+        new_vt = vt;
+    }
+    else {
+        vt_pid->set_target(vt);
+        new_vt = vt_pid->compute(meas_vt);
+    }
 
     if (abs(vx) < epsilon) {
         new_vx = 0.0;

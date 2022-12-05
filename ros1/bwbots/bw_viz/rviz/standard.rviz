@@ -6,9 +6,9 @@ Panels:
       Expanded:
         - /Global Options1
         - /TF1/Frames1
-        - /Camera1
         - /Camera1/Visibility1
-        - /PoseArray3
+        - /TEB Obstacles1
+        - /Global Path1
         - /PointCloud21
       Splitter Ratio: 0.3412107527256012
     Tree Height: 852
@@ -228,7 +228,7 @@ Visualization Manager:
       Axes Length: 0.30000001192092896
       Axes Radius: 0.009999999776482582
       Class: rviz/PoseArray
-      Color: 255; 169; 21
+      Color: 255; 170; 0
       Enabled: true
       Head Length: 0.07000000029802322
       Head Radius: 0.029999999329447746
@@ -272,7 +272,6 @@ Visualization Manager:
         LaserScan: true
         Local Path: true
         Map: true
-        Marker: true
         MarkerArray: true
         PointCloud2: true
         PointStamped: true
@@ -280,6 +279,8 @@ Visualization Manager:
         Pose: true
         PoseArray: true
         RobotModel: false
+        TEB Local Plan: true
+        TEB Obstacles: true
         TF: false
         Value: true
         ZedOdDisplay: true
@@ -310,13 +311,13 @@ Visualization Manager:
       Unreliable: false
       Value: true
     - Class: rviz/Marker
-      Enabled: false
+      Enabled: true
       Marker Topic: /standalone_converter/costmap_polygon_markers
-      Name: Marker
+      Name: TEB Obstacles
       Namespaces:
-        {}
+        Polygons: true
       Queue Size: 100
-      Value: false
+      Value: true
     - Alpha: 1
       Buffer Length: 1
       Class: rviz/Path
@@ -344,7 +345,7 @@ Visualization Manager:
     - Alpha: 1
       Buffer Length: 1
       Class: rviz/Path
-      Color: 25; 255; 0
+      Color: 0; 170; 0
       Enabled: true
       Head Diameter: 0.30000001192092896
       Head Length: 0.20000000298023224
@@ -505,6 +506,23 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: false
+    - Alpha: 1
+      Arrow Length: 0.30000001192092896
+      Axes Length: 0.30000001192092896
+      Axes Radius: 0.009999999776482582
+      Class: rviz/PoseArray
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.07000000029802322
+      Head Radius: 0.029999999329447746
+      Name: TEB Local Plan
+      Queue Size: 10
+      Shaft Length: 0.23000000417232513
+      Shaft Radius: 0.009999999776482582
+      Shape: Arrow (Flat)
+      Topic: /move_base/TebLocalPlannerROS/teb_poses
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -533,7 +551,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 11.93562126159668
+      Distance: 4.994604587554932
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -541,17 +559,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -1.9301081895828247
-        Y: 1.2492846250534058
-        Z: -2.1040682792663574
+        X: -0.10763978213071823
+        Y: 0.11528559774160385
+        Z: 0.055203426629304886
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.195397973060608
+      Pitch: 1.4697964191436768
       Target Frame: <Fixed Frame>
-      Yaw: 0.03541160374879837
+      Yaw: 4.850420951843262
     Saved: ~
 Window Geometry:
   Camera:

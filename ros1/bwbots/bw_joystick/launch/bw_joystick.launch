@@ -20,8 +20,9 @@
         <node name="$(anon bw_joystick)" pkg="bw_joystick" type="bw_joystick_node.py" output="screen" required="false">
             <param name="deadzone_joy_val" value="$(arg deadzone_val)" />
             <param name="joystick_topic" value="/$(arg topic_name)_throttled" />
-            <param name="linear_scale" value="1.5" />
-            <param name="angular_scale" value="10.0" />
+            <param name="linear_x_scale" value="1.5" />
+            <param name="linear_y_scale" value="0.0" />
+            <param name="angular_scale" value="5.0" />
             <param name="deadzone_joy_val" value="0.08" />
 
             <rosparam param="button_mapping" file="$(find bw_joystick)/config/$(arg button_map_name)" command="load"/>

@@ -1,4 +1,4 @@
-#include "bw_tunnel/bw_tunnel.h"
+#include "bw_tunnel.h"
 
 BwTunnel::BwTunnel(ros::NodeHandle* nodehandle) :
     BwSerialTunnel(nodehandle)

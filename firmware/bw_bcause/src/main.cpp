@@ -126,8 +126,8 @@ Adafruit_PWMServoDriver* servos = new Adafruit_PWMServoDriver(0x40 + 0b000010, I
 // ---
 // Drive train
 // ---
-const double SPEED_TO_COMMAND = 255.0 / 1.0;  // calculated max speed: 0.843 m/s @ 12V
-const double VOLTAGE_COMPENSATION_DENOMINATOR = 12.0;  // voltage the feedforward constant is tuned to
+const double SPEED_TO_COMMAND = 255.0 / 0.843;  // calculated max speed: 0.843 m/s @ 12V
+const double VOLTAGE_COMPENSATION_NUMERATOR = 12.0;  // voltage the feedforward constant is tuned to
 const double MAX_SERVO_SPEED = 6.5;  // calculated max speed: 5.950 rad/s @ 5V
 
 const int DEADZONE_COMMAND = 50;
@@ -679,38 +679,41 @@ void setup()
     set_builtin_led(255);
     set_button_led(255);
 
-    SpeedPID* vx_pid = drive->get_vx_pid();
-    vx_pid->Kp = 1.0;
-    vx_pid->Ki = 0.0;
-    vx_pid->Kd = 0.0;
-    vx_pid->K_ff = 1.0;
-    vx_pid->deadzone_command = 0.0;
-    vx_pid->standstill_deadzone_command = 0.0;
-    vx_pid->error_sum_clamp = 100.0;
-    vx_pid->command_min = -10.0;
-    vx_pid->command_max = 10.0;
+    // SpeedPID* vx_pid = drive->get_vx_pid();
+    // vx_pid->Kp = 0.25;
+    // vx_pid->Ki = 0.0;
+    // vx_pid->Kd = 0.0;
+    // vx_pid->K_ff = 1.0;
+    // vx_pid->deadzone_command = 0.0;
+    // vx_pid->standstill_deadzone_command = 0.0;
+    // vx_pid->error_sum_clamp = 100.0;
+    // vx_pid->command_min = -10.0;
+    // vx_pid->command_max = 10.0;
+    drive->set_vx_pid(NULL);  // disable vx PID
 
-    SpeedPID* vy_pid = drive->get_vy_pid();
-    vy_pid->Kp = 1.0;
-    vy_pid->Ki = 0.0;
-    vy_pid->Kd = 0.0;
-    vy_pid->K_ff = 1.0;
-    vy_pid->deadzone_command = 0.0;
-    vy_pid->standstill_deadzone_command = 0.0;
-    vy_pid->error_sum_clamp = 100.0;
-    vy_pid->command_min = -10.0;
-    vy_pid->command_max = 10.0;
+    // SpeedPID* vy_pid = drive->get_vy_pid();
+    // vy_pid->Kp = 1.0;
+    // vy_pid->Ki = 0.0;
+    // vy_pid->Kd = 0.0;
+    // vy_pid->K_ff = 1.0;
+    // vy_pid->deadzone_command = 0.0;
+    // vy_pid->standstill_deadzone_command = 0.0;
+    // vy_pid->error_sum_clamp = 100.0;
+    // vy_pid->command_min = -10.0;
+    // vy_pid->command_max = 10.0;
+    drive->set_vy_pid(NULL);  // disable vy PID
 
     SpeedPID* vt_pid = drive->get_vt_pid();
     vt_pid->Kp = 1.5;
-    vt_pid->Ki = 0.15;
+    vt_pid->Ki = 0.1;
     vt_pid->Kd = 0.0;
     vt_pid->K_ff = 1.0;
     vt_pid->deadzone_command = 0.0;
     vt_pid->standstill_deadzone_command = 0.0;
-    vt_pid->error_sum_clamp = 100000.0;
+    vt_pid->error_sum_clamp = 5000.0;
     vt_pid->command_min = -15.0;
     vt_pid->command_max = 15.0;
+    // drive->set_vt_pid(NULL);  // disable vt PID
 
     for (unsigned int channel = 0; channel < drive->get_num_motors(); channel++) {
         SpeedPID* pid = drive->get_motor_pid(channel);
@@ -869,6 +872,7 @@ void loop()
             }
             else {
                 drive->drive(vx_command, vy_command, vt_command);
+                // drive->drive_with_feedback(vx_command, vy_command, vt_command, odom_vx, odom_vy, odom_vt);
             }
 
             if (is_moving(vx_command, vy_command, vt_command)) {
@@ -889,7 +893,7 @@ void loop()
             report_sequence();
         }
 
-        set_voltage_compensation(VOLTAGE_COMPENSATION_DENOMINATOR / (double)load_voltage);
+        set_voltage_compensation(VOLTAGE_COMPENSATION_NUMERATOR / (double)load_voltage);
         drive->get_velocity(odom_vx, odom_vy, odom_vt);
         drive->get_position(odom_x, odom_y, odom_t, odom_vx, odom_vy, odom_vt);
         tunnel->writePacket("od", "eeefff",

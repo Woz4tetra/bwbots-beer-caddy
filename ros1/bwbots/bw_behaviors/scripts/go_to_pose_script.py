@@ -69,17 +69,26 @@ def main():
     pose2d = Pose2d.from_xyt(**pose_dict)
 
     goal = GoToPoseGoal()
-    goal.goal.pose = pose2d.to_ros_pose()
-    goal.goal.header.frame_id = args.reference_frame
+    goal.controller_type = "strafe2"
     goal.xy_tolerance = args.xy_tolerance
     goal.yaw_tolerance = args.theta_tolerance
     goal.timeout = rospy.Duration(args.timeout)
-    goal.ignore_obstacles = args.ignore_obstacles
     goal.reference_linear_speed = args.reference_linear_speed
     goal.reference_angular_speed = args.reference_angular_speed
     goal.allow_reverse = args.allow_reverse
     goal.rotate_in_place_start = True
+    goal.rotate_while_driving = True
     goal.rotate_in_place_end = True
+    goal.linear_max_vel = args.reference_linear_speed
+    goal.linear_max_accel = 2.0
+    goal.linear_min_vel = 0.015
+    goal.linear_zero_vel = 0.014
+    goal.theta_max_vel = 3.0
+    goal.theta_max_accel = 1.0
+    goal.theta_min_vel = 0.015
+    goal.theta_zero_vel = 0.0001
+    goal.goal.pose = pose2d.to_ros_pose()
+    goal.goal.header.frame_id = args.reference_frame
 
     action.send_goal(goal, done_cb=action_done)
     try:

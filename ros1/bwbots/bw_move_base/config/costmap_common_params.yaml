@@ -7,7 +7,7 @@ footprint: [[-0.1375, -0.105], [-0.1375, 0.105], [0.1375, 0.105], [0.1375, -0.10
 inflation:
     enabled: true
     cost_scaling_factor: 3.0
-    inflation_radius: 0.5
+    inflation_radius: 1.5
 
 obstacle_layer:
     enabled: true
