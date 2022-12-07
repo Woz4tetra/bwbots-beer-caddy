@@ -59,6 +59,7 @@ add_message_files(
   BwSequenceState.msg
   Waypoint.msg
   WaypointArray.msg
+  WifiNetwork.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -74,6 +75,8 @@ add_service_files(
   GetWaypoints.srv
   SaveWaypoint.srv
   SaveTF.srv
+  ConnectWifi.srv
+  ListWifi.srv
 )
 
 ## Generate actions in the 'action' folder

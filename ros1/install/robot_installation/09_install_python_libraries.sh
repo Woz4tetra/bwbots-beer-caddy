@@ -6,4 +6,4 @@ echo "---"
 
 cd ${BASE_DIR}/../../bwbots/bw_tools
 sudo -H python3 -m pip install -r requirements.txt
-python3 setup.py install --user
+python3 setup.py -q install --user

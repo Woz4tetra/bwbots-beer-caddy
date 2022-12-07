@@ -1,2 +1,3 @@
-aiocmd
 pyserial
+aiocmd
+dataclasses

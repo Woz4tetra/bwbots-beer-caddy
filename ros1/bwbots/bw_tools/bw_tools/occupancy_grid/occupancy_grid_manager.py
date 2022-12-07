@@ -6,7 +6,6 @@ import yaml
 from nav_msgs.msg import OccupancyGrid
 import numpy as np
 from itertools import product
-from geometry_msgs.msg import Pose
 
 from bw_tools.robot_state import Pose2d, State
 

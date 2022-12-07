@@ -233,3 +233,51 @@ Run this command on your local machine:
 - `sudo systemctl restart docker`
 - `cd ~/bwbots-beer-caddy/ros2`
 - `docker build -t bwbots:latest .`
+
+## Hotspot setup
+
+- Insert USB wifi adapter
+- `sudo nmcli con add type wifi ifname wlan1 con-name robeert autoconnect yes ssid robeert`
+- `sudo nmcli con modify robeert 802-11-wireless.mode ap 802-11-wireless.band bg ipv4.method shared`
+- `sudo nmcli con modify robeert wifi-sec.key-mgmt wpa-psk`
+- `sudo nmcli con modify robeert wifi-sec.psk "s0mething"`
+- `sudo nano /etc/NetworkManager/system-connections/robeert`
+- Contents:
+```
+[connection]
+id=robeert
+uuid=<leave as is>
+type=wifi
+interface-name=wlan0
+permissions=
+autoconnect=true
+
+[wifi]
+band=bg
+mac-address-blacklist=
+mode=ap
+ssid=robeert
+hidden=false
+
+[wifi-security]
+group=ccmp;
+key-mgmt=wpa-psk
+pairwise=ccmp;
+proto=rsn;
+psk=s0mething
+
+[ipv4]
+dns-search=
+method=shared
+
+[ipv6]
+addr-gen-mode=stable-privacy
+dns-search=
+method=auto
+```
+
+- `sudo nmcli con up robeert`
+
+### Turn hotspot off
+
+- `sudo nmcli con down robeert`

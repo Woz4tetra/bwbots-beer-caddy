@@ -1,0 +1,5 @@
+duration scan_time
+---
+bw_interfaces/WifiNetwork[] networks
+bool success
+string message
