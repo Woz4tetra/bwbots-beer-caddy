@@ -1,7 +1,12 @@
-sudo apt-get install qemu binfmt-support qemu-user-static  # Install the qemu packages
+cd ..
+
+sudo groupadd docker
+sudo usermod -aG docker ${USER}
+
+sudo apt-get install -y qemu binfmt-support qemu-user-static  # Install the qemu packages
 docker run --rm --privileged multiarch/qemu-user-static --reset -p yes  # This step will execute the registering scripts
 
-# docker run --rm -t arm64v8/ubuntu uname -m # Testing the emulation environment. Expected output: aarch64
+docker run --rm -t arm64v8/ubuntu uname -m # Testing the emulation environment. Expected output: aarch64
 
 docker run --privileged --rm tonistiigi/binfmt --install linux/amd64,linux/arm64
 

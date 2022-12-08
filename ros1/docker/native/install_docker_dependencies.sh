@@ -1,4 +1,6 @@
 #!/bin/bash
+cd ..
+
 sudo apt install -y apt-transport-https ca-certificates curl \
 	gnupg-agent software-properties-common
 
@@ -19,10 +21,9 @@ udevadm control --reload-rules && udevadm trigger
 
 #Install Docker Compose
 export DOCKER_COMPOSE_INSTALL_PATH=/usr/local/lib/docker/cli-plugins
-export DOCKER_COMPOSE_URL=https://github.com/docker/compose/releases/download/v2.11.2/docker-compose-linux-x86_64
+export DOCKER_COMPOSE_URL=https://github.com/docker/compose/releases/download/v2.14.0/docker-compose-linux-armv7
 
 sudo mkdir -p ${DOCKER_COMPOSE_INSTALL_PATH}
 sudo curl -SL ${DOCKER_COMPOSE_URL} -o ${DOCKER_COMPOSE_INSTALL_PATH}/docker-compose
 sudo chmod +x ${DOCKER_COMPOSE_INSTALL_PATH}/docker-compose
 curl -fL https://raw.githubusercontent.com/docker/compose-switch/master/install_on_linux.sh | sudo sh
-sudo ln -s /usr/local/bin/compose-switch /usr/local/bin/docker-compose

@@ -3,17 +3,14 @@
 #   https://docs.ros.org/en/humble/Installation/Alternatives/Ubuntu-Development-Setup.html
 #
 
-FROM dustynv/ros:noetic-pytorch-l4t-r35.1.0
+FROM dustynv/ros:noetic-pytorch-l4t-r32.6.1
 
-ENV L4T_MAJOR_VERSION=35
-ENV L4T_MINOR_VERSION=1
-ENV L4T_PATCH_VERSION=0
+ENV L4T_MAJOR_VERSION=32
+ENV L4T_MINOR_VERSION=6
+ENV L4T_PATCH_VERSION=1
 
 ENV ZED_SDK_MAJOR=3
 ENV ZED_SDK_MINOR=7
-
-ENV HOME=/home/nvidia
-RUN mkdir -p /home/nvidia
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV SHELL /bin/bash
@@ -22,8 +19,8 @@ SHELL ["/bin/bash", "-c"]
 WORKDIR /
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends apt-utils && \
-    apt-get install -y nano tmux curl htop net-tools iproute2
+    apt-get install -y --no-install-recommends apt-utils
+RUN apt-get install -y nano tmux curl htop net-tools iproute2
 
 # ---
 # ZED
@@ -64,16 +61,16 @@ RUN apt-get update && \
     python3 -m pip install Cython && llvmlite==0.32.0 && numba==0.49.0
 
 RUN apt-get install libeigen3-dev libsuitesparse-dev -y
-# RUN git clone https://github.com/RainerKuemmerle/g2o.git && \
-#     cd g2o && \
-#     git checkout 20201223_git && \
-#     mkdir build && \
-#     cd build && \
-#     cmake .. && \
-#     make -j4 && \
-#     make install && \
-#     cd ../.. && \
-#     rm -r g2o
+RUN git clone https://github.com/RainerKuemmerle/g2o.git && \
+    cd g2o && \
+    git checkout 20201223_git && \
+    mkdir build && \
+    cd build && \
+    cmake .. && \
+    make -j4 && \
+    make install && \
+    cd ../.. && \
+    rm -r g2o
 
 RUN python3 -m pip install py_trees==0.7.6
 
@@ -87,11 +84,18 @@ RUN git clone https://github.com/AprilRobotics/apriltag.git && \
     cd ../.. && \
     rm -r apriltag
 
-RUN apt-get install -y libbullet-dev
+RUN apt-get update && apt-get install -y libbullet-dev
 
 # ---
 # bwbots ROS dependencies
 # ---
+
+RUN useradd -ms /bin/bash bw
+ENV USER=bw
+ENV HOME=/home/${USER}
+
+RUN chown -R ${USER} ${HOME} && \
+  echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 ENV ROS_WS_ROOT=${HOME}/ros_ws
 ENV ROS_WS_SRC=${HOME}/ros_ws/src
