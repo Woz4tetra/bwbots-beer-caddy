@@ -58,10 +58,8 @@ class State:
     def is_none(self):
         return self.x is None and self.y is None and self.theta is None
 
-    def get_theta_as_quat(self, as_list=False):
-        quat = tf_conversions.transformations.quaternion_from_euler(0.0, 0.0, self.theta)
-        if as_list:
-            return quat
+    def get_theta_as_quat(self) -> Quaternion:
+        quat = self.get_theta_as_quat_as_list()
 
         quat_msg = Quaternion()
         quat_msg.x = quat[0]
@@ -69,6 +67,9 @@ class State:
         quat_msg.z = quat[2]
         quat_msg.w = quat[3]
         return quat_msg
+
+    def get_theta_as_quat_as_list(self) -> List[float]:
+        return tf_conversions.transformations.quaternion_from_euler(0.0, 0.0, self.theta).tolist()
 
     def transform_by(self, other):
         if not isinstance(other, self.__class__):

@@ -36,7 +36,7 @@ class StrafeController(Controller):
 
     def calculate(self, **kwargs) -> Velocity:
         current_pose: Pose2d = kwargs["current_pose"]
-        pose_ref: Optional[Pose2d] = kwargs.get("pose_ref", None)
+        pose_ref: Pose2d = kwargs["pose_ref"]
         linear_velocity_ref: Optional[float] = kwargs.get("linear_velocity_ref", None)
         angular_velocity_ref: Optional[float] = kwargs.get("angular_velocity_ref", None)
         linear_x_min_velocity: float = kwargs.get("linear_x_min_velocity", 0.0)
@@ -102,6 +102,8 @@ class StrafeController(Controller):
                 if not self.at_reference():
                     self.state = StrafeControllerState.STRAFING
                 vel = Velocity()
+        else:
+            raise RuntimeError(f"Invalid state for strafe controller: {self.state}")
 
         vel = Velocity(
             PIDController.clamp_region(vel.x, linear_x_min_velocity, linear_velocity_ref, linear_zero_velocity),

@@ -7,7 +7,7 @@ from nav_msgs.msg import OccupancyGrid
 import numpy as np
 from itertools import product
 
-from bw_tools.robot_state import Pose2d, State
+from bw_tools.robot_state import Pose2d
 
 """
 Adapted from https://github.com/awesomebytes/occupancy_grid_python
@@ -174,7 +174,7 @@ class OccupancyGridManager:
             assert "x" in value
             assert "y" in value
             self.map_config["origin"] = Pose2d(value["x"], value["y"])
-        elif isinstance(value, State):
+        elif isinstance(value, Pose2d):
             self.map_config["origin"] = value
         else:
             raise ValueError("Invalid type for origin: %s" % repr(value))

@@ -65,7 +65,7 @@ class ProfiledPIDController(PIDController):
             goal_min_distance = \
                 self.input_modulus(self.goal.position - measurement, -error_bound, error_bound)
             setpoint_min_distance = \
-                self.input_modulus(self.setpoint.position - measurement, -error_bound, error_bound)
+                self.input_modulus(self.setpoint - measurement, -error_bound, error_bound)
 
             # recompute the profile goal with the smallest error, thus giving the shortest path. the goal
             # may be outside the input range after this operation, but that's ok because the controller

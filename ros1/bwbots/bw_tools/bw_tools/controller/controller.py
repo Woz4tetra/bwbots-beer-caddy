@@ -24,7 +24,7 @@ class Controller:
         self.pose_tolerance = tolerance
 
     def calculate(self, **kwargs) -> Velocity:
-        pass
+        return Velocity()
 
     def set_enabled(self, enabled: bool) -> None:
         """

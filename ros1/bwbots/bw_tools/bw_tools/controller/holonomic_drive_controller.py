@@ -48,7 +48,7 @@ class HolonomicDriveController(Controller):
         angle_ref: Optional[float] = kwargs.get("angle_ref", None)
         desired_state: Optional[State] = kwargs.get("desired_state", None)
 
-        if pose_ref is not None:
+        if pose_ref is not None and linear_velocity_ref is not None:
             return self.calculate_from_poses(current_pose, pose_ref, linear_velocity_ref, angle_ref)
         elif desired_state is not None:
             return self.calculate_from_state(current_pose, desired_state, angle_ref)
@@ -107,5 +107,10 @@ class HolonomicDriveController(Controller):
         * @param angle_ref The desired end-angle.
         * @return The next output of the holonomic drive controller.
         """
+        
         return self.calculate(
-            current_pose, desired_state.pose_meters, desired_state.velocity_meters_per_second, angle_ref)
+            current_pose=current_pose,
+            pose_ref=desired_state.position,
+            linear_velocity_ref=desired_state.velocity,
+            angle_ref=angle_ref
+        )

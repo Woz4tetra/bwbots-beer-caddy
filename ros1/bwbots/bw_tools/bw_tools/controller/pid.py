@@ -159,15 +159,7 @@ class PIDController:
         self.minimum_integral = minimum_integral
         self.maximum_integral = maximum_integral
     
-    def set_tolerance(self, position_tolerance: float) -> None:
-        """
-        * Sets the error which is considered tolerable for use with at_setpoint().
-        *
-        * @param position_tolerance Position error which is tolerable.
-        """
-        self.set_tolerance(position_tolerance, float('inf'))
-
-    def set_tolerance(self, position_tolerance: float, velocity_tolerance: float) -> None:
+    def set_tolerance(self, position_tolerance: float, velocity_tolerance: Optional[float] = None) -> None:
         """
         * Sets the error which is considered tolerable for use with atSetpoint().
         *
@@ -175,7 +167,7 @@ class PIDController:
         * @param velocity_tolerance Velocity error which is tolerable.
         """
         self.position_tolerance = position_tolerance
-        self.velocity_tolerance = velocity_tolerance
+        self.velocity_tolerance = float('inf') if velocity_tolerance is None else velocity_tolerance
 
     def get_position_error(self) -> float:
         """

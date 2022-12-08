@@ -190,13 +190,13 @@ class TrapezoidProfile:
             decel_dist = dist_to_target - full_speed_dist - accel_dist
 
         accel_time = \
-            (-velocity + math.sqrt(math.abs(velocity * velocity + 2 * acceleration * accel_dist))) \
+            (-velocity + math.sqrt(abs(velocity * velocity + 2 * acceleration * accel_dist))) \
                 / acceleration
 
         decel_time = \
             (-decel_velocity
                     + math.sqrt(
-                        math.abs(decel_velocity * decel_velocity + 2 * deceleration * decel_dist))) \
+                        abs(decel_velocity * decel_velocity + 2 * deceleration * decel_dist))) \
                 / deceleration
 
         full_speed_time = full_speed_dist / self.constraints.max_velocity

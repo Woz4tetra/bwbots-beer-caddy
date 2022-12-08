@@ -1,4 +1,5 @@
 import math
+from typing import Union
 import numpy as np
 from geometry_msgs.msg import Pose
 from nav_msgs.msg import Odometry
@@ -60,9 +61,10 @@ class Simple3DState(State):
         return self
 
     @classmethod
-    def from_detect(cls, msg):
+    def from_detect(cls, msg: Union[Detection2D, Detection3D]):
         if not (isinstance(msg, Detection2D) or isinstance(msg, Detection3D)):
             raise ValueError("%s is not of type %s" % (repr(msg), Detection2D))
+        assert msg.results is not None
         self = cls.from_ros_pose(msg.results[0].pose.pose)
         self.type = msg.results[0].id
         self.stamp = msg.header.stamp.to_sec()

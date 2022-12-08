@@ -15,8 +15,8 @@ ENV L4T_PATCH_VERSION=0
 ENV ZED_SDK_MAJOR=3
 ENV ZED_SDK_MINOR=7
 
-ENV HOME=/home/nvidia
-RUN mkdir -p /home/nvidia
+RUN useradd -ms /bin/bash bw
+USER bw
 
 ENV ROS_DOMAIN_ID=1
 ENV ROS_NET_INTERFACE=wlan0
@@ -66,9 +66,9 @@ RUN git clone https://github.com/AprilRobotics/apriltag.git && \
 # make bwbots ros build workspace
 
 
-ENV BW_ROS_ROOT=/home/nvidia/ros_ws
-ENV BW_ROS_SRC=/home/nvidia/ros_ws/src
-ENV BW_BUILD_WS=/home/nvidia/build_ws
+ENV BW_ROS_ROOT=${HOME}/ros_ws
+ENV BW_ROS_SRC=${HOME}/ros_ws/src
+ENV BW_BUILD_WS=${HOME}/build_ws
 
 RUN mkdir -p ${BW_ROS_SRC}
 RUN mkdir -p ${BW_BUILD_WS}

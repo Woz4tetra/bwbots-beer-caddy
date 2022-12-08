@@ -116,10 +116,10 @@ class NonHolonomicDriveController(Controller):
             theta_min_velocity: float,
             allow_reverse: bool) -> Velocity:
         return self.calculate(
-            current_pose,
-            desired_state.pose_meters,
-            desired_state.velocity_meters_per_second,
-            linear_min_velocity,
-            theta_min_velocity,
-            allow_reverse
+            current_pose=current_pose,
+            pose_ref=desired_state.position,
+            linear_velocity_ref=desired_state.velocity,
+            linear_min_velocity=linear_min_velocity,
+            theta_min_velocity=theta_min_velocity,
+            allow_reverse=allow_reverse
         )

@@ -81,7 +81,7 @@ class State:
         # Check whether the robot is reversing at this stage.
         reversing: bool = \
             self.velocity < 0 \
-                or math.abs(self.velocity) < 1E-9 and self.acceleration < 0.0
+                or abs(self.velocity) < 1E-9 and self.acceleration < 0.0
 
         # Calculate the new velocity
         # v_f = v_0 + at
@@ -169,7 +169,7 @@ class Trajectory:
             return self.states[0]
 
         if time_seconds >= self.total_time_seconds:
-            return self.states[self.states.size() - 1]
+            return self.states[len(self.states) - 1]
 
         # To get the element that we want, we will use a binary search algorithm
         # instead of iterating over a for-loop. A binary search is O(std::log(n))
@@ -222,7 +222,7 @@ class Trajectory:
         first_pose = first_state.pose
 
         # Calculate the transformed first pose.
-        new_first_pose = first_pose.transform_pose(transform)
+        new_first_pose = first_pose.transform_by(transform)
         new_states: List[State] = []
 
         new_states.append(State(
