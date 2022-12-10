@@ -1,0 +1,15 @@
+[Unit]
+After=NetworkManager.service time-sync.target
+Description=BWBots
+
+[Service]
+Type=oneshot
+User=nvidia
+Group=nvidia
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/run_containers /home/nvidia/bwbots-beer-caddy/docker
+ExecStop=/usr/local/bin/stop_main_container /home/nvidia/bwbots-beer-caddy/docker
+
+[Install]
+WantedBy=multi-user.target
+

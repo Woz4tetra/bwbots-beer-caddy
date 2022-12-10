@@ -1,13 +1,19 @@
 #!/bin/bash
+BASE_DIR=$(realpath "$(dirname $0)")
 
-cd ../resources
+if [ "$EUID" -ne 0 ]
+    then echo "Please run as root"
+    exit
+fi
 
-docker buildx use bwbots-builder
+cd ${BASE_DIR}/../resources
 
-for arch in linux/amd64 linux/arm64  ; do 
+docker buildx use bw-builder
+
+for arch in arm64 ; do 
     docker buildx build \
-    --platform $arch \
+    --platform linux/$arch \
     --output type=docker \
     -f ./Dockerfile \
-    --tag bwbots:latest .
+    --tag bwbots-${arch}:latest .
 done

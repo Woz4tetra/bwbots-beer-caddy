@@ -1,0 +1,12 @@
+version: "3"
+
+services:
+  roscore:
+    image: bwbots:latest
+    container_name: roscore
+    restart: "no"
+    network_mode: "host"
+    privileged: true
+    entrypoint: ["/roscore.sh"]
+    stop_signal: SIGINT
+

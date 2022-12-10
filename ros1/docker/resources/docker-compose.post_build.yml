@@ -1,18 +1,18 @@
 version: "3"
 
 services:
-  bwbots:
+  post_build:
     image: bwbots:latest
-    container_name: bwbots
-    restart: on-failure
-    environment:
-      - ROS_MAP_NAME=3-101
-      - OBJECT_MODEL_NAMES=powercell_2021.names
+    container_name: post_build
+    restart: "no"
     network_mode: "host"
+    runtime: "nvidia"
     privileged: true
+    group_add:
+      - dialout
     volumes:
-      - /home/${USER}/bwbots-beer-caddy/ros1/bwbots:/home/${USER}/ros_ws/src:rw
-      - /home/${USER}/docker_ros_ws:/home/${USER}/bw_ros_ws:rw
+      - /home/${USER}/docker_ros_ws:/root/ros_ws:rw
+      - /home/${USER}/bwbots-beer-caddy/ros/bwbots:/root/ros_ws/src/bwbots:rw
       - /run/systemd:/run/systemd:rw
       - /dev:/dev:rw
       - /tmp/.X11-unix:/tmp/.X11-unix
@@ -21,6 +21,7 @@ services:
       - /home/${USER}/.docker:/root/.docker:rw # docker looks here inside a container
       - /home/${USER}/.docker:/home/${USER}/.docker:rw # but we need to satisfy spice-lib.sh
       - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint: ["/root/install/post_build.sh"]
     deploy:
       resources:
         reservations:

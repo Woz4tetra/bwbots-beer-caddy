@@ -1,0 +1,7 @@
+Package: docker.io 79
+Pin: version 20.10.2*
+Pin-Priority: 1001
+
+Package: containerd
+Pin: version 1.5.5*
+Pin-Priority: 1001
