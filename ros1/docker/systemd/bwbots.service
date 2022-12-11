@@ -7,8 +7,8 @@ Type=oneshot
 User=nvidia
 Group=nvidia
 RemainAfterExit=yes
-ExecStart=/usr/local/bin/run_containers /home/nvidia/bwbots-beer-caddy/docker
-ExecStop=/usr/local/bin/stop_main_container /home/nvidia/bwbots-beer-caddy/docker
+ExecStart=/usr/local/bin/run_containers /home/nvidia/bwbots-beer-caddy/ros1/docker
+ExecStop=/usr/local/bin/stop_main_container /home/nvidia/bwbots-beer-caddy/ros1/docker
 
 [Install]
 WantedBy=multi-user.target

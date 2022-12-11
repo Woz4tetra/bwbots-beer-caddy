@@ -95,20 +95,27 @@ RUN apt-get update && sudo apt-get install -y \
     lm-sensors  \
     python3-psutil  \
     libusb-1.0-0*  \
-    libswscale-dev
+    libswscale-dev \
+    libsuitesparse-dev \
+    python3-termcolor \
+    i2c-tools \
+    python3-smbus
+
+RUN python3 -m pip install scipy==1.5.4 \
+    shapely==1.6.4 \
+    mido \
+    pyperclip \
+    dataclasses
+
+RUN apt-get install -y llvm-7*
+RUN ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin
+RUN python3 -m pip install Cython
+RUN python3 -m pip install llvmlite==0.32.0
+RUN python3 -m pip install numba==0.49.0
 
 WORKDIR /tmp
 RUN git clone https://github.com/wjakob/tbb.git
 WORKDIR /tmp/tbb/build
-RUN cmake ..
-RUN make -j4 && make install
-
-WORKDIR /tmp
-RUN git clone https://github.com/RainerKuemmerle/g2o.git
-WORKDIR /tmp/g2o
-RUN git checkout 20201223_git
-RUN mkdir build
-WORKDIR /tmp/g2o/build
 RUN cmake ..
 RUN make -j4 && make install
 
@@ -139,40 +146,21 @@ RUN cmake -D PYTHON_EXECUTABLE=/usr/bin/python3 \
 RUN make -j4 && make install
 
 WORKDIR /tmp
-RUN git clone https://github.com/FRC-Utilities/LibDS.git
-WORKDIR /tmp/LibDS
-RUN qmake -qt=qt5
+RUN git clone https://github.com/RainerKuemmerle/g2o.git
+WORKDIR /tmp/g2o
+RUN git checkout 20201223_git
+RUN mkdir build
+WORKDIR /tmp/g2o/build
+RUN cmake ..
 RUN make -j4 && make install
 
-WORKDIR /tmp
-RUN git clone --recursive https://github.com/ThadHouse/CmakeWpilib.git && \
-    cd CmakeWpilib && \
-    mkdir build
-WORKDIR /tmp/CmakeWpilib/build
-RUN cmake .. -DWITHOUT_CSCORE=ON -DWITHOUT_JAVA=ON
-RUN make -j4 && make install
+
+RUN apt-get install -y libceres-dev
+RUN python3 -m pip install py-trees==0.7.6
 
 WORKDIR /
 RUN ldconfig
 RUN rm -r /tmp/*
-
-RUN apt-get install -y llvm-7*
-RUN ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin
-RUN python3 -m pip install Cython
-RUN python3 -m pip install llvmlite==0.32.0
-RUN python3 -m pip install numba==0.49.0
-
-RUN python3 -m pip install scipy==1.5.4
-RUN python3 -m pip install PyYAML==5.4.1
-RUN python3 -m pip install pynetworktables==2021.0.0
-RUN python3 -m pip install pynmcli==1.0.5
-RUN python3 -m pip install flask==2.0.3
-RUN python3 -m pip install gevent==22.10.2
-RUN python3 -m pip install shapely==1.6.4
-
-RUN apt-get install -y i2c-tools python3-smbus
-RUN apt-get install -y python3-termcolor
-RUN apt-get install -y libsuitesparse-dev
 
 # ---
 # bwbots

@@ -9,11 +9,12 @@ if [ $? != 0 ]; then
     tmux new -s $SESSION -d
 fi
 
-tmux send -t $SESSION "source /root/scripts/enable_tmux_logger.sh bw" ENTER
+tmux send -t $SESSION "source ${HOME}/install/enable_tmux_logger.sh bw" ENTER
 tmux send -t $SESSION "source /opt/ros/${ROS_DISTRO}/setup.bash" ENTER
 tmux send -t $SESSION "source ${HOME}/ros_ws/devel/setup.bash" ENTER
 tmux send -t $SESSION "source ${HOME}/scripts/startup.sh" ENTER
 tmux send -t $SESSION "roslaunch --wait bw_bringup bw_bringup.launch --screen" ENTER
 
 sleep 2
-/root/ros_ws/src/bwbots/scripts/tail-session.sh
+${HOME}/scripts/tail-session.sh
+sleep infinity

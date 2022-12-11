@@ -311,13 +311,13 @@ Visualization Manager:
       Unreliable: false
       Value: true
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /standalone_converter/costmap_polygon_markers
       Name: TEB Obstacles
       Namespaces:
-        Polygons: true
+        {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Alpha: 1
       Buffer Length: 1
       Class: rviz/Path
@@ -550,26 +550,20 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Class: rviz/Orbit
-      Distance: 4.994604587554932
+      Angle: -0.07499972730875015
+      Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
-      Field of View: 0.7853981852531433
-      Focal Point:
-        X: -0.10763978213071823
-        Y: 0.11528559774160385
-        Z: 0.055203426629304886
-      Focal Shape Fixed Size: false
-      Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.4697964191436768
+      Scale: 356.77349853515625
       Target Frame: <Fixed Frame>
-      Yaw: 4.850420951843262
+      X: -3.1356210708618164
+      Y: 3.1143434047698975
     Saved: ~
 Window Geometry:
   Camera:

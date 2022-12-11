@@ -60,6 +60,7 @@ private:
     ros::Duration _cmd_vel_timeout;
 
     std::vector<std::string> _joint_names;
+    int _num_modules;
 
     // Members
 
@@ -79,7 +80,7 @@ private:
     ros::Publisher _button_counter_pub;
     ros::Publisher _button_counter_result_pub;
     ros::Publisher _is_enabled_pub;
-    ros::Publisher _module_pub;
+    vector<ros::Publisher>* _module_pubs;
     ros::Publisher _sequence_state_pub;
 
     // Subscribers

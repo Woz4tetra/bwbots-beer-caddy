@@ -9,6 +9,7 @@ BwTunnel::BwTunnel(ros::NodeHandle* nodehandle) :
     ros::param::param<string>("~map_frame", _map_frame, "map");
 
     ros::param::param<double>("~cmd_vel_timeout", _cmd_vel_timeout_param, 0.5);
+    ros::param::param<int>("~num_modules", _num_modules, 4);
 
     string key;
     if (!ros::param::search("joint_names", key)) {
@@ -57,6 +58,8 @@ BwTunnel::BwTunnel(ros::NodeHandle* nodehandle) :
 
     _raw_joint_pubs = new vector<ros::Publisher>();
     _raw_joint_msgs = new vector<std_msgs::Float64*>();
+
+    _module_pubs = new vector<ros::Publisher>();
     
     for (int index = 0; index < _joint_names.size(); index++) {
         addJointPub(_joint_names.at(index));
@@ -67,7 +70,9 @@ BwTunnel::BwTunnel(ros::NodeHandle* nodehandle) :
     _button_counter_pub = nh.advertise<std_msgs::Int32>("button_counter", 10);
     _button_counter_result_pub = nh.advertise<std_msgs::Int32>("button_counter_result", 10);
     _is_enabled_pub = nh.advertise<std_msgs::Bool>("are_motors_enabled", 10);
-    _module_pub = nh.advertise<bw_interfaces::BwDriveModule>("module", 50);
+    for (int index = 0; index < _num_modules; index++) {
+        _module_pubs->push_back(nh.advertise<bw_interfaces::BwDriveModule>("module/" + std::to_string(index), 50));
+    }
 
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &BwTunnel::twistCallback, this);
     _module_sub = nh.subscribe<bw_interfaces::BwDriveModule>("module_command", 50, &BwTunnel::moduleCommandCallback, this);
@@ -128,12 +133,16 @@ void BwTunnel::packetCallback(PacketResult* result)
             (int)channel, azimuth
         );
 
+        if (channel >= _module_pubs->size()) {
+            ROS_WARN_THROTTLE(1.0, "Encountered invalid channel index: %d", (int)channel);
+        }
+
         bw_interfaces::BwDriveModule msg;
         msg.module_index = std::to_string(channel);
         msg.azimuth_position = (double)azimuth;
         msg.wheel_position = wheel_position;
         msg.wheel_velocity = (double)wheel_velocity;
-        _module_pub.publish(msg);
+        _module_pubs->at(channel).publish(msg);
     }
     else if (category.compare("power") == 0) {
         float voltage, current;
