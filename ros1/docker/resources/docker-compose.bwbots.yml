@@ -23,7 +23,7 @@ services:
       - /home/${USER}/.docker:/root/.docker:rw # docker looks here inside a container
       - /home/${USER}/.docker:/home/${USER}/.docker:rw # but we need to satisfy spice-lib.sh
       - /var/run/docker.sock:/var/run/docker.sock
-    entrypoint: ["/launch.sh"]
+    command: ["/launch.sh"]
     deploy:
       resources:
         reservations:

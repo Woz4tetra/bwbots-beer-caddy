@@ -6,10 +6,13 @@ if [ "$EUID" -ne 0 ]
     exit
 fi
 
-# echo "Exporting bwbots image. This will take a very long time."
-# mkdir -p /media/storage/docker
-# docker save bwbots:latest | gzip > /media/storage/docker/bwbots.tar.gz
+docker images
+echo "Paste in image ID to push: "
+read TAG_IMAGE_ID
+docker tag ${TAG_IMAGE_ID} woz4tetra/bwbots:latest
+docker push woz4tetra/bwbots:latest
+
 echo "Compressing docker_ros_ws"
-cd /media/storage
+cd ~
 tar -cvf bwbots_ws.tar.gz docker_ros_ws
 echo "Done!"

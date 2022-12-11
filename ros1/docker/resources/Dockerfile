@@ -158,6 +158,8 @@ RUN make -j4 && make install
 RUN apt-get install -y libceres-dev
 RUN python3 -m pip install py-trees==0.7.6
 
+RUN apt-get install -y dumb-init
+
 WORKDIR /
 RUN ldconfig
 RUN rm -r /tmp/*
@@ -173,23 +175,21 @@ WORKDIR ${HOME}
 ENV ROS_WS_ROOT=${HOME}/ros_ws
 ENV ROS_WS_SRC=${HOME}/ros_ws/src
 
+ENV FLASK_ENV=development
+ENV PYTHONPATH="${PYTHONPATH}:${ROS_WS_SRC}/bwbots/bw_tools"
+
 COPY ./install ${HOME}/install
 COPY ./scripts ${HOME}/scripts
 COPY ./configs ${HOME}/configs
 
-RUN sudo mv ${HOME}/install/preferences /etc/apt/preferences
 RUN sudo mv ${HOME}/configs/zed/* /usr/local/zed/settings/
+RUN sudo mv ${HOME}/install/preferences /etc/apt/preferences
 
 RUN cat ${HOME}/install/bashrc >> ${HOME}/.bashrc
 RUN rm ${HOME}/install/bashrc
-
-ENV FLASK_ENV=development
-
-ENV PYTHONPATH="${PYTHONPATH}:${ROS_WS_SRC}/bwbots/bw_tools"
 
 COPY ./install/entrypoint.sh /entrypoint.sh
 COPY ./install/launch.sh /launch.sh
 COPY ./install/roscore.sh /roscore.sh
 
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["source ${HOME}/.bashrc"]
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
