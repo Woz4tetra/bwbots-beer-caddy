@@ -11,10 +11,13 @@ class SelectBySupplierDecorator(py_trees.decorators.Decorator):
         for child in self.children_lookup.values():
             child.parent = self
     
-    def update(self):
+    def initialise(self):
         name = self.name_supplier
         child = self.children_lookup[name]
         self.children[0] = child
         self.decorated = child
-        
+
+        return super().initialise()
+    
+    def update(self):
         return self.decorated.status

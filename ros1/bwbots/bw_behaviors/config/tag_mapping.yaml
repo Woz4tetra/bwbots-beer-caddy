@@ -6,4 +6,4 @@ dock_tag:
 dispenser1:
   id: [12]
   prep: dispenser1_prep
-  type: typeA0
+  type: A0

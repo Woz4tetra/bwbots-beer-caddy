@@ -14,11 +14,14 @@ class Tag:
     reference_frame: str
     pose: Optional[Pose] = None
     timestamp: Optional[rospy.Time] = None
+    prep: str = ""
+    tag_type: str = ""
 
 
 class TagManager:
     def __init__(self, valid_tag_window: float) -> None:
         self.tags: Dict[str, Tag] = {}
+        self.metadata = {}
         self.valid_tag_window = rospy.Duration(valid_tag_window)
 
     def register_tag(self, **kwargs) -> None:
@@ -28,7 +31,9 @@ class TagManager:
             reference_frame = kwargs.get("reference_frame")
             pose = kwargs.get("pose", None)
             timestamp = kwargs.get("timestamp", None)
-            tag = Tag(name, tag_id, reference_frame, pose, timestamp)
+            prep = kwargs.get("prep")
+            tag_type = kwargs.get("tag_type")
+            tag = Tag(name, tag_id, reference_frame, pose, timestamp, prep, tag_type)
         elif "tag" in kwargs:
             tag = kwargs.get("tag")
         else:

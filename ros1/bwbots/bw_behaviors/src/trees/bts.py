@@ -33,7 +33,7 @@ from trees.managers.drink_mission_manager import DrinkMissionManager
 
 class BehaviorTrees:
     def __init__(self) -> None:
-        self.tag_mapping: Dict[str: Dict] = rospy.get_param("~tag_mapping", {})
+        tag_mapping: Dict[str: Dict] = rospy.get_param("~tag_mapping", {})
         
         self.dock_tag_name: str = rospy.get_param("~dock_tag_name", "dock_tag")
         
@@ -44,20 +44,23 @@ class BehaviorTrees:
         self.has_drink_mass_threshold: float = rospy.get_param("~has_drink_mass_threshold", 0.1)
         self.dock_prep_offset: float = rospy.get_param("~dock_prep_offset", -0.7)
         self.dispenser_prep_offset: float = rospy.get_param("~dispenser_prep_offset", -0.7)
+        self.valid_tag_window: float = rospy.get_param("~valid_tag_window", 1.5)
 
         self.bt_cache = {}
-        self.dock_tag_supplier = lambda: self.dock_tag_name
-        self.dock_prep_supplier = lambda: self.tag_mapping[self.dock_tag_name]["prep"]
 
-        self.tag_manager = TagManager(valid_tag_window=1.5)
-        assert self.dock_tag_name in self.tag_mapping
-        for tag_name, values in self.tag_mapping.items():
-            tag_id = values["id"]
+        self.tag_manager = TagManager(valid_tag_window=self.valid_tag_window)
+        assert self.dock_tag_name in tag_mapping
+        for tag_name, values in tag_mapping.items():
             self.tag_manager.register_tag(
                 name=tag_name,
-                tag_id=tag_id,
+                tag_id=values["id"],
+                prep=values["prep"],
+                tag_type=values["type"],
                 reference_frame=self.go_to_tag_reference_frame
             )
+
+        self.dock_tag_supplier = lambda: self.dock_tag_name
+        self.dock_prep_supplier = lambda: self.tag_manager.get_tag(self.dock_tag_name).prep
         
         self.waypoint_manager = WaypointManager()
         self.drink_mission_manager = DrinkMissionManager()
@@ -73,7 +76,7 @@ class BehaviorTrees:
         return self.check_cache("follow_waypoint", lambda: FollowWaypointBehavior(waypoint_name_supplier, self.waypoint_manager))
     
     def go_to_dock_stage1(self):
-        return GoToTagBehavior(
+        return self.check_cache("go_to_dock_stage1", lambda: GoToTagBehavior(
             -0.5,
             0.075,
             self.dock_tag_supplier,
@@ -92,10 +95,10 @@ class BehaviorTrees:
             reference_angular_speed=2.0,
             allow_reverse=False,
             failure_on_pose_failure=False
-        )
+        ))
         
     def go_to_dock_stage2(self):
-        return GoToTagBehavior(
+        return self.check_cache("go_to_dock_stage2", lambda: GoToTagBehavior(
             -0.05,
             0.075,
             self.dock_tag_supplier,
@@ -114,7 +117,7 @@ class BehaviorTrees:
             rotate_while_driving=True,
             rotate_in_place_end=False,
             failure_on_pose_failure=True
-        )
+        ))
     
     def find_tag(self, tag_name_supplier):
         return self.check_cache("find_tag", lambda: FindTagBehavior(tag_name_supplier, self.tag_manager, 10.0))
@@ -192,7 +195,7 @@ class BehaviorTrees:
             if mission is None:
                 return None
             else:
-                return self.tag_mapping[self.drink_mission_manager.get_active().drink_dispenser_waypoint]["prep"]
+                return self.tag_manager.get_tag(self.drink_mission_manager.get_active().drink_dispenser_waypoint).prep
         return supplier()
 
     def dispenser_tag_supplier(self):
@@ -219,11 +222,11 @@ class BehaviorTrees:
             if mission is None:
                 return None
             else:
-                return self.tag_mapping[self.drink_mission_manager.get_active().delivery_waypoint]["type"]
+                return self.tag_manager.get_tag(self.drink_mission_manager.get_active().delivery_waypoint).tag_type
         return supplier()
 
     def go_to_dispenser_type_A0_stage1(self):
-        return GoToTagBehavior(
+        return self.check_cache("go_to_dispenser_type_A0_stage1", lambda: GoToTagBehavior(
             -0.5,
             0.075,
             self.dispenser_tag_supplier,
@@ -242,10 +245,10 @@ class BehaviorTrees:
             reference_angular_speed=2.0,
             allow_reverse=False,
             failure_on_pose_failure=False
-        )
+        ))
 
-    def go_to_dispenser_stage2(self):
-        return GoToTagBehavior(
+    def go_to_dispenser_type_A0_stage2(self):
+        return self.check_cache("go_to_dispenser_type_A0_stage2", lambda: GoToTagBehavior(
             -0.05,
             0.075,
             self.dispenser_tag_supplier,
@@ -264,7 +267,7 @@ class BehaviorTrees:
             rotate_while_driving=True,
             rotate_in_place_end=False,
             failure_on_pose_failure=True
-        )
+        ))
 
     def dock(self):
         return py_trees.composites.Sequence("Dock", [
@@ -306,22 +309,25 @@ class BehaviorTrees:
         ])
 
     def dispenser_stage1_sequence(self):
-        return RepeatNTimesDecorator(py_trees.composites.Selector("Search dispenser stage 1", [
-            py_trees.composites.Sequence("Go to tag stage 1", [
-                SelectBySupplierDecorator({
-                    "typeA0": self.go_to_dispenser_type_A0_stage1()
-                }, self.dispenser_type_supplier),
-                PauseBeforeRunning(self.find_tag(self.dispenser_tag_supplier), 3.0)
-            ]),
-            self.search_for_tag(self.dispenser_tag_supplier)
-        ]), attempts=2),
+        selected_stage1 = SelectBySupplierDecorator({
+            "A0": self.go_to_dispenser_type_A0_stage1()
+        }, self.dispenser_type_supplier)
+
+        return py_trees.composites.Sequence("Go to dispenser stage 1", [
+                RepeatNTimesDecorator(py_trees.composites.Selector("Go to dispenser stage 1 selector", [
+                py_trees.composites.Sequence("Go to dispenser stage 1 sequence", [
+                    selected_stage1,
+                    PauseBeforeRunning(self.find_tag(self.dispenser_tag_supplier), 3.0)
+                ]),
+                self.search_for_tag(self.dispenser_tag_supplier)
+            ]), attempts=2),
+            self.save_tag_as_waypoint(0.0, 0.0, self.dispenser_tag_supplier, self.dispenser_tag_supplier),
+            self.save_tag_as_waypoint(0.0, self.dispenser_prep_offset, self.dispenser_tag_supplier, self.dispenser_prep_supplier),
+        ])
 
     def dispenser_stage2_sequence(self):
         return SelectBySupplierDecorator({
-            "typeA0", py_trees.composites.Sequence("Go to tag stage 2", [
-                self.save_tag_as_waypoint(0.0, 0.0, self.dispenser_tag_supplier, self.dispenser_tag_supplier),
-                self.save_tag_as_waypoint(0.0, self.dispenser_prep_offset, self.dispenser_tag_supplier, self.dispenser_prep_supplier),
-                self.go_to_dispenser_stage2()])
+            "A0", self.go_to_dispenser_type_A0_stage2()
         }, self.dispenser_type_supplier)
 
     def collect_drink(self):
