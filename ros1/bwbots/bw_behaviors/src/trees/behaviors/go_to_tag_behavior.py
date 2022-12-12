@@ -1,3 +1,4 @@
+from typing import Callable
 import rospy
 import py_trees
 import py_trees_ros
@@ -9,10 +10,10 @@ from trees.managers.tag_manager import TagManager
 
 
 class GoToTagBehavior(py_trees_ros.actions.ActionClient):
-    def __init__(self, x_offset: float, y_offset: float, tag_name: str, tag_manager: TagManager, **kwargs):
+    def __init__(self, x_offset: float, y_offset: float, tag_name_supplier: Callable[[], str], tag_manager: TagManager, **kwargs):
         self.x_offset = x_offset
         self.y_offset = y_offset
-        self.tag_name = tag_name
+        self.tag_name_supplier = tag_name_supplier
         self.tag_manager = tag_manager
         
         super().__init__("Go to tag",
@@ -41,7 +42,10 @@ class GoToTagBehavior(py_trees_ros.actions.ActionClient):
 
     def update(self):
         if not self.sent_goal:
-            tag_pose_stamped = self.tag_manager.get_offset_tag(self.tag_name, self.x_offset, self.y_offset)
+            tag_name = self.tag_name_supplier()
+            if type(tag_name) != str:
+                return py_trees.Status.FAILURE
+            tag_pose_stamped = self.tag_manager.get_offset_tag(tag_name, self.x_offset, self.y_offset)
             if tag_pose_stamped is None:
                 return py_trees.Status.FAILURE
             self.action_goal.goal.pose = tag_pose_stamped.pose

@@ -53,6 +53,8 @@ add_message_files(
   FILES
   BwDriveModule.msg
   ChargeState.msg
+  DrinkMission.msg
+  DrinkMissionArray.msg
   LoadCell.msg
   BwSequence.msg
   BwSequenceElement.msg
@@ -84,6 +86,7 @@ add_action_files(
   FILES
   FindTag.action
   FollowWaypoints.action
+  HasDrink.action
   GoToPose.action
   RunBehavior.action
   RunSequence.action

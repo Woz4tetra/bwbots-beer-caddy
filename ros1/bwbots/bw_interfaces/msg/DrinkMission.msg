@@ -1,0 +1,2 @@
+string delivery_waypoint
+string drink_dispenser_waypoint

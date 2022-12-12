@@ -3,7 +3,7 @@ import rospy
 import tf2_ros
 import py_trees
 import tf2_geometry_msgs
-from typing import Optional
+from typing import Callable, Optional
 
 from bw_interfaces.srv import SaveWaypoint
 
@@ -13,11 +13,17 @@ from trees.managers.tag_manager import TagManager
 
 
 class SaveTagAsWaypointBehavior(py_trees.behaviour.Behaviour):
-    def __init__(self, x_offset: float, y_offset: float, global_frame_id: str, waypoint_name: str, tag_name: str, tag_manager: TagManager):
+    def __init__(self,
+                x_offset: float,
+                y_offset: float,
+                global_frame_id: str,
+                waypoint_name_supplier: Callable[[], str],
+                tag_name_supplier: Callable[[], str],
+                tag_manager: TagManager):
         self.x_offset = x_offset
         self.y_offset = y_offset
-        self.tag_name = tag_name
-        self.waypoint_name = waypoint_name
+        self.tag_name_supplier = tag_name_supplier
+        self.waypoint_name_supplier = waypoint_name_supplier
         self.tag_manager = tag_manager
         self.global_frame_id = global_frame_id
         self.save_waypoint_srv = rospy.ServiceProxy("/bw/bw_waypoints/save_waypoint", SaveWaypoint)
@@ -29,7 +35,10 @@ class SaveTagAsWaypointBehavior(py_trees.behaviour.Behaviour):
     def update(self):
         if self.save_waypoint_srv is None:
             raise RuntimeError("Failed to initialize save waypoint service")
-        tag_pose_stamped = self.tag_manager.get_offset_tag(self.tag_name, self.x_offset, self.y_offset)
+        tag_name = self.tag_name_supplier()
+        if type(tag_name) != str:
+            return py_trees.Status.FAILURE
+        tag_pose_stamped = self.tag_manager.get_offset_tag(tag_name, self.x_offset, self.y_offset)
         if tag_pose_stamped is None:
             return py_trees.Status.FAILURE
         try:
@@ -40,8 +49,12 @@ class SaveTagAsWaypointBehavior(py_trees.behaviour.Behaviour):
 
         tag_waypoint = tf2_geometry_msgs.do_transform_pose(tag_pose_stamped, transform)
 
+        waypoint_name = self.waypoint_name_supplier()
+        if type(waypoint_name) != str:
+            return py_trees.Status.FAILURE
+
         waypoint = Waypoint()
-        waypoint.name = self.waypoint_name
+        waypoint.name = waypoint_name
         waypoint.header.frame_id = self.global_frame_id
         waypoint.pose = tag_waypoint.pose
         result = self.save_waypoint_srv(waypoint)

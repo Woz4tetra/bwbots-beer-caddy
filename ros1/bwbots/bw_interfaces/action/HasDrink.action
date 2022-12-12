@@ -1,0 +1,6 @@
+duration timeout
+float32 mass_threshold
+---
+bool has_drink
+bool success
+---

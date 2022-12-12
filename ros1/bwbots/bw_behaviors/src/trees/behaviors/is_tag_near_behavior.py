@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Callable, Optional
 import tf2_ros
 import py_trees
 import tf2_geometry_msgs
@@ -12,10 +12,10 @@ from trees.managers.tag_manager import Tag
 
 
 class IsTagNearBehavior(py_trees.behaviour.Behaviour):
-    def __init__(self, robot_frame: str, tag_name: str, tag_manager: TagManager, distance_threshold: float):
+    def __init__(self, robot_frame: str, tag_name_supplier: Callable[[], str], tag_manager: TagManager, distance_threshold: float):
         self.distance_threshold = distance_threshold
         self.robot_frame = robot_frame
-        self.tag_name = tag_name
+        self.tag_name_supplier = tag_name_supplier
         self.tag_manager = tag_manager
         
         self.tf_buffer = tf2_ros.Buffer()
@@ -36,8 +36,12 @@ class IsTagNearBehavior(py_trees.behaviour.Behaviour):
         return Pose2d.from_ros_pose(dest_tag_pose.pose)
 
     def update(self):
-        if self.tag_manager.is_tag_valid(self.tag_name):
-            tag = self.tag_manager.get_tag(self.tag_name)
+        tag_name = self.tag_name_supplier()
+        if type(tag_name) != str:
+            return py_trees.Status.FAILURE
+        
+        if self.tag_manager.is_tag_valid(tag_name):
+            tag = self.tag_manager.get_tag(tag_name)
             tag_pose = self.tf_tag(tag)
             if tag_pose is None:
                 return py_trees.Status.FAILURE

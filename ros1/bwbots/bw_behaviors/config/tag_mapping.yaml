@@ -1,0 +1,9 @@
+dock_tag: 
+  id: [11]
+  prep: dock_prep
+  type: dock
+
+dispenser1:
+  id: [12]
+  prep: dispenser1_prep
+  type: typeA0

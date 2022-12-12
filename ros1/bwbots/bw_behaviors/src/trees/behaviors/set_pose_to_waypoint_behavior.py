@@ -1,4 +1,5 @@
 import math
+from typing import Callable
 import rospy
 import py_trees
 
@@ -10,14 +11,14 @@ from trees.managers.waypoint_manager import WaypointManager
 class SetPoseToWaypointBehavior(py_trees.behaviour.Behaviour):
     def __init__(
             self,
-            waypoint_name,
+            waypoint_name_supplier: Callable[[], str],
             waypoint_manager: WaypointManager,
             set_pose_topic="/initialpose",
             reset_x_std=0.1,
             reset_y_std=0.1,
             reset_theta_std_degrees=25.0):
         super().__init__("Set pose to waypoint")
-        self.waypoint_name = waypoint_name
+        self.waypoint_name_supplier = waypoint_name_supplier
         self.waypoint_manager = waypoint_manager
         self.set_pose_pub = rospy.Publisher(set_pose_topic, PoseWithCovarianceStamped, queue_size=5)
         
@@ -27,7 +28,10 @@ class SetPoseToWaypointBehavior(py_trees.behaviour.Behaviour):
         self.reset_theta_cov = reset_theta_std * reset_theta_std
 
     def update(self):
-        waypoint_array = self.waypoint_manager.get_waypoint(self.waypoint_name)
+        waypoint_name = self.waypoint_name_supplier()
+        if type(waypoint_name) != str:
+            return py_trees.Status.FAILURE
+        waypoint_array = self.waypoint_manager.get_waypoint(waypoint_name)
         if waypoint_array is None:
             return py_trees.Status.FAILURE
         waypoint = waypoint_array.waypoints[0]

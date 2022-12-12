@@ -3,7 +3,7 @@
 # Tutorial on behavior trees: https://roboticseabass.com/2021/05/08/introduction-to-behavior-trees/
 
 import sys
-from typing import Dict, Optional
+from typing import Callable, Dict, List, Optional, Tuple
 import rospy
 import functools
 import actionlib
@@ -19,25 +19,51 @@ from trees.bts import BehaviorTrees
 
 class TreesNode:
     def __init__(self) -> None:
-        rospy.init_node("dock_tree")
-        bts =  BehaviorTrees()
+        rospy.init_node("bw_trees")
+        
+        self.tick_rate: float = rospy.get_param("~tick_rate", 0.0)
+        
+        bts =  BehaviorTrees(self.tag_mapping)
         self.roots: Dict[str: py_trees.behaviour.Behaviour] = {
             "dock": bts.dock(),
             "undock": bts.undock(),
-            "test": bts.test(),
+            "drink_mission": bts.drink_mission(),
         }
-        self.action_server = actionlib.SimpleActionServer(
+        self.run_behavior_server = actionlib.SimpleActionServer(
             "run_behavior",
             RunBehaviorAction,
-            execute_cb=self.action_callback,
+            execute_cb=self.run_behavior_callback,
             auto_start=False
         )
-        self.action_server.start()
+        self.run_behavior_server.start()
+
+    def run_behavior_callback(self, goal: RunBehaviorGoal):
+        def update_callback(tip) -> bool:
+            if self.run_behavior_server.is_preempt_requested():
+                rospy.loginfo(f"Cancelling behavior {goal.behavior}")
+                return False
+
+            feedback = RunBehaviorFeedback()
+            feedback.status = tip.status.value
+            feedback.status = tip.name
+            self.run_behavior_server.publish_feedback(feedback)
+            return True
         
-        
-    def action_callback(self, goal: RunBehaviorGoal):
-        rospy.loginfo(f"Running behavior {goal.behavior}")
-        behavior = self.roots[goal.behavior]
+        success, aborted = self.run_behavior(goal.behavior, update_callback)
+
+        result = RunBehaviorResult(success)
+        if aborted:
+            self.run_behavior_server.set_aborted(result, f"Interrupted while running behavior {goal.behavior}")
+        else:
+            if result.success:
+                rospy.loginfo(f"{goal.behavior} completed!")
+            else:
+                rospy.loginfo(f"{goal.behavior} failed!")
+            self.run_behavior_server.set_succeeded(result)
+
+    def run_behavior(self, behavior_name: str, update_callback: Callable[[py_trees.behaviour.Behaviour], bool]) -> Tuple[bool, bool]:
+        rospy.loginfo(f"Running behavior {behavior_name}")
+        behavior = self.roots[behavior_name]
 
         tree = py_trees_ros.trees.BehaviourTree(behavior)
         rospy.on_shutdown(functools.partial(TreesNode.shutdown, tree))
@@ -47,42 +73,28 @@ class TreesNode:
 
         status: Optional[py_trees.Status] = None
         aborted = False
-        if goal.tick_rate > 0.0:
-            rate = rospy.Rate(goal.tick_rate)
+        if self.tick_rate > 0.0:
+            rate = rospy.Rate(self.tick_rate)
         else:
             rate = None
         while status is None or status == py_trees.Status.RUNNING:
             tree.tick()
             tip = tree.root.tip()
-            if tip is not None:
-                status = tip.status
-            else:
+            if tip is None:
                 break
 
-            if self.action_server.is_preempt_requested():
+            if not update_callback(tip):
                 aborted = True
-                rospy.loginfo(f"Cancelling behavior {goal.behavior}")
                 break
-
-            feedback = RunBehaviorFeedback()
-            feedback.status = status.value
-            self.action_server.publish_feedback(feedback)
             if rate is not None:
                 rate.sleep()
-
-        result = RunBehaviorResult(status == py_trees.Status.SUCCESS)
-        if aborted:
-            self.action_server.set_aborted(result, f"Interrupted while running behavior {goal.behavior}")
-        else:
-            if result.success:
-                rospy.loginfo(f"{goal.behavior} completed!")
-            else:
-                rospy.loginfo(f"{goal.behavior} failed!")
-            self.action_server.set_succeeded(result)
         tree.destroy()
         tree._cleanup()
         tree.blackboard_exchange.unregister_services()
         del tree
+        
+        return status == py_trees.Status.SUCCESS, aborted
+
 
     def run(self):
         rospy.spin()

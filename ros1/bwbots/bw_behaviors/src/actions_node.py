@@ -6,6 +6,7 @@ from commands.follow_waypoint import FollowWaypoint
 from commands.shuffle_until_charging import ShuffleUntilChargingCommand
 from commands.run_sequence import RunSequenceCommand
 from commands.set_robot_state import SetRobotStateCommand
+from commands.has_drink import HasDrinkCommand
 
 
 def main():
@@ -23,6 +24,7 @@ def main():
     commands["shuffle_until_charging"] = ShuffleUntilChargingCommand()
     commands["run_sequence"] = RunSequenceCommand()
     commands["set_robot_state"] = SetRobotStateCommand()
+    commands["has_drink"] = HasDrinkCommand()
 
     rospy.spin()
 

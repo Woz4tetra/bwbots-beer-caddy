@@ -1,6 +1,6 @@
 string behavior
-float32 tick_rate
 ---
 bool success
 ---
 string status
+string node_name
