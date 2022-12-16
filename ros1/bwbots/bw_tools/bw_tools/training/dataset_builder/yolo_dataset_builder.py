@@ -3,7 +3,7 @@ from pathlib import Path
 import shutil
 from bw_tools.training.pascal_voc import PascalVOCFrame
 from bw_tools.training.yolo import YoloFrame
-from ..detect_collector import DetectCollector
+from .pascal_voc_collector import PascalVOCCollector
 from .dataset_builder import DatasetBuilder, BACKGROUND_LABEL
 from ..get_image_size import get_image_size
 
@@ -12,7 +12,7 @@ JPEGIMAGES = "images"
 
 
 class YoloDatasetBuilder(DatasetBuilder):
-    def __init__(self, output_dir: Path, image_collector: DetectCollector, labels: list, dry_run=True):
+    def __init__(self, output_dir: Path, image_collector: PascalVOCCollector, labels: list, dry_run=True):
         super(YoloDatasetBuilder, self).__init__(output_dir, dry_run=dry_run)
         self.image_collector = image_collector
         self.frames = []

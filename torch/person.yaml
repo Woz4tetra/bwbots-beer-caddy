@@ -1,0 +1,30 @@
+# YOLOv5 🚀 by Ultralytics, GPL-3.0 license
+# cargo_2022 dataset
+# Example usage: python train.py --data cargo_2022.yaml
+
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path: outputs/person_dataset  # dataset root dir
+train: images/  # train images (relative to 'path')
+val: images/  # val images (relative to 'path')
+test: ''  # test images (optional)
+
+# Classes
+nc: 17  # number of classes
+names: # class names
+- right_knee
+- right_hip
+- right_ear
+- left_ear
+- nose
+- left_wrist
+- left_hip
+- right_eye
+- right_shoulder
+- left_ankle
+- right_wrist
+- left_eye
+- right_ankle
+- left_knee
+- right_elbow
+- left_shoulder
+- left_elbow

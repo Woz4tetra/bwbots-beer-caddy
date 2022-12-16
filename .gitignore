@@ -3,6 +3,12 @@ pcb/bw_beer_caddy/export
 pcb/bw_beer_caddy/bw_beer_caddy-backups
 fp-info-cache
 bags/
+torch/outputs/
+torch/dataset/
+torch/pretrained/
+
+# training
+wandb
 
 # logs
 *.log*

@@ -140,15 +140,25 @@ class PascalVOCObject:
         return True
 
     def is_truncated(self, width, height):
-        if self.bndbox[0] <= 0:
+        if self.bndbox[0] < 0:
             return True
-        if self.bndbox[1] <= 0:
+        if self.bndbox[1] < 0:
             return True
         if self.bndbox[2] >= width:
             return True
         if self.bndbox[3] >= height:
             return True
         return False
+
+    def truncate(self, width, height):
+        if self.bndbox[0] < 0:
+            self.bndbox[0] = 0
+        if self.bndbox[1] < 0:
+            self.bndbox[1] = 0
+        if self.bndbox[2] >= width:
+            self.bndbox[2] = width - 1
+        if self.bndbox[3] >= height:
+            self.bndbox[3] = height - 1
 
     def is_out_of_bounds(self, width, height):
         if self.bndbox[0] >= width:

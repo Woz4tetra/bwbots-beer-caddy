@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 import shutil
 from bw_tools.training.pascal_voc import PascalVOCFrame
-from ..detect_collector import DetectCollector
+from .pascal_voc_collector import PascalVOCCollector
 from .dataset_builder import DatasetBuilder, BACKGROUND_LABEL
 
 ANNOTATIONS = "Annotations"
@@ -11,7 +11,7 @@ JPEGIMAGES = "JPEGImages"
 
 
 class DetectDatasetBuilder(DatasetBuilder):
-    def __init__(self, output_dir: Path, image_collector: DetectCollector, test_ratio=0.15, train_ratio=0.85,
+    def __init__(self, output_dir: Path, image_collector: PascalVOCCollector, test_ratio=0.15, train_ratio=0.85,
                  validation_ratio=0.0, dry_run=True):
         super(DetectDatasetBuilder, self).__init__(output_dir, test_ratio, train_ratio, validation_ratio,
                                                    dry_run=dry_run)
