@@ -6,6 +6,9 @@ bags/
 torch/outputs/
 torch/dataset/
 torch/pretrained/
+torch/outputs
+torch/dataset
+torch/pretrained
 
 # training
 wandb

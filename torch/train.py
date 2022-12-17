@@ -32,5 +32,6 @@ with NamedTemporaryFile('w') as tmp:
         device=0,
         batch_size=4,
         project=os.path.abspath("outputs/person_train"),
-        multi_scale=True
+        multi_scale=True,
+        cache='ram'
     )

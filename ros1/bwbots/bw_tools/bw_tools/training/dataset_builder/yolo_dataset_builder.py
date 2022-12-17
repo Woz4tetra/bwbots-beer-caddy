@@ -12,8 +12,15 @@ JPEGIMAGES = "images"
 
 
 class YoloDatasetBuilder(DatasetBuilder):
-    def __init__(self, output_dir: Path, image_collector: PascalVOCCollector, labels: list, dry_run=True):
-        super(YoloDatasetBuilder, self).__init__(output_dir, dry_run=dry_run)
+    def __init__(self, output_dir: Path, image_collector: PascalVOCCollector, labels: list, 
+                 test_ratio=0.05, train_ratio=0.80, validation_ratio=0.15,
+                 test_name="test", train_name="train", validation_name="val", dry_run=True):
+        super(YoloDatasetBuilder, self).__init__(
+            output_dir,
+            test_ratio, train_ratio, validation_ratio,
+            test_name, train_name, validation_name,
+            dry_run
+        )
         self.image_collector = image_collector
         self.frames = []
         self.frame_filenames = {}
@@ -28,9 +35,39 @@ class YoloDatasetBuilder(DatasetBuilder):
 
     def build(self):
         self.frames = []
+        
+        label_to_identifier_map = {}
+        frame_map = {}
         for frame in self.image_collector.iter():
-            self.frames.append(frame)
-            self.copy_annotation(frame)
+            label = frame.objects[0].name
+            if label not in label_to_identifier_map:
+                label_to_identifier_map[label] = []
+            label_to_identifier_map[label].append(frame.path)
+            frame_map[frame.path] = frame
+        image_sets = self.get_distributed_sets(label_to_identifier_map)
+
+        test_count = len(image_sets[self.test_name])
+        train_count = len(image_sets[self.train_name])
+        validation_count = len(image_sets[self.validation_name])
+        total_count = test_count + train_count + validation_count
+        print(
+            f"Total {total_count}:\n"
+            f"\tTest: {test_count}\t{test_count / total_count:0.2f}\n"
+            f"\tTrain: {train_count}\t{train_count / total_count:0.2f}\n"
+            f"\tValidation: {validation_count}\t{validation_count / total_count:0.2f}"
+        )
+
+        for set_key in image_sets.keys():
+            for label in self.labels:
+                self.makedir(self.output_dir / ANNOTATIONS / set_key)
+                self.makedir(self.output_dir / JPEGIMAGES / set_key)
+
+        for key, image_set in image_sets.items():
+            for frame_path in image_set:
+                frame = frame_map[frame_path]
+                self.frames.append(frame)
+                self.copy_annotation(key, frame)
+
         self.write_labels()
 
     def write_labels(self):
@@ -40,7 +77,7 @@ class YoloDatasetBuilder(DatasetBuilder):
         print("Writing labels to %s" % labels_path)
         self.write_list(labels_path, self.labels)
 
-    def copy_annotation(self, frame: PascalVOCFrame):
+    def copy_annotation(self, subdirectory: str, frame: PascalVOCFrame):
         if frame.filename not in self.frame_filenames:
             self.frame_filenames[frame.filename] = 0
         filename_count = self.frame_filenames[frame.filename]
@@ -49,8 +86,8 @@ class YoloDatasetBuilder(DatasetBuilder):
         frame.width = width
         frame.height = height
 
-        annotation_dir = self.output_dir / ANNOTATIONS
-        images_dir = self.output_dir / JPEGIMAGES
+        annotation_dir = self.output_dir / ANNOTATIONS / subdirectory
+        images_dir = self.output_dir / JPEGIMAGES / subdirectory
         self.makedir(annotation_dir)
         self.makedir(images_dir)
         new_image_path = images_dir / frame.filename
