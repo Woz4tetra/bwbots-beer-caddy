@@ -1,7 +1,6 @@
 import os
 import sys
 import yaml
-from tempfile import NamedTemporaryFile
 
 yolov5_path = sys.argv[1]
 
@@ -10,9 +9,10 @@ sys.path.insert(0, yolov5_path)
 import yolov5
 import yolov5.train
 
-data_path = os.path.abspath("person.yaml")
+filename = "person.yaml"
+data_path = os.path.abspath(filename)
 
-with NamedTemporaryFile('w') as tmp:
+with open(os.path.join("/tmp", filename), 'w') as tmp:
     with open(data_path, 'r') as file:
         config = yaml.load(file)
     base_dir = config["path"]
@@ -33,5 +33,6 @@ with NamedTemporaryFile('w') as tmp:
         batch_size=4,
         project=os.path.abspath("outputs/person_train"),
         multi_scale=True,
-        cache='ram'
+        cache='ram',
+        # resume='outputs/person_train/exp11/weights/last.pt'
     )
