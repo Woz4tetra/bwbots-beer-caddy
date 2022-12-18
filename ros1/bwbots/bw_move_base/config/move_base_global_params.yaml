@@ -95,17 +95,17 @@ shutdown_costmaps: true
 
 # How long in seconds to allow for oscillation before executing recovery
 # behaviors. A value of 0.0 corresponds to an infinite timeout.
-oscillation_timeout: 0.0
+oscillation_timeout: 3.0
 
 # How far in meters the robot must move to be considered not to be oscillating.
 # Moving this far resets the timer counting up to the ~oscillation_timeout
-oscillation_distance: 0.4
+oscillation_distance: 0.05
 
 # The rate in Hz at which to run the global planning loop. If the frequency is
 # set to 0.0, the global planner will only run when a new goal is received or
 # the local planner reports that its path is blocked.
 # planner_frequency: 2.0  # 1.0
-planner_frequency: 0.0  # 1.0
+planner_frequency: 0.5  # 1.0
 
 
 # How many times to allow for planning retries before executing recovery

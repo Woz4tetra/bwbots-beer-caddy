@@ -2,7 +2,7 @@
 <launch>
     <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
         <remap from="/cmd_vel" to="/bw/cmd_vel_nav"/>
-        <remap from="/odom" to="/bw/odom"/>
+        <remap from="/odom" to="/bw/odom/filtered"/>
         <rosparam file="$(find bw_move_base)/config/move_base_global_params.yaml" command="load"/>
 
         <rosparam file="$(find bw_move_base)/config/dwaplanner_params.yaml" command="load" ns="DWAPlannerROS"/>

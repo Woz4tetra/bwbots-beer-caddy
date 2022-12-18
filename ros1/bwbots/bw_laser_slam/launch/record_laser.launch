@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <node pkg="rosbag" type="record" name="rosbag_record_laser"
-       args="record -o /home/nvidia/bags/laser
+       args="record -o /root/bags/laser
             /bw/odom
             /laser/scan
             /bw/ping
@@ -10,6 +10,10 @@
             /bw/joint/base_link_to_module_2_joint
             /bw/joint/base_link_to_module_3_joint
             /bw/joint/base_link_to_module_4_joint
+            /bw/module/0
+            /bw/module/1
+            /bw/module/2
+            /bw/module/3
             /bw/module
             /zed/imu/data
             " />
