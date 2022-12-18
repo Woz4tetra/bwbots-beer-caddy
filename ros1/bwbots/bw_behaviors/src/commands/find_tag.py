@@ -140,7 +140,9 @@ class FindTagCommand:
         tag_id.sort()
         frozen_tag_id = tuple(tag_id)
 
-        result = FindTagResult(PoseStamped(), False)
+        empty_pose = PoseStamped()
+        empty_pose.header.frame_id = self.stored_frame
+        result = FindTagResult(empty_pose, False)
 
         start_time = rospy.Time.now()
         current_time = rospy.Time.now()
