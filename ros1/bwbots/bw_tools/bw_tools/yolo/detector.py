@@ -4,7 +4,7 @@ import numpy as np
 from torch.backends import cudnn
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.torch_utils import select_device
-from yolov5.utils.general import non_max_suppression, scale_coords, xyxy2xywh
+from yolov5.utils.general import non_max_suppression, scale_boxes, check_img_size
 from yolov5.utils.plots import Annotator, colors
 from yolov5.utils.augmentations import letterbox
 from .utils import get_label, get_obj_id
@@ -30,27 +30,18 @@ class YoloDetector:
         self.overlay_line_thickness = 3  # bounding box thickness (pixels)
 
         self.selected_model_device = select_device(self.model_device)
-        self.model = DetectMultiBackend(self.model_path, device=self.selected_model_device, dnn=False)
+        self.model = DetectMultiBackend(self.model_path, device=self.selected_model_device, dnn=False, fp16=self.half)
 
         self.stride = self.model.stride
         self.class_names = self.model.names
-        pt = self.model.pt
-        jit = self.model.jit
-        onnx = self.model.onnx
-        engine = self.model.engine
-
-        # FP16 supported on limited backends with CUDA
-        self.half &= (pt or jit or onnx or engine) and self.selected_model_device.type != 'cpu'
-        if pt or jit:
-            self.model.model.half() if self.half else self.model.model.float()
-
         cudnn.benchmark = True  # set True to speed up constant image size inference
 
         self.timing_report = ""
 
-        # Run inference
+        stride = self.model.stride
         self.image_size = (self.image_width, self.image_height)
-        self.model.warmup(imgsz=(1, 3, *self.image_size), half=self.half)  # warmup
+        self.image_size = check_img_size(self.image_size, s=stride)  # check image size
+        self.model.warmup(imgsz=(1, 3, *self.image_size))  # warmup
 
     def detect(self, image):
         t_start = time.time()
@@ -93,7 +84,7 @@ class YoloDetector:
         detection = prediction[0]
 
         # Rescale boxes from torch_image size to image size
-        detection[:, :4] = scale_coords(torch_image.shape[2:], detection[:, :4], image.shape).round()
+        detection[:, :4] = scale_boxes(torch_image.shape[2:], detection[:, :4], image.shape).round()
         t3 = time.time()
 
         if self.publish_overlay:

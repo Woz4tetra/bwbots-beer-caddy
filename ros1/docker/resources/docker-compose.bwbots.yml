@@ -14,6 +14,7 @@ services:
     volumes:
       - /home/${USER}/docker_ros_ws:/root/ros_ws:rw
       - /home/${USER}/bwbots-beer-caddy/ros1/bwbots:/root/ros_ws/src/bwbots:rw
+      - /home/${USER}/bwbots-beer-caddy/ros1/scripts:/root/scripts:rw
       - /home/${USER}/logs:/root/logs:rw
       - /run/systemd:/run/systemd:rw
       - /dev:/dev:rw

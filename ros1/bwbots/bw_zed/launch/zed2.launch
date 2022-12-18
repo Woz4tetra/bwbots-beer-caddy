@@ -26,7 +26,7 @@
 
         <param name="general/camera_name"               value="$(arg camera_name)" />
         <param name="general/base_frame"                value="camera_link" />
-        <param name="yolo_object_detection/model_path"        value="$(find bw_yolo)/models/powercell_2021-01-30.torchscript" />
-        <param name="yolo_object_detection/class_names_path"  value="$(find bw_yolo)/models/$(env OBJECT_MODEL_NAMES)" />
+        <param name="yolo_object_detection/model_path"        value="$(find bw_yolo)/models/person_2022-12-18.torchscript" />
+        <param name="yolo_object_detection/class_names_path"  value="$(find bw_yolo)/models/person.names" />
     </node>
 </launch>

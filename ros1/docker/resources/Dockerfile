@@ -179,7 +179,6 @@ ENV FLASK_ENV=development
 ENV PYTHONPATH="${PYTHONPATH}:${ROS_WS_SRC}/bwbots/bw_tools"
 
 COPY ./install ${HOME}/install
-COPY ./scripts ${HOME}/scripts
 COPY ./configs ${HOME}/configs
 
 RUN sudo mv ${HOME}/configs/zed/* /usr/local/zed/settings/
