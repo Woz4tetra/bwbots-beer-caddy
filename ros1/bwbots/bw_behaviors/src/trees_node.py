@@ -23,7 +23,7 @@ class TreesNode:
         
         self.tick_rate: float = rospy.get_param("~tick_rate", 0.0)
         
-        bts =  BehaviorTrees(self.tag_mapping)
+        bts =  BehaviorTrees()
         self.roots: Dict[str: py_trees.behaviour.Behaviour] = {
             "dock": bts.dock(),
             "undock": bts.undock(),
@@ -45,7 +45,7 @@ class TreesNode:
 
             feedback = RunBehaviorFeedback()
             feedback.status = tip.status.value
-            feedback.status = tip.name
+            feedback.node_name = tip.name
             self.run_behavior_server.publish_feedback(feedback)
             return True
         
@@ -82,6 +82,7 @@ class TreesNode:
             tip = tree.root.tip()
             if tip is None:
                 break
+            status = tip.status
 
             if not update_callback(tip):
                 aborted = True

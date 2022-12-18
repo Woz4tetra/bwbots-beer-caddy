@@ -29,7 +29,6 @@ class FindTagCommand:
         self.detections = {}
         self.computed_poses = {}
         
-        self.computed_pose_lock = threading.Lock()
         self.detections_lock = threading.Lock()
 
         self.tf_buffer = tf2_ros.Buffer()
@@ -76,7 +75,7 @@ class FindTagCommand:
 
     def update_computed_poses(self):
         self.prune_detections()
-        with self.computed_pose_lock:
+        with self.detections_lock:
             filtered_array_msg = AprilTagDetectionArray()
             pose_array = PoseArray()
             filtered_pose_array = PoseArray()

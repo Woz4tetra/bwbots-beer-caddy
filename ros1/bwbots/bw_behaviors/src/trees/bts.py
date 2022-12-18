@@ -49,7 +49,7 @@ class BehaviorTrees:
         self.bt_cache = {}
 
         self.tag_manager = TagManager(valid_tag_window=self.valid_tag_window)
-        assert self.dock_tag_name in tag_mapping
+        assert self.dock_tag_name in tag_mapping, f"tag_mapping: {tag_mapping}"
         for tag_name, values in tag_mapping.items():
             self.tag_manager.register_tag(
                 name=tag_name,
@@ -305,7 +305,7 @@ class BehaviorTrees:
                 self.is_tag_near(self.dock_tag_supplier),
             ]),
             self.save_tag_as_waypoint(0.0, 0.0, self.dock_tag_supplier, self.dock_tag_supplier),
-            self.save_tag_as_waypoint(0.0, self.dock_prep_offset, self.dock_tag_supplier, self.dock_prep_supplier)
+            self.save_tag_as_waypoint(self.dock_prep_offset, 0.0, self.dock_tag_supplier, self.dock_prep_supplier)
         ])
 
     def dispenser_stage1_sequence(self):
@@ -327,7 +327,7 @@ class BehaviorTrees:
 
     def dispenser_stage2_sequence(self):
         return SelectBySupplierDecorator({
-            "A0", self.go_to_dispenser_type_A0_stage2()
+            "A0": self.go_to_dispenser_type_A0_stage2()
         }, self.dispenser_type_supplier)
 
     def collect_drink(self):
@@ -337,7 +337,7 @@ class BehaviorTrees:
                 PauseBeforeRunning(self.find_tag(self.dispenser_tag_supplier), 3.0),
                 self.search_for_tag(self.dispenser_tag_supplier),
                 self.rotate_in_place(),
-                self.follow_tag(self.dispenser_tag_supplier)
+                self.follow_tag(self.dispenser_tag_supplier, 0.0, 0.0)  # TODO find actual offsets. Add angle
             ]), attempts=2),
             self.dispenser_stage1_sequence(),
             self.dispenser_stage2_sequence(),
@@ -358,8 +358,8 @@ class BehaviorTrees:
                     self.collect_drink(),
                     self.has_drink(),
                     self.deliver_drink(),
-                ])
-            ),
+                ]),
+                self.drink_mission_manager),
             self.dock()
         ])
 

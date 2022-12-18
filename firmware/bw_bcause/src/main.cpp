@@ -194,7 +194,7 @@ float load_voltage = 0.0f;
 bool was_charging = false;
 
 const float DISABLE_THRESHOLD = 9.5;
-const float CHARGE_CURRENT_THRESHOLD = 0.15;  // amps
+const float CHARGE_CURRENT_THRESHOLD = 0.1;  // amps
 Adafruit_INA219 charge_ina(0x40 + 0b01);
 
 // ---

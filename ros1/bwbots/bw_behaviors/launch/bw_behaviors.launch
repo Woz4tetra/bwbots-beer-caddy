@@ -5,6 +5,7 @@
             <remap from="cmd_vel" to="cmd_vel_nav"/>
         </node>
         <node name="bw_bts" pkg="bw_behaviors" type="trees_node.py" output="screen" required="false">
+            <rosparam file="$(find bw_behaviors)/config/tag_mapping.yaml" command="load" ns="tag_mapping"/>
             <remap from="cmd_vel" to="cmd_vel_nav"/>
         </node>
     </group>
