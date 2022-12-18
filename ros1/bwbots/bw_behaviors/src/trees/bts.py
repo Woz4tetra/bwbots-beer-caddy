@@ -78,15 +78,15 @@ class BehaviorTrees:
     def go_to_dock_stage1(self):
         return self.check_cache("go_to_dock_stage1", lambda: GoToTagBehavior(
             -0.5,
-            0.075,
+            0.05,
             self.dock_tag_supplier,
             self.tag_manager,
             frame_id=self.go_to_tag_reference_frame,
             controller_type="strafe1",
             linear_min_vel=0.1,
-            theta_min_vel=0.02,
+            theta_min_vel=0.015,
             xy_tolerance=0.025,
-            yaw_tolerance=0.0125,
+            yaw_tolerance=0.025,
             timeout=10.0,
             reference_linear_speed=0.5,
             rotate_in_place_start=True,
@@ -100,7 +100,7 @@ class BehaviorTrees:
     def go_to_dock_stage2(self):
         return self.check_cache("go_to_dock_stage2", lambda: GoToTagBehavior(
             -0.05,
-            0.075,
+            0.05,
             self.dock_tag_supplier,
             self.tag_manager,
             frame_id=self.go_to_tag_reference_frame,
