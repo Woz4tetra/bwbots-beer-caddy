@@ -64,10 +64,12 @@ public class FpvCamera : MonoBehaviour
     private Quaternion cameraRotationOffset;
     public float smoothSpeed = 1.0f;
 
-    public ArticulationWheelController wheelController;
-    public float speed = 1.0f;
+    public BwbotsSimulatedChassis wheelController;
+    public float forwardSpeed = 1.0f;
+    public float lateralSpeed = 0.4f;
     public float angularSpeed = 3.14f;
     private float targetLinearSpeed;
+    private float targetLateralSpeed;
     private float targetAngularSpeed;
 
     private SlewLimiter m_MovementLimiter;
@@ -115,13 +117,26 @@ public class FpvCamera : MonoBehaviour
         Quaternion smoothedRotation = Quaternion.Lerp(transform.rotation, desiredRotation, smoothSpeed);
         transform.rotation = smoothedRotation;
 
-        targetLinearSpeed = Input.GetAxisRaw("Vertical") * speed;
+        targetLinearSpeed = Input.GetAxisRaw("Vertical") * forwardSpeed;
+        targetLateralSpeed = 0.0f;
+        if (Input.GetKey(KeyCode.Q)) {
+            targetLateralSpeed = -lateralSpeed;
+            if (targetLinearSpeed == 0.0f) {
+                targetLinearSpeed = forwardSpeed;
+            }
+        }
+        if (Input.GetKey(KeyCode.E)) {
+            targetLateralSpeed = lateralSpeed;
+            if (targetLinearSpeed == 0.0f) {
+                targetLinearSpeed = forwardSpeed;
+            }
+        }
         targetAngularSpeed = Input.GetAxisRaw("Horizontal") * angularSpeed;
     }
 
     void FixedUpdate()
     {
-        wheelController.setRobotVelocity(targetLinearSpeed, 0.0f, targetAngularSpeed);
+        wheelController.setRobotVelocity(targetLinearSpeed, targetLateralSpeed, targetAngularSpeed);
     }
 
     void FreeCamUpdate() {

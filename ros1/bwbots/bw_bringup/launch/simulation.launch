@@ -1,4 +1,16 @@
 <launch>
     <include file="$(find ros_tcp_endpoint)/launch/endpoint.launch"/>
+    <include file="$(find bw_description)/launch/bw_description.launch"/>
     <include file="$(find bw_rplidar)/launch/robeert_filters.launch"/>
+    <include file="$(find bw_kalman)/launch/bw_kalman.launch"/>
+
+    <node pkg="tf" type="static_transform_publisher" name="imu_tf" args="0.0 0.0 0.0  0 0 0 1 camera_link zed2_imu_link 20" />
+
+    <arg name="map_name" value="simulated"/>
+    <include file="$(find bw_laser_slam)/launch/bw_laser_slam.launch">
+        <arg name="mode" value="localize"/>
+        <!-- <arg name="mode" value="mapping"/> -->
+        <!-- <arg name="mode" value="idle"/> -->
+        <arg name="map_name" value="$(arg map_name)"/>
+    </include>
 </launch>

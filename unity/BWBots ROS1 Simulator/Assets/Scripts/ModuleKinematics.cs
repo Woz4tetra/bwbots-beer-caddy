@@ -138,7 +138,7 @@ class ModuleKinematics
         setWheelVelocity(wheel_velocity);
     }
 
-    private double WrapAngle(double angle)
+    public static double WrapAngle(double angle)
     {
         // wrap to -pi..pi
         angle = angle % (2.0 * Math.PI);
@@ -179,7 +179,23 @@ class ModuleKinematics
     }
 
     public double getAzimuth() {
-        return (double)(module.transform.localEulerAngles.y * Mathf.Deg2Rad);
+        List<float> states = new List<float>();
+        module.GetJointPositions(states);
+
+        List<int> indices = new List<int>();
+        module.GetDofStartIndices(indices);
+
+        if (module.index >= indices.Count) {
+            Debug.LogWarning("Failed to get azimuth! Not enough joints.");
+            return 0.0f;
+        }
+        int index = indices[module.index];
+        if (index >= states.Count) {
+            Debug.LogWarning("Failed to get azimuth! Index out of range.");
+            return 0.0f;
+        }
+        double azimuth = (double)(states[index]);
+        return this.azimuth_direction * azimuth;
     }
 
     public double getWheelVelocity() {
@@ -200,5 +216,13 @@ class ModuleKinematics
         }
         double angularVelocity = (double)(states[index]);  // rad/s
         return this.wheel_direction * angularVelocity * wheel_radius;
+    }
+
+    public double getXLocation() {
+        return x_location;
+    }
+
+    public double getYLocation() {
+        return y_location;
     }
 }

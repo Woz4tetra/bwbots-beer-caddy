@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class OdometryPublisher : MonoBehaviour
 {
-    [SerializeField] private ArticulationWheelController chassis;
+    [SerializeField] private BwbotsSimulatedChassis chassis;
     [SerializeField] private double publishDelay;
     [SerializeField] private string topic;
     

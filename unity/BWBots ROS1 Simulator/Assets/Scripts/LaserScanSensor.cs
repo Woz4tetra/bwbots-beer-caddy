@@ -2,12 +2,15 @@ using System.Collections.Generic;
 using System.Linq;
 using RosMessageTypes.Sensor;
 using RosMessageTypes.Std;
+using RosMessageTypes.BuiltinInterfaces;
+using Unity.Robotics.ROSTCPConnector;
 using UnityEngine;
+using System;
 
 public class LaserScanSensor : MonoBehaviour
 {
     public bool debug = false;
-    public double PublishPeriodSeconds = 0.1;
+    public double ScanDelay = 0.1;
     public float RangeMetersMin = 0;
     public float RangeMetersMax = 1000;
     public float ScanAngleStartDegrees = -45;
@@ -24,25 +27,39 @@ public class LaserScanSensor : MonoBehaviour
     double m_TimeNextScanSeconds = -1;
     int m_NumMeasurementsTaken;
     List<float> ranges = new List<float>();
+    List<float> intensities = new List<float>();
 
     bool isScanning = false;
     double m_TimeLastScanBeganSeconds = -1;
 
     private LaserScanMsg latestScanMsg;
 
+    [SerializeField] private double PublishDelay;
+    [SerializeField] private string topic;
+    private double _prevScanTime;
+    private uint m_messageCount = 0;
+    
+    private ROSConnection _ros;
+
+
     protected virtual void Start()
     {
         m_CurrentScanAngleStart = ScanAngleStartDegrees;
         m_CurrentScanAngleEnd = ScanAngleEndDegrees;
 
-        m_TimeNextScanSeconds = Time.realtimeSinceStartup + PublishPeriodSeconds;
+        m_TimeNextScanSeconds = Time.realtimeSinceStartup + ScanDelay;
+
+        _ros = ROSConnection.GetOrCreateInstance();
+        _ros.RegisterPublisher<LaserScanMsg>(topic);
+        _prevScanTime = Time.realtimeSinceStartup;
+        Debug.Log($"Laser topic registered: {topic}");
     }
 
     void BeginScan()
     {
         isScanning = true;
         m_TimeLastScanBeganSeconds = Time.realtimeSinceStartup;
-        m_TimeNextScanSeconds = m_TimeLastScanBeganSeconds + PublishPeriodSeconds;
+        m_TimeNextScanSeconds = m_TimeLastScanBeganSeconds + ScanDelay;
         m_NumMeasurementsTaken = 0;
     }
 
@@ -53,7 +70,7 @@ public class LaserScanSensor : MonoBehaviour
         {
             if (float.IsFinite(range)) {
                 Vector3 direction = Quaternion.Euler(0, currAngle * Mathf.Rad2Deg, 0) * transform.forward;
-                Debug.DrawRay(transform.position, direction * range, new Color(1.0f, 0.0f, 0.0f, 0.5f), duration:(float)(PublishPeriodSeconds));
+                Debug.DrawRay(transform.position, direction * range, new Color(1.0f, 0.0f, 0.0f, 0.5f), duration:(float)(ScanDelay));
             }
             currAngle += scanMsg.angle_increment;
         }
@@ -86,12 +103,15 @@ public class LaserScanSensor : MonoBehaviour
         // }
         
         ranges.Reverse();
+        intensities.Reverse();
 
         var msg = new LaserScanMsg
         {
             header = new HeaderMsg
             {
                 frame_id = FrameId,
+                seq = m_messageCount,
+                stamp = RosUtil.GetTimeMsg()
             },
             range_min = RangeMetersMin,
             range_max = RangeMetersMax,
@@ -99,8 +119,8 @@ public class LaserScanSensor : MonoBehaviour
             angle_max = angleEndRos,
             angle_increment = (angleEndRos - angleStartRos) / NumMeasurementsPerScan,
             time_increment = TimeBetweenMeasurementsSeconds,
-            scan_time = (float)PublishPeriodSeconds,
-            intensities = new float[ranges.Count],
+            scan_time = (float)ScanDelay,
+            intensities = intensities.ToArray(),
             ranges = ranges.ToArray(),
         };
 
@@ -110,9 +130,12 @@ public class LaserScanSensor : MonoBehaviour
             this.VisualizeScan(msg);
 
         m_NumMeasurementsTaken = 0;
+        m_messageCount++;
         ranges.Clear();
+        intensities.Clear();
         isScanning = false;
     }
+
 
     public LaserScanMsg GetLaserScanMsg() {
         return latestScanMsg;
@@ -120,6 +143,13 @@ public class LaserScanSensor : MonoBehaviour
 
     public void Update()
     {
+        double now = Time.realtimeSinceStartup;
+        if (now - _prevScanTime > PublishDelay)
+        {
+            _ros.Publish(topic, GetLaserScanMsg());
+            _prevScanTime = now;
+        }
+
         if (!isScanning)
         {
             if (Time.realtimeSinceStartup < m_TimeNextScanSeconds)
@@ -148,12 +178,14 @@ public class LaserScanSensor : MonoBehaviour
             if (foundValidMeasurement && hit.distance > RangeMetersMin)
             {
                 float magnitude = noiseMagnitude * hit.distance / RangeMetersMax;
-                float noise = Random.Range(-magnitude, magnitude);
+                float noise = UnityEngine.Random.Range(-magnitude, magnitude);
                 ranges.Add(hit.distance + noise);
+                intensities.Add(100.0f);
             }
             else
             {
                 ranges.Add(float.PositiveInfinity);
+                intensities.Add(0.0f);
             }
 
             // Even if Raycast didn't find a valid hit, we still count it as a measurement

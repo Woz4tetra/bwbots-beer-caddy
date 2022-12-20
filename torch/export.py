@@ -12,7 +12,7 @@ sys.path.insert(0, yolov5_path)
 import yolov5
 import yolov5.export
 
-model_name = "person_2022-12-18.torchscript"
+model_name = "person_2022-12-20.torchscript"
 classes_name = "person.names"
 
 base_dir = "outputs/person_train"

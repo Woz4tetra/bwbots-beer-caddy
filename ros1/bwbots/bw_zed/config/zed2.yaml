@@ -60,7 +60,7 @@ object_detection:
 
 yolo_object_detection:
     enabled: false
-    confidence_threshold: 45.0
+    confidence_threshold: 70.0
     nms_iou_confidence_threshold: 40.0
     report_loop_times: false
     object_tracking_enabled: true

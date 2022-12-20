@@ -7,10 +7,6 @@ throttle_scans: 1  # 1 = no scans skipped
 
 maxRange: 24.0 # Max sensor value
 maxUrange: 24.0 # Usable region of the sensor
-# maxRange: 18.0 # Max sensor value
-# maxUrange: 18.0 # Usable region of the sensor
-# maxRange: 24.0 # Max sensor value
-# maxUrange: 24.0 # Usable region of the sensor
 particles: 50
 
 # minimumScore: 40
