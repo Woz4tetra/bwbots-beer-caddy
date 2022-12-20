@@ -1,7 +1,8 @@
 using System;
 using UnityEngine;
-using System.Collections;
+using RosMessageTypes.Nav;
 using System.Collections.Generic;
+using RosMessageTypes.Geometry;
 
 /// <summary>
 ///     This script converts linear velocity and 
@@ -26,6 +27,7 @@ public class ArticulationWheelController : MonoBehaviour
     private const double FRONT_ANGLE = -1.2967;  // -74.293 degrees
     private const double ALCOVE_ANGLE = 0.5236;  // 30 degrees
     private const double MIN_RADIUS_OF_CURVATURE = 0.15;
+    private const double WHEEL_RADIUS = 0.115 / 2.0;  // meters
 
     private const double WIDTH = 0.115;  // meters, chassis pivot to pivot Y dimension
     private const double LENGTH = 0.160;  // meters, chassis pivot to pivot X dimension
@@ -37,6 +39,9 @@ public class ArticulationWheelController : MonoBehaviour
     private const double max_strafe_angle = Math.PI;
     private const double reverse_min_strafe_angle = -Math.PI;
     private const double reverse_max_strafe_angle = Math.PI;
+
+    private double[] odom_covariance;
+    private double[] twist_covariance;
 
     void Start()
     {
@@ -60,6 +65,7 @@ public class ArticulationWheelController : MonoBehaviour
                 bodyModuleBackLeft,
                 FRONT_ANGLE,  // -75 deg
                 ALCOVE_ANGLE,  // 30 deg
+                WHEEL_RADIUS,
                 MIN_RADIUS_OF_CURVATURE,
                 -LENGTH / 2.0,
                 -WIDTH / 2.0,
@@ -76,6 +82,7 @@ public class ArticulationWheelController : MonoBehaviour
                 bodyModuleBackRight,
                 -ALCOVE_ANGLE,  // -30 deg
                 -FRONT_ANGLE,  // 75 deg
+                WHEEL_RADIUS,
                 MIN_RADIUS_OF_CURVATURE,
                 -LENGTH / 2.0,
                 WIDTH / 2.0,
@@ -92,6 +99,7 @@ public class ArticulationWheelController : MonoBehaviour
                 bodyModuleFrontLeft,
                 -ALCOVE_ANGLE,  // -30 deg
                 -FRONT_ANGLE,  // 75 deg
+                WHEEL_RADIUS,
                 MIN_RADIUS_OF_CURVATURE,
                 LENGTH / 2.0,
                 -WIDTH / 2.0,
@@ -108,6 +116,7 @@ public class ArticulationWheelController : MonoBehaviour
                 bodyModuleFrontRight,
                 FRONT_ANGLE,  // -75 deg
                 ALCOVE_ANGLE,  // 30 deg
+                WHEEL_RADIUS,
                 MIN_RADIUS_OF_CURVATURE,
                 LENGTH / 2.0,
                 WIDTH / 2.0,
@@ -117,6 +126,23 @@ public class ArticulationWheelController : MonoBehaviour
                 false
             )
         );
+
+        odom_covariance = new double[] {
+            1e-5, 0.0, 0.0, 0.0, 0.0, 0.0,
+            0.0, 1e-5, 0.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 1e-5, 0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 1e-5, 0.0, 0.0,
+            0.0, 0.0, 0.0, 0.0, 1e-5, 0.0,
+            0.0, 0.0, 0.0, 0.0, 0.0, 1e-5
+        };
+        twist_covariance = new double[] {
+            1e-5, 0.0, 0.0, 0.0, 0.0, 0.0,
+            0.0, 1e-5, 0.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 1e-5, 0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 1e-5, 0.0, 0.0,
+            0.0, 0.0, 0.0, 0.0, 1e-5, 0.0,
+            0.0, 0.0, 0.0, 0.0, 0.0, 1e-5
+        };
     }
 
     void Update()
@@ -179,6 +205,33 @@ public class ArticulationWheelController : MonoBehaviour
         // Debug.Log(String.Format("vx: {0}, vy: {1}, vt: {2}, dt: {3}", vx, vy, vt, dt));
         foreach (ModuleKinematics module in modules) {
             module.set(vx, vy, vt, dt);
+            module.getWheelVelocity();
         }
     }
+
+    public OdometryMsg GetOdometryMessage(){
+        OdometryMsg msg = new OdometryMsg();
+        msg.header.frame_id = "odom";
+        msg.child_frame_id = "base_link";
+        PoseMsg pose = new PoseMsg(
+            new PointMsg(0.0, 0.0, 0.0),
+            new QuaternionMsg(0.0, 0.0, 0.0, 1.0)
+        );
+        TwistMsg twist = new TwistMsg(
+            new Vector3Msg(0.0, 0.0, 0.0),
+            new Vector3Msg(0.0, 0.0, 0.0)
+        );
+
+        msg.pose = new PoseWithCovarianceMsg(pose, odom_covariance);
+        msg.twist = new TwistWithCovarianceMsg(twist, twist_covariance);
+        return msg;
+    }
+
+    // void computeVelocity() {
+    //     foreach (ModuleKinematics module in modules) {
+    //         double azimuth = get_azimuth(channel);
+    //         double x = drive_modules[channel]->get_x_location() + this->armature_length * cos(-azimuth);
+    //         double y = drive_modules[channel]->get_y_location() + this->armature_length * sin(-azimuth);
+    //     }
+    // }
 }
