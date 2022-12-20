@@ -1126,23 +1126,13 @@ MonoBehaviour:
   PublishPeriodSeconds: 0.05
   RangeMetersMin: 0.1
   RangeMetersMax: 20
-  ScanAngleStartDegrees: 0
-  ScanAngleEndDegrees: -180
-  ScanOffsetAfterPublish: 180
+  ScanAngleStartDegrees: -180
+  ScanAngleEndDegrees: 180
+  ScanOffsetAfterPublish: 0
   NumMeasurementsPerScan: 720
   TimeBetweenMeasurementsSeconds: 0.0000001
   FrameId: laser
   noiseMagnitude: 0.15
-  latestScanMsg:
-    angle_min: 0
-    angle_max: 0
-    angle_increment: 0
-    time_increment: 0
-    scan_time: 0
-    range_min: 0
-    range_max: 0
-    ranges: []
-    intensities: []
 --- !u!114 &552436834
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2479,6 +2469,7 @@ GameObject:
   - component: {fileID: 1613416636}
   - component: {fileID: 1613416637}
   - component: {fileID: 1613416638}
+  - component: {fileID: 1613416639}
   m_Layer: 0
   m_Name: robeert
   m_TagString: Untagged
@@ -2659,6 +2650,21 @@ ArticulationBody:
   m_Immovable: 0
   m_UseGravity: 1
   m_CollisionDetectionMode: 0
+--- !u!114 &1613416639
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1613416630}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52bf7b37b5b7c32838d457e8c8157d7a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  chassis: {fileID: 1613416636}
+  publishDelay: 0.03
+  topic: /bw/odom
 --- !u!1 &1642577580
 GameObject:
   m_ObjectHideFlags: 0
