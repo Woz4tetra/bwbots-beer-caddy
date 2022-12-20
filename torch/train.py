@@ -22,11 +22,11 @@ with open(os.path.join("/tmp", filename), 'w') as tmp:
     config["test"] = os.path.abspath(os.path.join(base_dir, config.get("test", '')))
     yaml.dump(config, tmp)
 
-    model_path = os.path.join(os.path.dirname(yolov5.__file__), "models", "yolov5n.yaml")
+    model_path = os.path.join(os.path.dirname(yolov5.__file__), "models", "yolov5s.yaml")
     yolov5.train.run(
         data=tmp.name,
         imgsz=640,
-        epochs=300,
+        epochs=500,
         cfg=model_path,
         weights='',
         device=0,

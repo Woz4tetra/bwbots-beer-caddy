@@ -112,6 +112,7 @@ class ModuleKinematics
             module_vx = module_hypo * Math.Cos(module_angle);
             module_vy = module_hypo * Math.Sin(module_angle);
             azimuth = Math.Atan2(module_vy, module_vx);
+            wheel_velocity = v_mag;
         }
         return (azimuth, wheel_velocity);
     }
