@@ -74,7 +74,7 @@ public class FpvCamera : MonoBehaviour
 
     private Vector3 m_prevMovementVector = Vector3.zero;
 
-    private ViewMode m_viewMode = ViewMode.FREE_CAM;
+    private ViewMode m_viewMode = ViewMode.FOLLOW_ROBOT;
 
     void Start()
     {
