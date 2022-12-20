@@ -1,2 +1,2 @@
-string delivery_waypoint
-string drink_dispenser_waypoint
+string delivery_waypoint_key
+string drink_dispenser_tag

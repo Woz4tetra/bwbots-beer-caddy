@@ -196,7 +196,7 @@ class BehaviorTrees:
             if mission is None:
                 return None
             else:
-                return self.tag_manager.get_tag(self.drink_mission_manager.get_active().drink_dispenser_waypoint).prep
+                return self.tag_manager.get_tag(self.drink_mission_manager.get_active().drink_dispenser_tag).prep
         return supplier()
 
     def dispenser_tag_supplier(self):
@@ -205,7 +205,7 @@ class BehaviorTrees:
             if mission is None:
                 return None
             else:
-                return self.drink_mission_manager.get_active().drink_dispenser_waypoint
+                return self.drink_mission_manager.get_active().drink_dispenser_tag
         return supplier()
 
     def delivery_supplier(self):
@@ -214,7 +214,7 @@ class BehaviorTrees:
             if mission is None:
                 return None
             else:
-                return self.drink_mission_manager.get_active().delivery_waypoint
+                return self.drink_mission_manager.get_active().delivery_waypoint_key
         return supplier()
 
     def dispenser_type_supplier(self):
@@ -223,7 +223,7 @@ class BehaviorTrees:
             if mission is None:
                 return None
             else:
-                return self.tag_manager.get_tag(self.drink_mission_manager.get_active().delivery_waypoint).tag_type
+                return self.tag_manager.get_tag(self.drink_mission_manager.get_active().delivery_waypoint_key).tag_type
         return supplier()
 
     def go_to_dispenser_type_A0_stage1(self):
