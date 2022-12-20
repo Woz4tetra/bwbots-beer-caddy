@@ -3,6 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum ViewMode {
+    FOLLOW_ROBOT,
+    FREE_CAM
+}
+
 public class FpvCamera : MonoBehaviour
 {
     /// <summary>
@@ -53,19 +58,73 @@ public class FpvCamera : MonoBehaviour
     /// </summary>
     [SerializeField]
     float m_MovementDeceleration = -10f;
+    
+    public Component followObject;
+    private Vector3 cameraPositionOffset;
+    private Quaternion cameraRotationOffset;
+    public float smoothSpeed = 1.0f;
 
-    SlewLimiter m_MovementLimiter;
+    public ArticulationWheelController wheelController;
+    public float speed = 1.0f;
+    public float angularSpeed = 3.14f;
+    private float targetLinearSpeed;
+    private float targetAngularSpeed;
 
-    Vector3 m_prevMovementVector = Vector3.zero;
+    private SlewLimiter m_MovementLimiter;
+
+    private Vector3 m_prevMovementVector = Vector3.zero;
+
+    private ViewMode m_viewMode = ViewMode.FREE_CAM;
 
     void Start()
     {
         m_MovementLimiter = new SlewLimiter(m_MovementDeceleration, m_MovementAcceleration, 0.0f);
+        cameraPositionOffset = this.transform.position;
+        cameraRotationOffset = this.transform.rotation;
         StopLooking();
     }
 
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.V)) {
+            if (m_viewMode == ViewMode.FREE_CAM) {
+                m_viewMode = ViewMode.FOLLOW_ROBOT;
+                Quaternion inverseRotation = Quaternion.Inverse(followObject.transform.rotation);
+                cameraPositionOffset = inverseRotation * (this.transform.position - followObject.transform.position);
+                cameraRotationOffset = inverseRotation * this.transform.rotation;
+            }
+            else {
+                m_viewMode = ViewMode.FREE_CAM;
+            }
+        }
+        
+        if (m_viewMode == ViewMode.FREE_CAM) {
+            FreeCamUpdate();
+        }
+        else if (m_viewMode == ViewMode.FOLLOW_ROBOT) {
+            FollowRobotUpdate();
+        }
+    }
+
+    void FollowRobotUpdate() {
+        Vector3 desiredPosition = followObject.transform.position + followObject.transform.rotation * cameraPositionOffset;
+        Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed);
+        transform.position = smoothedPosition;
+
+        Quaternion desiredRotation = followObject.transform.rotation * cameraRotationOffset;
+        Quaternion smoothedRotation = Quaternion.Lerp(transform.rotation, desiredRotation, smoothSpeed);
+        transform.rotation = smoothedRotation;
+
+        targetLinearSpeed = Input.GetAxisRaw("Vertical") * speed;
+        targetAngularSpeed = Input.GetAxisRaw("Horizontal") * angularSpeed;
+    }
+
+    void FixedUpdate()
+    {
+        wheelController.setRobotVelocity(targetLinearSpeed, 0.0f, targetAngularSpeed);
+    }
+
+    void FreeCamUpdate() {
         var fastMode = Input.GetKey(KeyCode.LeftControl);
         float movementForward = 0.0f;
         float movementRight = 0.0f;
@@ -89,6 +148,7 @@ public class FpvCamera : MonoBehaviour
 
         if (Input.GetKey(KeyCode.E) || Input.GetKey(KeyCode.Space))
             movementUp += movementSpeed;
+        
 
         Vector3 relativeMovementVector = new Vector3(movementRight, movementUp, movementForward);
         Quaternion cameraRotation = Quaternion.Euler(0.0f, transform.localEulerAngles.y, 0.0f);

@@ -10,8 +10,8 @@ public class KeyboardControl : MonoBehaviour
 {
     public ArticulationWheelController wheelController;
 
-    public float speed = 1.5f;
-    public float angularSpeed = 1.5f;
+    public float speed = 1.0f;
+    public float angularSpeed = 3.14f;
     private float targetLinearSpeed;
     private float targetAngularSpeed;
 
