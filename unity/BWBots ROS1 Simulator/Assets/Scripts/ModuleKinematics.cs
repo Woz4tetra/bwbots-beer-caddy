@@ -53,10 +53,12 @@ class ModuleKinematics
         wheelDrive.forceLimit = 3.402823e+38f;
         wheel.xDrive = wheelDrive;
 
-        wheel.linearDamping = 0.1f;
-        wheel.angularDamping = 0.1f;
+        wheel.linearDamping = 1.0f;
+        wheel.angularDamping = 1.0f;
         wheel.jointFriction = 0.1f;
-        wheel.mass = 0.01f;
+        wheel.inertiaTensor = new Vector3(1e-06f, 1e-04f, 1e-06f);
+        Debug.Log("wheel.inertiaTensor: " + wheel.inertiaTensor);
+        wheel.mass = 0.005f;
 
         ArticulationDrive moduleDrive = module.xDrive;
         moduleDrive.stiffness = 10000.0f;
@@ -67,7 +69,10 @@ class ModuleKinematics
         module.linearDamping = 1.0f;
         module.angularDamping = 1.0f;
         module.jointFriction = 1.0f;
-        module.mass = 0.1f;
+        module.mass = 0.15f;
+        // module.inertiaTensor = new Vector3(0.0f, 0.0f, 0.0f);
+        module.inertiaTensor = new Vector3(1e-04f, 1e-02f, 1e-04f);
+        Debug.Log("module.inertiaTensor: " + module.inertiaTensor);
     }
 
     private (double, double) ComputeState(double vx, double vy, double vt, double dt, double prev_azimuth)
@@ -127,7 +132,7 @@ class ModuleKinematics
             wheel_velocity = -wheel_velocity;
         }
 
-        Debug.Log(String.Format("name: {0}, azimuth: {1}, wheel_velocity: {2}", name, azimuth, wheel_velocity));
+        // Debug.Log(String.Format("name: {0}, azimuth: {1}, wheel_velocity: {2}", name, azimuth, wheel_velocity));
         setModuleAzimuth(azimuth);
         setWheelVelocity(wheel_velocity);
     }

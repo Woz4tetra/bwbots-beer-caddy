@@ -1848,6 +1848,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c7ce92355f256b942bda13b275fbe299, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  bodyMain: {fileID: 1613416638}
   bodyWheelBackLeft: {fileID: 1372091407}
   bodyWheelBackRight: {fileID: 914812194}
   bodyWheelFrontLeft: {fileID: 1430557362}
@@ -1917,8 +1918,8 @@ ArticulationBody:
     forceLimit: 3.4028235e+38
     target: 0
     targetVelocity: 0
-  m_LinearDamping: 0.01
-  m_AngularDamping: 0.01
+  m_LinearDamping: 1
+  m_AngularDamping: 1
   m_JointFriction: 0.05
   m_Immovable: 0
   m_UseGravity: 1

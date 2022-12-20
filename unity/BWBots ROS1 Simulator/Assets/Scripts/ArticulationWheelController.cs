@@ -10,7 +10,7 @@ using System.Collections.Generic;
 /// </summary>
 public class ArticulationWheelController : MonoBehaviour
 {
-
+    public ArticulationBody bodyMain;
     public ArticulationBody bodyWheelBackLeft;
     public ArticulationBody bodyWheelBackRight;
     public ArticulationBody bodyWheelFrontLeft;
@@ -40,6 +40,18 @@ public class ArticulationWheelController : MonoBehaviour
 
     void Start()
     {
+        ArticulationDrive bodyDrive = bodyMain.xDrive;
+        bodyDrive.stiffness = 200.0f;
+        bodyDrive.damping = 25.0f;
+        bodyDrive.forceLimit = 3.402823e+38f;
+        bodyMain.xDrive = bodyDrive;
+
+        bodyMain.linearDamping = 1.0f;
+        bodyMain.angularDamping = 1.0f;
+        bodyMain.jointFriction = 0.1f;
+        bodyMain.inertiaTensor = new Vector3(2e-07f, 2e-07f, 2e-07f);
+        bodyMain.mass = 0.005f;
+
         modules = new List<ModuleKinematics>();
         modules.Add(
             new ModuleKinematics(
@@ -164,7 +176,7 @@ public class ArticulationWheelController : MonoBehaviour
             vx = v_mag * Math.Cos(v_theta);
             vy = v_mag * Math.Sin(v_theta);
         }
-        Debug.Log(String.Format("vx: {0}, vy: {1}, vt: {2}, dt: {3}", vx, vy, vt, dt));
+        // Debug.Log(String.Format("vx: {0}, vy: {1}, vt: {2}, dt: {3}", vx, vy, vt, dt));
         foreach (ModuleKinematics module in modules) {
             module.set(vx, vy, vt, dt);
         }
