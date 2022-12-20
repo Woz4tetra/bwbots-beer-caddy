@@ -628,7 +628,7 @@ ArticulationBody:
   m_GameObject: {fileID: 201100060}
   m_Enabled: 1
   serializedVersion: 3
-  m_Mass: 0.01
+  m_Mass: 1
   m_ParentAnchorPosition: {x: 0.037000004, y: 0.057500005, z: 0}
   m_ParentAnchorRotation: {x: 0, y: 0, z: 1.0000001, w: 0}
   m_AnchorPosition: {x: 0, y: 0, z: 0}
@@ -665,8 +665,8 @@ ArticulationBody:
     forceLimit: 3.4028235e+38
     target: 0
     targetVelocity: 0
-  m_LinearDamping: 1
-  m_AngularDamping: 1
+  m_LinearDamping: 0.1
+  m_AngularDamping: 0.1
   m_JointFriction: 1
   m_Immovable: 0
   m_UseGravity: 1
@@ -682,8 +682,8 @@ SphereCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.057442103
-  m_Center: {x: 0.00011573921, y: -0.000000007450581, z: 0}
+  m_Radius: 0.0575
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &384469617
 GameObject:
   m_ObjectHideFlags: 0
@@ -1123,7 +1123,7 @@ ArticulationBody:
   m_GameObject: {fileID: 914812189}
   m_Enabled: 1
   serializedVersion: 3
-  m_Mass: 0.01
+  m_Mass: 1
   m_ParentAnchorPosition: {x: 0.037000004, y: 0.057500005, z: 0}
   m_ParentAnchorRotation: {x: 0, y: 0, z: 1.0000001, w: 0}
   m_AnchorPosition: {x: 0, y: 0, z: 0}
@@ -1160,8 +1160,8 @@ ArticulationBody:
     forceLimit: 3.4028235e+38
     target: 0
     targetVelocity: 0
-  m_LinearDamping: 1
-  m_AngularDamping: 1
+  m_LinearDamping: 0.1
+  m_AngularDamping: 0.1
   m_JointFriction: 1
   m_Immovable: 0
   m_UseGravity: 1
@@ -1177,8 +1177,8 @@ SphereCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.057442103
-  m_Center: {x: 0.00011573921, y: -0.000000007450581, z: 0}
+  m_Radius: 0.0575
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -1526,7 +1526,7 @@ ArticulationBody:
   m_GameObject: {fileID: 1372091402}
   m_Enabled: 1
   serializedVersion: 3
-  m_Mass: 0.01
+  m_Mass: 1
   m_ParentAnchorPosition: {x: 0.037000004, y: 0.057500005, z: 0}
   m_ParentAnchorRotation: {x: 0, y: 0, z: 1.0000001, w: 0}
   m_AnchorPosition: {x: 0, y: 0, z: 0}
@@ -1563,9 +1563,9 @@ ArticulationBody:
     forceLimit: 3.4028235e+38
     target: 0
     targetVelocity: 0
-  m_LinearDamping: 0
-  m_AngularDamping: 0
-  m_JointFriction: 0
+  m_LinearDamping: 0.1
+  m_AngularDamping: 0.1
+  m_JointFriction: 1
   m_Immovable: 0
   m_UseGravity: 1
   m_CollisionDetectionMode: 0
@@ -1580,8 +1580,8 @@ SphereCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.057442103
-  m_Center: {x: 0.00011573921, y: -0.000000007450581, z: 0}
+  m_Radius: 0.0575
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1430557357
 GameObject:
   m_ObjectHideFlags: 0
@@ -1676,7 +1676,7 @@ ArticulationBody:
   m_GameObject: {fileID: 1430557357}
   m_Enabled: 1
   serializedVersion: 3
-  m_Mass: 0.01
+  m_Mass: 1
   m_ParentAnchorPosition: {x: 0.037000004, y: 0.057500005, z: 0}
   m_ParentAnchorRotation: {x: 0, y: 0, z: 1.0000001, w: 0}
   m_AnchorPosition: {x: 0, y: 0, z: 0}
@@ -1713,8 +1713,8 @@ ArticulationBody:
     forceLimit: 3.4028235e+38
     target: 0
     targetVelocity: 0
-  m_LinearDamping: 1
-  m_AngularDamping: 1
+  m_LinearDamping: 0.1
+  m_AngularDamping: 0.1
   m_JointFriction: 1
   m_Immovable: 0
   m_UseGravity: 1
@@ -1730,8 +1730,8 @@ SphereCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.057442103
-  m_Center: {x: 0.00011573921, y: -0.000000007450581, z: 0}
+  m_Radius: 0.0575
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1613416630
 GameObject:
   m_ObjectHideFlags: 0
