@@ -2,7 +2,7 @@ import { useState } from "react"
 
 export default function ConnectPage(props: any) {
     const { rosClient, setRosClient } = props;
-    const [robotIP, setRobotIP] = useState("");
+    const [ robotIP, setRobotIP ] = useState("");
 
     const onRobotIPChange = (e: any) => setRobotIP(e.target.value);
     
@@ -11,22 +11,24 @@ export default function ConnectPage(props: any) {
 
         var ROSLIB = require('roslib');
 
+        const webSocketUrl = "ws://" + robotIP + ":9090";
+
         const ros = new ROSLIB.Ros({
-            url: robotIP
+            url: webSocketUrl
         });
         
         ros.on('connection', () => {
-            console.log('Connected to ROS websocket server');
+            console.log('Connected to ROS websocket server on', webSocketUrl);
             setRosClient(ros);
         });
 
         ros.on('error', (error: any) => {
-            console.log('Error connecting to websocket server: ', error);
+            console.log('Error connecting to ROS websocket server: ', error);
             setRosClient(undefined);
         });
         
         ros.on('close', () => {
-            console.log('Connection to websocket server closed.');
+            console.log('Closed connection to ROS websocket server on', webSocketUrl);
             setRosClient(undefined);
         });
     }
