@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 export default function RobotState(props: any) {
     const { rosClient } = props;
-    const [robotState, setRobotState] = useState([0, 0, 0]);
+    const [ robotState, setRobotState ] = useState([0, 0, 0]);
 
     useEffect(() => {
         if (!rosClient) return;
@@ -25,11 +25,11 @@ export default function RobotState(props: any) {
 
         odomListener.subscribe(odomCallback);
 
-        console.log("Subscribed to robot topics.")
+        console.log("Subscribed to /bw/odom");
 
         return () => {
             odomListener.unsubscribe(odomCallback);
-            console.log("Unsubscribed from robot topics.")
+            console.log("Unsubscribed from /bw/odom");
         };
     }, [rosClient]);
 
@@ -38,7 +38,7 @@ export default function RobotState(props: any) {
         <h1>Robot</h1>
         <div>State: <span>{robotState[0] + ', ' + robotState[1] + ', ' + robotState[2]}</span></div>
         <div>Battery: <span>N/A</span></div>
-        <div>Connection: <span>Disconnected</span></div>
+        <div>Connection: <span>{rosClient ? 'Connected' : 'Disconnected'}</span></div>
     </div>
     );
 }

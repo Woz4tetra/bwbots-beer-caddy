@@ -14,7 +14,8 @@ import { WaypointsPage } from "./components/WaypointsPage";
 import { StatePage } from "./components/StatePage";
 import { useState } from "react";
 
-const pathRoot = "/beer-delivery-robot-webapp/";
+// const pathRoot = "/beer-delivery-robot-webapp/";
+const pathRoot = "/";
 
 export function constructPath(path: string) {
   return pathRoot + path;
@@ -35,7 +36,7 @@ function App() {
     <NavBar />
     <Routes>
       <Route path={constructPath("connect")} element={<ConnectPage {...defaultProps} />}/>
-      <Route path={constructPath("deliver")} element={<DeliverPage />}/>
+      <Route path={constructPath("deliver")} element={<DeliverPage {...defaultProps} />}/>
       <Route path={constructPath("waypoints")} element={<WaypointsPage {...defaultProps} />}/>
       <Route path={constructPath("state")} element={<StatePage {...defaultProps} />}/>
       <Route path={constructPath("*")} element={<Navigate to={constructPath("connect")} />}/>
