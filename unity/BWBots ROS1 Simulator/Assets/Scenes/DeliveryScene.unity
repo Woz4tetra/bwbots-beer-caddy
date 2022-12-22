@@ -780,9 +780,9 @@ ArticulationBody:
   serializedVersion: 3
   m_Mass: 0.1
   m_ParentAnchorPosition: {x: 0.0575, y: 0, z: -0.08}
-  m_ParentAnchorRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
+  m_ParentAnchorRotation: {x: 0, y: 0, z: 0.70710677, w: 0.70710677}
   m_AnchorPosition: {x: 0, y: 0, z: 0}
-  m_AnchorRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
+  m_AnchorRotation: {x: 0, y: 0, z: 0.70710677, w: 0.70710677}
   m_MatchAnchors: 1
   m_ArticulationJointType: 2
   m_LinearX: 2
@@ -1054,7 +1054,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 519659260}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.294, y: 0.302, z: -0.231}
+  m_LocalPosition: {x: 0.294, y: 1.515, z: 5.968}
   m_LocalScale: {x: 0.25, y: 0.25, z: 0.25}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1557,9 +1557,9 @@ ArticulationBody:
   serializedVersion: 3
   m_Mass: 1
   m_ParentAnchorPosition: {x: 0.037000004, y: 0.057500005, z: 0}
-  m_ParentAnchorRotation: {x: 0, y: 0, z: 1.0000001, w: 0}
+  m_ParentAnchorRotation: {x: 0, y: 0, z: 1, w: 0}
   m_AnchorPosition: {x: 0, y: 0, z: 0}
-  m_AnchorRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
+  m_AnchorRotation: {x: 0, y: 0, z: 0.70710677, w: 0.70710677}
   m_MatchAnchors: 1
   m_ArticulationJointType: 2
   m_LinearX: 2
@@ -2153,9 +2153,9 @@ ArticulationBody:
   serializedVersion: 3
   m_Mass: 1
   m_ParentAnchorPosition: {x: 0.037000004, y: 0.057500005, z: 0}
-  m_ParentAnchorRotation: {x: 0, y: 0, z: 1.0000001, w: 0}
+  m_ParentAnchorRotation: {x: 1, y: 0, z: -0.000000043711392, w: -0.000000017453292}
   m_AnchorPosition: {x: 0, y: 0, z: 0}
-  m_AnchorRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
+  m_AnchorRotation: {x: 0.70710677, y: -0.70710677, z: -0.000000018567277, w: -0.000000043249962}
   m_MatchAnchors: 1
   m_ArticulationJointType: 2
   m_LinearX: 2
@@ -2303,9 +2303,9 @@ ArticulationBody:
   serializedVersion: 3
   m_Mass: 1
   m_ParentAnchorPosition: {x: 0.037000004, y: 0.057500005, z: 0}
-  m_ParentAnchorRotation: {x: 0, y: 0, z: 1.0000001, w: 0}
+  m_ParentAnchorRotation: {x: 1, y: 0, z: -0.000000043711392, w: 0}
   m_AnchorPosition: {x: 0, y: 0, z: 0}
-  m_AnchorRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
+  m_AnchorRotation: {x: 0.70710677, y: -0.70710677, z: -0.00000003090862, w: -0.00000003090862}
   m_MatchAnchors: 1
   m_ArticulationJointType: 2
   m_LinearX: 2
@@ -2631,12 +2631,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 1613416630}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 52bf7b37b5b7c32838d457e8c8157d7a, type: 3}
+  m_Script: {fileID: 11500000, guid: a7f217c4d5bdd9275ae2123ca74b1b54, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   chassis: {fileID: 1613416636}
   publishDelay: 0.03
-  topic: /bw/odom
+  odometryTopic: /bw/odom
+  jointTopicFormat: /bw/joint/base_link_to_module_{0}_joint
+  moduleTopicFormat: /bw/module/{0}
 --- !u!1 &1642577580
 GameObject:
   m_ObjectHideFlags: 0

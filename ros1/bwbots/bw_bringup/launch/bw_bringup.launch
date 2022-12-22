@@ -12,6 +12,7 @@
     <include file="$(find bw_launcher)/launch/bw_launcher.launch"/>
     <include file="$(find bw_waypoints)/launch/bw_waypoints.launch"/>
     <include if="$(arg use_kalman)" file="$(find bw_kalman)/launch/bw_kalman.launch"/>
+    <include file="$(find bw_tunnel)/launch/twist_mux.launch"/>
 
     <arg name="map_name" default="$(env ROS_MAP_NAME)"/>
     <include file="$(find bw_laser_slam)/launch/bw_laser_slam.launch">

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using RosMessageTypes.Geometry;
 using UnityEngine;
 
 public enum ViewMode {
@@ -43,21 +44,21 @@ public class FpvCamera : MonoBehaviour
     /// <summary>
     ///     Set to true when free looking (on right mouse button).
     /// </summary>
-    bool m_Looking;
+    bool looking;
 
-    bool m_FocusButtonPressed = false;
+    bool focusButtonPressed = false;
 
     /// <summary>
     ///     Movement acceleration
     /// </summary>
     [SerializeField]
-    float m_MovementAcceleration = 10f;
+    float movementAcceleration = 10f;
 
     /// <summary>
     ///     Movement deceleration
     /// </summary>
     [SerializeField]
-    float m_MovementDeceleration = -10f;
+    float mMovementDeceleration = -10f;
     
     public Component followObject;
     private Vector3 cameraPositionOffset;
@@ -72,15 +73,16 @@ public class FpvCamera : MonoBehaviour
     private float targetLateralSpeed;
     private float targetAngularSpeed;
 
-    private SlewLimiter m_MovementLimiter;
+    private SlewLimiter movementLimiter;
 
-    private Vector3 m_prevMovementVector = Vector3.zero;
+    private Vector3 prevMovementVector = Vector3.zero;
 
-    private ViewMode m_viewMode = ViewMode.FOLLOW_ROBOT;
+    private ViewMode viewMode = ViewMode.FOLLOW_ROBOT;
+    private bool enableRobotCommands = false;
 
     void Start()
     {
-        m_MovementLimiter = new SlewLimiter(m_MovementDeceleration, m_MovementAcceleration, 0.0f);
+        movementLimiter = new SlewLimiter(mMovementDeceleration, movementAcceleration, 0.0f);
         cameraPositionOffset = this.transform.position;
         cameraRotationOffset = this.transform.rotation;
         StopLooking();
@@ -89,21 +91,21 @@ public class FpvCamera : MonoBehaviour
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.V)) {
-            if (m_viewMode == ViewMode.FREE_CAM) {
-                m_viewMode = ViewMode.FOLLOW_ROBOT;
+            if (viewMode == ViewMode.FREE_CAM) {
+                viewMode = ViewMode.FOLLOW_ROBOT;
                 Quaternion inverseRotation = Quaternion.Inverse(followObject.transform.rotation);
                 cameraPositionOffset = inverseRotation * (this.transform.position - followObject.transform.position);
                 cameraRotationOffset = inverseRotation * this.transform.rotation;
             }
             else {
-                m_viewMode = ViewMode.FREE_CAM;
+                viewMode = ViewMode.FREE_CAM;
             }
         }
         
-        if (m_viewMode == ViewMode.FREE_CAM) {
+        if (viewMode == ViewMode.FREE_CAM) {
             FreeCamUpdate();
         }
-        else if (m_viewMode == ViewMode.FOLLOW_ROBOT) {
+        else if (viewMode == ViewMode.FOLLOW_ROBOT) {
             FollowRobotUpdate();
         }
     }
@@ -120,23 +122,43 @@ public class FpvCamera : MonoBehaviour
         targetLinearSpeed = Input.GetAxisRaw("Vertical") * forwardSpeed;
         targetLateralSpeed = 0.0f;
         if (Input.GetKey(KeyCode.Q)) {
-            targetLateralSpeed = -lateralSpeed;
-            if (targetLinearSpeed == 0.0f) {
-                targetLinearSpeed = forwardSpeed;
-            }
-        }
-        if (Input.GetKey(KeyCode.E)) {
             targetLateralSpeed = lateralSpeed;
             if (targetLinearSpeed == 0.0f) {
                 targetLinearSpeed = forwardSpeed;
             }
         }
-        targetAngularSpeed = Input.GetAxisRaw("Horizontal") * angularSpeed;
+        if (Input.GetKey(KeyCode.E)) {
+            targetLateralSpeed = -lateralSpeed;
+            if (targetLinearSpeed == 0.0f) {
+                targetLinearSpeed = forwardSpeed;
+            }
+        }
+        if (Input.GetKeyDown(KeyCode.C)) {
+            enableRobotCommands = !enableRobotCommands;
+            if (enableRobotCommands) {
+                Debug.Log($"Enabling robot control");
+            }
+            else {
+                Debug.Log($"Disabling robot control");
+            }
+        }
+        targetAngularSpeed = -Input.GetAxisRaw("Horizontal") * angularSpeed;
     }
 
     void FixedUpdate()
     {
-        wheelController.setRobotVelocity(targetLinearSpeed, targetLateralSpeed, targetAngularSpeed);
+        if (enableRobotCommands) {
+            TwistMsg msg = new TwistMsg {
+                linear = {
+                    x = targetLinearSpeed,
+                    y = targetLateralSpeed
+                },
+                angular = {
+                    z = targetAngularSpeed
+                }
+            };
+            wheelController.setTwistCommand(msg);
+        }
     }
 
     void FreeCamUpdate() {
@@ -170,19 +192,19 @@ public class FpvCamera : MonoBehaviour
         Vector3 absoluteMovementVector = cameraRotation * relativeMovementVector;
         float movementDeltaRaw = Vector3.Distance(Vector3.zero, absoluteMovementVector);
         if (Math.Abs(movementDeltaRaw) < 1E-3) {
-            absoluteMovementVector = m_prevMovementVector;
+            absoluteMovementVector = prevMovementVector;
         }
         else {
-            m_prevMovementVector = absoluteMovementVector;
+            prevMovementVector = absoluteMovementVector;
         }
         movementDeltaRaw = SlewLimiter.clamp(movementDeltaRaw, -movementSpeed, movementSpeed);
-        float movementDelta = (float)m_MovementLimiter.calculate(movementDeltaRaw);
+        float movementDelta = (float)movementLimiter.calculate(movementDeltaRaw);
 
         Vector3 movementVector = Vector3.MoveTowards(Vector3.zero, absoluteMovementVector, movementDelta);
 
         transform.position = transform.position + movementVector * Time.deltaTime;
 
-        if (m_Looking)
+        if (looking)
         {
             var newRotationX = transform.localEulerAngles.y + Input.GetAxis("Mouse X") * m_FreeLookSensitivity;
             var newRotationY = transform.localEulerAngles.x - Input.GetAxis("Mouse Y") * m_FreeLookSensitivity;
@@ -197,16 +219,16 @@ public class FpvCamera : MonoBehaviour
         }
 
         bool focusButtonPressed;
-        if (m_Looking) {
+        if (looking) {
             focusButtonPressed = Input.GetKeyDown(KeyCode.Escape);
         }
         else {
             focusButtonPressed = Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Mouse0);
         }
-        if (focusButtonPressed != m_FocusButtonPressed) {
-            m_FocusButtonPressed = focusButtonPressed;
-            if (!m_FocusButtonPressed) {
-                if (m_Looking) {
+        if (focusButtonPressed != this.focusButtonPressed) {
+            this.focusButtonPressed = focusButtonPressed;
+            if (!this.focusButtonPressed) {
+                if (looking) {
                     StopLooking();
                 }
                 else {
@@ -226,7 +248,7 @@ public class FpvCamera : MonoBehaviour
     /// </summary>
     void StartLooking()
     {
-        m_Looking = true;
+        looking = true;
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
     }
@@ -236,7 +258,7 @@ public class FpvCamera : MonoBehaviour
     /// </summary>
     void StopLooking()
     {
-        m_Looking = false;
+        looking = false;
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
     }

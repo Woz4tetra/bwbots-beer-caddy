@@ -31,14 +31,14 @@ class ImuSensor : MonoBehaviour
         imuMsg.header.frame_id = FrameId;
 
         imuMsg.orientation_covariance = new double[] {
-            1e-6, 0.0, 0.0,
-            0.0, 1e-6, 0.0,
-            0.0, 0.0, 1e-6
+            1e-1, 0.0, 0.0,
+            0.0, 1e-1, 0.0,
+            0.0, 0.0, 1e-1
         };
         imuMsg.angular_velocity_covariance = new double[] {
-            1e-6, 0.0, 0.0,
-            0.0, 1e-6, 0.0,
-            0.0, 0.0, 1e-6
+            1e-1, 0.0, 0.0,
+            0.0, 1e-1, 0.0,
+            0.0, 0.0, 1e-1
         };
         imuMsg.linear_acceleration_covariance = new double[] {
             1e-2, 0.0, 0.0,

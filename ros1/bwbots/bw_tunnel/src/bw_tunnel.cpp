@@ -71,7 +71,7 @@ BwTunnel::BwTunnel(ros::NodeHandle* nodehandle) :
     _button_counter_result_pub = nh.advertise<std_msgs::Int32>("button_counter_result", 10);
     _is_enabled_pub = nh.advertise<std_msgs::Bool>("are_motors_enabled", 10);
     for (int index = 0; index < _num_modules; index++) {
-        _module_pubs->push_back(nh.advertise<bw_interfaces::BwDriveModule>("module/" + std::to_string(index), 50));
+        _module_pubs->push_back(nh.advertise<bw_interfaces::BwDriveModule>("module/" + std::to_string(index + 1), 50));
     }
 
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &BwTunnel::twistCallback, this);
@@ -138,7 +138,7 @@ void BwTunnel::packetCallback(PacketResult* result)
         }
 
         bw_interfaces::BwDriveModule msg;
-        msg.module_index = std::to_string(channel);
+        msg.module_index = std::to_string(channel + 1);
         msg.azimuth_position = (double)azimuth;
         msg.wheel_position = wheel_position;
         msg.wheel_velocity = (double)wheel_velocity;

@@ -4,6 +4,7 @@ using RosMessageTypes.Nav;
 using System.Collections.Generic;
 using RosMessageTypes.Geometry;
 using Unity.Robotics.ROSTCPConnector.ROSGeometry;
+using RosMessageTypes.BwInterfaces;
 
 /// <summary>
 ///     This script converts linear velocity and 
@@ -23,7 +24,7 @@ public class BwbotsSimulatedChassis : MonoBehaviour
     public ArticulationBody bodyModuleFrontLeft;
     public ArticulationBody bodyModuleFrontRight;
 
-    List<ModuleKinematics> modules;
+    private List<ModuleKinematics> modules;
 
     private const double FRONT_ANGLE = -1.2967;  // -74.293 degrees
     private const double ALCOVE_ANGLE = 0.5236;  // 30 degrees
@@ -56,6 +57,13 @@ public class BwbotsSimulatedChassis : MonoBehaviour
     private double[] module_vector;
 
     double[] prev_position;
+    bool use_odom_ground_truth = false;
+    TwistMsg twistCommand = new TwistMsg();
+
+
+    public BwbotsSimulatedChassis() {
+        modules = new List<ModuleKinematics>();
+    }
 
     void Start()
     {
@@ -71,63 +79,44 @@ public class BwbotsSimulatedChassis : MonoBehaviour
         bodyMain.inertiaTensor = new Vector3(2e-07f, 2e-07f, 2e-07f);
         bodyMain.mass = 0.005f;
 
-        modules = new List<ModuleKinematics>();
         modules.Add(
             new ModuleKinematics(
                 "back_left",
+                0,
                 bodyWheelBackLeft,
                 bodyModuleBackLeft,
-                FRONT_ANGLE,  // -75 deg
-                ALCOVE_ANGLE,  // 30 deg
+                -ALCOVE_ANGLE,  // -30 deg
+                -FRONT_ANGLE,  // 75 deg
                 WHEEL_RADIUS,
                 MIN_RADIUS_OF_CURVATURE,
                 -LENGTH / 2.0,
-                -WIDTH / 2.0,
+                WIDTH / 2.0,
                 ARMATURE,
-                MAX_WHEEL_SPEED,
-                true,
-                true
+                MAX_WHEEL_SPEED
             )
         );
         modules.Add(
             new ModuleKinematics(
                 "back_right",
+                1,
                 bodyWheelBackRight,
                 bodyModuleBackRight,
-                -ALCOVE_ANGLE,  // -30 deg
-                -FRONT_ANGLE,  // 75 deg
+                FRONT_ANGLE,  // -75 deg
+                ALCOVE_ANGLE,  // 30 deg
                 WHEEL_RADIUS,
                 MIN_RADIUS_OF_CURVATURE,
                 -LENGTH / 2.0,
-                WIDTH / 2.0,
+                -WIDTH / 2.0,
                 ARMATURE,
-                MAX_WHEEL_SPEED,
-                true,
-                false
+                MAX_WHEEL_SPEED
             )
         );
         modules.Add(
             new ModuleKinematics(
                 "front_left",
+                2,
                 bodyWheelFrontLeft,
                 bodyModuleFrontLeft,
-                -ALCOVE_ANGLE,  // -30 deg
-                -FRONT_ANGLE,  // 75 deg
-                WHEEL_RADIUS,
-                MIN_RADIUS_OF_CURVATURE,
-                LENGTH / 2.0,
-                -WIDTH / 2.0,
-                ARMATURE,
-                MAX_WHEEL_SPEED,
-                true,
-                true
-            )
-        );
-        modules.Add(
-            new ModuleKinematics(
-                "front_right",
-                bodyWheelFrontRight,
-                bodyModuleFrontRight,
                 FRONT_ANGLE,  // -75 deg
                 ALCOVE_ANGLE,  // 30 deg
                 WHEEL_RADIUS,
@@ -135,9 +124,23 @@ public class BwbotsSimulatedChassis : MonoBehaviour
                 LENGTH / 2.0,
                 WIDTH / 2.0,
                 ARMATURE,
-                MAX_WHEEL_SPEED,
-                true,
-                false
+                MAX_WHEEL_SPEED
+            )
+        );
+        modules.Add(
+            new ModuleKinematics(
+                "front_right",
+                3,
+                bodyWheelFrontRight,
+                bodyModuleFrontRight,
+                -ALCOVE_ANGLE,  // -30 deg
+                -FRONT_ANGLE,  // 75 deg
+                WHEEL_RADIUS,
+                MIN_RADIUS_OF_CURVATURE,
+                LENGTH / 2.0,
+                -WIDTH / 2.0,
+                ARMATURE,
+                MAX_WHEEL_SPEED
             )
         );
 
@@ -243,17 +246,31 @@ public class BwbotsSimulatedChassis : MonoBehaviour
 
         double dt = (double)Time.fixedDeltaTime;
         (double vx, double vy, double vt) = computeVelocity();
-        (double x, double y, double theta) = computePosition(vx, vy, vt, dt);
+        double x, y, theta;
+        if (use_odom_ground_truth) {
+            (x, y, theta) = computePosition(vx, vy, vt, dt);
+        }
+        else {
+            x = transform.position.z;
+            y = -transform.position.x;
+            theta = ModuleKinematics.WrapAngle(-transform.rotation.eulerAngles.y * Mathf.Deg2Rad);
+        }
+        // double x = transform.position.z;
+        // double y = -transform.position.x;
+        // double theta = ModuleKinematics.WrapAngle(-transform.rotation.eulerAngles.y * Mathf.Deg2Rad);
         last_odom_msg = MakeOdometryMessage(x, y, theta, vx, vy, vt);
-        Debug.Log($"theta: {ModuleKinematics.WrapAngle(theta)} transform: {ModuleKinematics.WrapAngle(-transform.rotation.eulerAngles.y * Mathf.Deg2Rad)}");
-        // Debug.Log($"---");
-        // foreach (ModuleKinematics module in modules) {
-        //     double azimuth = module.getAzimuth();
-        //     Debug.Log($"Azimuth: {azimuth}");
-        // }
+        // Debug.Log($"x computed: {x} ground truth: {transform.position.z}");
+        // Debug.Log($"y computed: {y} ground truth: {-transform.position.x}");
+        // Debug.Log($"theta computed: {ModuleKinematics.WrapAngle(theta)} ground truth: {ModuleKinematics.WrapAngle(-transform.rotation.eulerAngles.y * Mathf.Deg2Rad)}");
+
+        setRobotVelocity(twistCommand.linear.x, twistCommand.linear.y, twistCommand.angular.z);
     }
 
-    public void setRobotVelocity(double vx, double vy, double vt)
+    public void setTwistCommand(TwistMsg twist) {
+        twistCommand = twist;
+    }
+
+    private void setRobotVelocity(double vx, double vy, double vt)
     {
         double v_theta = Math.Atan2(vy, vx);
         double dt = (double)Time.unscaledDeltaTime;
@@ -309,12 +326,19 @@ public class BwbotsSimulatedChassis : MonoBehaviour
         return msg;
     }
 
-    (double, double, double) computeVelocity() {
+    private (double, double, double) computeVelocity() {
         int channel = 0;
         foreach (ModuleKinematics module in modules) {
             double azimuth = module.getAzimuth();
-            double x = module.getXLocation() + 2 * ARMATURE * Math.Cos(-azimuth);
-            double y = module.getYLocation() + 2 * ARMATURE * Math.Sin(-azimuth);
+            double geometric_azimuth = 0.0;
+            if (module.getYLocation() < 0.0) {
+                geometric_azimuth = azimuth * Math.PI;
+            }
+            else {
+                geometric_azimuth = azimuth;
+            }
+            double x = module.getXLocation() + 2 * ARMATURE * Math.Sin(geometric_azimuth);
+            double y = module.getYLocation() + 2 * ARMATURE * Math.Cos(geometric_azimuth);
 
             //  0  1  2 -- channel 0, -y0
             //  3  4  5 -- channel 0, x0
@@ -393,15 +417,15 @@ public class BwbotsSimulatedChassis : MonoBehaviour
         // SimpleMatrix.Print(chassis_vector, CHASSIS_STATE_LEN, 1, "pinv(M) * mv");
 
         double vx = chassis_vector[0];
-        double vy = -chassis_vector[1];
-        double vt = -chassis_vector[2];
+        double vy = chassis_vector[1];
+        double vt = chassis_vector[2];
 
         // Debug.Log($"vx: {vx}, vy: {vy}, vt: {vt}");
 
         return (vx, vy, vt);
     }
 
-    (double, double, double) computePosition(double vx, double vy, double vt, double dt) {
+    private (double, double, double) computePosition(double vx, double vy, double vt, double dt) {
         double dx = vx * dt;
         double dy = vy * dt;
         double dtheta = vt * dt;
@@ -428,6 +452,15 @@ public class BwbotsSimulatedChassis : MonoBehaviour
         prev_position[0] += rotated_tx;
         prev_position[1] += rotated_ty;
         prev_position[2] += dtheta;
+
         return (prev_position[0], prev_position[1], prev_position[2]);
+    }
+
+    public int getNumModules() {
+        return 4;
+    }
+
+    public BwDriveModuleMsg getModuleMessage(int index) {
+        return this.modules[index].getMessage();
     }
 }

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using RosMessageTypes.BwInterfaces;
 
 class ModuleKinematics
 {
@@ -16,13 +17,13 @@ class ModuleKinematics
     private double x_location;
     private double y_location;
     private double armature_length;
-    private double azimuth_direction;
-    private double wheel_direction;
     private double prev_azimuth;
     private double max_wheel_speed;
+    private BwDriveModuleMsg module_msg = new BwDriveModuleMsg();
 
     public ModuleKinematics(
             String name,
+            int index,
             ArticulationBody wheel,
             ArticulationBody module,
             double min_angle,
@@ -32,9 +33,7 @@ class ModuleKinematics
             double x_location,
             double y_location,
             double armature_length,
-            double max_wheel_speed,
-            bool azimuth_direction,
-            bool wheel_direction) {
+            double max_wheel_speed) {
         this.name = name;
         this.wheel = wheel;
         this.module = module;
@@ -47,8 +46,6 @@ class ModuleKinematics
         this.y_location = y_location;
         this.armature_length = armature_length;
         this.max_wheel_speed = max_wheel_speed;
-        this.azimuth_direction = azimuth_direction ? 1.0 : -1.0;
-        this.wheel_direction = wheel_direction ? 1.0 : -1.0;
         prev_azimuth = 0.0;
 
         ArticulationDrive wheelDrive = wheel.xDrive;
@@ -74,6 +71,8 @@ class ModuleKinematics
         module.jointFriction = 1.0f;
         module.mass = 0.15f;
         module.inertiaTensor = new Vector3(1e-04f, 1e-02f, 1e-04f);
+
+        module_msg.module_index = (index + 1).ToString();
     }
 
     private (double, double) ComputeState(double vx, double vy, double vt, double dt, double prev_azimuth)
@@ -133,6 +132,12 @@ class ModuleKinematics
             wheel_velocity = -wheel_velocity;
         }
 
+        double azimuthVelocity = getAzimuthVelocity();
+        if (Math.Abs(azimuthVelocity) > 0.001) {
+            double delta = azimuthVelocity * wheel_radius;
+            wheel_velocity += delta;
+        }
+
         // Debug.Log(String.Format("name: {0}, azimuth: {1}, wheel_velocity: {2}", name, azimuth, wheel_velocity));
         setModuleAzimuth(azimuth);
         setWheelVelocity(wheel_velocity);
@@ -156,8 +161,7 @@ class ModuleKinematics
         if (Math.Abs(groundVelocity) > max_wheel_speed) {
             groundVelocity = Math.Sign(groundVelocity) * max_wheel_speed;
         }
-        groundVelocity = this.wheel_direction * groundVelocity;
-        double angularVelocity = groundVelocity / wheel_radius;
+        double angularVelocity = -groundVelocity / wheel_radius;
         double deltaAngle = angularVelocity * Time.fixedDeltaTime;
         ArticulationDrive drive = wheel.xDrive;
         drive.target = drive.target + (float)(deltaAngle * Mathf.Rad2Deg);
@@ -165,7 +169,6 @@ class ModuleKinematics
     }
 
     public void setModuleAzimuth(double azimuth) {
-        azimuth = this.azimuth_direction * azimuth;
         azimuth = WrapAngle(azimuth);
         if (azimuth < min_angle) {
             azimuth = min_angle;
@@ -173,6 +176,7 @@ class ModuleKinematics
         if (azimuth > max_angle) {
             azimuth = max_angle;
         }
+        azimuth *= -1.0;
         ArticulationDrive drive = module.xDrive;
         drive.target = (float)azimuth * Mathf.Rad2Deg;
         module.xDrive = drive;
@@ -195,7 +199,36 @@ class ModuleKinematics
             return 0.0f;
         }
         double azimuth = (double)(states[index]);
-        return this.azimuth_direction * azimuth;
+        azimuth *= -1.0;
+        azimuth = WrapAngle(azimuth);
+
+        module_msg.azimuth_position = azimuth;
+        if (x_location < 0.0) {
+            module_msg.azimuth_position = WrapAngle(module_msg.azimuth_position + Math.PI);
+        }
+        return azimuth;
+    }
+
+    public double getAzimuthVelocity() {
+        List<float> states = new List<float>();
+        module.GetJointVelocities(states);
+
+        List<int> indices = new List<int>();
+        module.GetDofStartIndices(indices);
+
+        if (module.index >= indices.Count) {
+            Debug.LogWarning("Failed to get azimuth velocity! Not enough joints.");
+            return 0.0f;
+        }
+        int index = indices[module.index];
+        if (index >= states.Count) {
+            Debug.LogWarning("Failed to get azimuth velocity! Index out of range.");
+            return 0.0f;
+        }
+        double azimuthVelocity = (double)(states[index]);
+        azimuthVelocity *= -1.0;
+        azimuthVelocity = WrapAngle(azimuthVelocity);
+        return azimuthVelocity;
     }
 
     public double getWheelVelocity() {
@@ -215,7 +248,9 @@ class ModuleKinematics
             return 0.0f;
         }
         double angularVelocity = (double)(states[index]);  // rad/s
-        return this.wheel_direction * angularVelocity * wheel_radius;
+        angularVelocity = -angularVelocity * wheel_radius;
+        module_msg.wheel_velocity = angularVelocity;
+        return angularVelocity;
     }
 
     public double getXLocation() {
@@ -224,5 +259,9 @@ class ModuleKinematics
 
     public double getYLocation() {
         return y_location;
+    }
+
+    public BwDriveModuleMsg getMessage() {
+        return module_msg;
     }
 }
