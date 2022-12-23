@@ -5,7 +5,10 @@ public class GridPlaneDrawer : MonoBehaviour
 {
     void Start()
     {
-        Texture2D texture = new Texture2D(1024, 1024);
+        int width = 100;
+        int height = 100;
+        Texture2D texture = new Texture2D(width, height);
+        texture.wrapMode = TextureWrapMode.Repeat;
         GetComponent<Renderer>().material.mainTexture = texture;
 
         for (int y = 0; y < texture.height; y++)
@@ -13,7 +16,7 @@ public class GridPlaneDrawer : MonoBehaviour
             for (int x = 0; x < texture.width; x++)
             {
                 Color color;
-                if (x % 10 == 0 || y % 10 == 0) {
+                if (x % 100 == 0 || y % 100 == 0) {
                     color = Color.gray;
                 }
                 else {
@@ -23,5 +26,10 @@ public class GridPlaneDrawer : MonoBehaviour
             }
         }
         texture.Apply();
+
+        MeshRenderer floorRenderer = GetComponent<MeshRenderer>();
+        Collider floorCollider = GetComponent<Collider>();
+        floorRenderer.material.mainTextureScale = new Vector2(floorCollider.bounds.size.x, floorCollider.bounds.size.z);
+        floorRenderer.material.mainTextureOffset = new Vector2(0.0f, 0.0f);
     }
 }

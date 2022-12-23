@@ -1,0 +1,5 @@
+string dispenser_name
+duration timeout
+---
+bool success
+---

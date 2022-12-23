@@ -59,6 +59,10 @@ public class BwbotsSimulatedChassis : MonoBehaviour
 
     private double[] prev_position;
     private TwistMsg twistCommand = new TwistMsg();
+    private double velocityLimit = 1000.0;
+    private double angularVelocityLimit = 1000.0;
+    private double positionLimit = 10000.0;
+    private bool motorsEnabled = false;
 
 
     public BwbotsSimulatedChassis() {
@@ -214,38 +218,16 @@ public class BwbotsSimulatedChassis : MonoBehaviour
 
     void FixedUpdate()
     {
-        // double angle = Time.realtimeSinceStartupAsDouble % (2 * Math.PI);
-        // Debug.Log("angle: " + angle);
-        // modules[0].setModuleAzimuth(angle);
-        // modules[1].setModuleAzimuth(angle);
-        // modules[2].setModuleAzimuth(angle);
-        // modules[3].setModuleAzimuth(angle);
-        // double speed;
-        // if (Time.realtimeSinceStartupAsDouble % 2.0 < 1.0) {
-        //     speed = -1.0;
-        // }
-        // else {
-        //     speed = 1.0;
-        // }
-
-        // double angle = Math.PI / 4.0;
-        // // double speed = 1.0;
-        // modules[0].setModuleAzimuth(-angle);
-        // modules[1].setModuleAzimuth(angle);
-        // modules[2].setModuleAzimuth(angle);
-        // modules[3].setModuleAzimuth(-angle);
-        // modules[0].setWheelVelocity(speed);
-        // modules[1].setWheelVelocity(-speed);
-        // modules[2].setWheelVelocity(speed);
-        // modules[3].setWheelVelocity(-speed);
-
-        // modules[0].setModuleAzimuth(0.0);
-        // modules[1].setModuleAzimuth(0.0);
-        // modules[2].setModuleAzimuth(0.0);
-        // modules[3].setModuleAzimuth(0.0);
-
         double dt = (double)Time.fixedDeltaTime;
-        (double vx, double vy, double vt) = computeVelocity();
+        double vx, vy, vt;
+        if (motorsEnabled) {
+            (vx, vy, vt) = computeVelocity();
+        }
+        else {
+            vx = 0.0;
+            vy = 0.0;
+            vt = 0.0;
+        }
         double x, y, theta;
         if (useOdomGroundTruth) {
             x = transform.position.z;
@@ -256,19 +238,35 @@ public class BwbotsSimulatedChassis : MonoBehaviour
             (x, y, theta) = computePosition(vx, vy, vt, dt);
         }
         last_odom_msg = MakeOdometryMessage(x, y, theta, vx, vy, vt);
-        // Debug.Log($"x computed: {x} ground truth: {transform.position.z}");
-        // Debug.Log($"y computed: {y} ground truth: {-transform.position.x}");
-        // Debug.Log($"theta computed: {ModuleKinematics.WrapAngle(theta)} ground truth: {ModuleKinematics.WrapAngle(-transform.rotation.eulerAngles.y * Mathf.Deg2Rad)}");
 
         setRobotVelocity(twistCommand.linear.x, twistCommand.linear.y, twistCommand.angular.z);
+
+        if (Math.Abs(vx) > velocityLimit || Math.Abs(vy) > velocityLimit || Math.Abs(vt) > angularVelocityLimit
+                || Math.Abs(x) > positionLimit || Math.Abs(y) > positionLimit) {
+            bodyMain.TeleportRoot(Vector3.zero, Quaternion.identity);
+            Debug.LogWarning($"Robot exceeds spatial constaints {last_odom_msg}! Teleporting to origin.");
+        }
     }
 
     public void setTwistCommand(TwistMsg twist) {
         twistCommand = twist;
     }
 
+    public void setMotorEnable(bool enabled) {
+        motorsEnabled = enabled;
+    }
+
+    public bool getMotorEnable() {
+        return motorsEnabled;
+    }
+
     private void setRobotVelocity(double vx, double vy, double vt)
     {
+        if (!motorsEnabled) {
+            vx = 0.0;
+            vy = 0.0;
+            vt = 0.0;
+        }
         double v_theta = Math.Atan2(vy, vx);
         double dt = (double)Time.unscaledDeltaTime;
 
@@ -291,7 +289,6 @@ public class BwbotsSimulatedChassis : MonoBehaviour
             vx = v_mag * Math.Cos(v_theta);
             vy = v_mag * Math.Sin(v_theta);
         }
-        // Debug.Log(String.Format("vx: {0}, vy: {1}, vt: {2}, dt: {3}", vx, vy, vt, dt));
         foreach (ModuleKinematics module in modules) {
             module.set(vx, vy, vt, dt);
         }

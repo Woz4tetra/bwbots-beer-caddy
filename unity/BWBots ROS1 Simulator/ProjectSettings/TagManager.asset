@@ -6,6 +6,8 @@ TagManager:
   tags:
   - robot
   - locator_tag
+  - charge_pins
+  - beer_can
   layers:
   - Default
   - TransparentFX

@@ -92,7 +92,8 @@ class ShuffleUntilChargingCommand:
             feedback.attempts = attempts
             self.action_server.publish_feedback(feedback)
 
-        self.publish_speed(0.0)
+        for _ in range(10):
+            self.publish_speed(0.0)
 
         success = self.charger_state.is_charging
 

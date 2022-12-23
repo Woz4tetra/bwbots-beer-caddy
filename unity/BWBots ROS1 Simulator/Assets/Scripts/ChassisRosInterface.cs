@@ -13,6 +13,8 @@ public class ChassisRosInterface : MonoBehaviour
     [SerializeField] private string jointTopicFormat = "/bw/joint/base_link_to_module_{0}_joint";
     [SerializeField] private string moduleTopicFormat = "/bw/module/{0}";
     [SerializeField] private string cmdVelTopic = "/bw/cmd_vel";
+    [SerializeField] private string setMotorEnableTopic = "/bw/set_motors_enabled";
+    [SerializeField] private string getMotorEnableTopic = "/bw/are_motors_enabled";
     
     private ROSConnection _ros;
     private double _prevPublishTime;
@@ -27,6 +29,9 @@ public class ChassisRosInterface : MonoBehaviour
             _ros.RegisterPublisher<Float64Msg>(getJointTopic(index));
             _ros.RegisterPublisher<BwDriveModuleMsg>(getModuleTopic(index));
         }
+        _ros.RegisterPublisher<BoolMsg>(getMotorEnableTopic);
+        _ros.Subscribe<BoolMsg>(setMotorEnableTopic, setMotorEnableCallback);
+
         _ros.Subscribe<TwistMsg>(cmdVelTopic, cmdVelCallback);
     }
 
@@ -43,9 +48,16 @@ public class ChassisRosInterface : MonoBehaviour
                 _ros.Publish(getJointTopic(index), jointMsg);
                 _ros.Publish(getModuleTopic(index), moduleMsg);
             }
+            _ros.Publish(getMotorEnableTopic, new BoolMsg {
+                data = chassis.getMotorEnable()
+            });
 
             _prevPublishTime = now;
         }
+    }
+
+    private void setMotorEnableCallback(BoolMsg msg) {
+        chassis.setMotorEnable(msg.data);
     }
 
     private void cmdVelCallback(TwistMsg twist) {

@@ -29,6 +29,7 @@ private:
     string _base_child_frame;
     string _base_imu_frame;
     bool _combine_with_odom;
+    double _time_delta_limit;
 
     // Members
     geometry_msgs::Quaternion _base_quat_msg;
@@ -56,4 +57,5 @@ private:
 
     void base_callback(tf2::Quaternion quat);
     void publish_base_tf();
+    void reset_odom();
 };

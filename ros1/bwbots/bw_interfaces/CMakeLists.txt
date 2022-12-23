@@ -84,6 +84,7 @@ add_service_files(
 ## Generate actions in the 'action' folder
 add_action_files(
   FILES
+  Dispense.action
   FindTag.action
   FollowWaypoints.action
   HasDrink.action

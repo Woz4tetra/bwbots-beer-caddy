@@ -8,6 +8,7 @@ BwImuJoint::BwImuJoint(ros::NodeHandle* nodehandle) :
     ros::param::param<string>("~base_child_frame", _base_child_frame, "base_tilt_link");
     ros::param::param<string>("~base_imu_frame", _base_imu_frame, "imu");
     ros::param::param<bool>("~combine_with_odom", _combine_with_odom, false);
+    ros::param::param<double>("~time_delta_limit", _time_delta_limit, 0.25);
 
     _static_imu_tf_set = false;
     
@@ -30,9 +31,20 @@ void BwImuJoint::base_imu_callback(const sensor_msgs::ImuConstPtr& imu)
     base_callback(quat);
 }
 
+void BwImuJoint::reset_odom() {
+    x = 0.0;
+    y = 0.0;
+    theta = 0.0;
+}
+
 void BwImuJoint::odom_callback(const nav_msgs::OdometryConstPtr& odom) {
     double delta_time = (odom->header.stamp - _prev_odom_time).toSec();
     _prev_odom_time = odom->header.stamp;
+    if (delta_time > _time_delta_limit || _prev_odom_time > odom->header.stamp) {
+        ROS_WARN("Odometry timestamp jumped! Resetting.");
+        reset_odom();
+        return;
+    }
 
     double vx = odom->twist.twist.linear.x;
     double vy = odom->twist.twist.linear.y;

@@ -53,7 +53,6 @@ class FindTagCommand:
         with self.detections_lock:
             for tag in msg.detections:
                 tag_id: List[int] = list(tag.id)
-                tag_id.sort()
                 frozen_tag_id = tuple(tag_id)
                 if frozen_tag_id not in self.detections:
                     self.detections[frozen_tag_id] = []
@@ -113,9 +112,10 @@ class FindTagCommand:
                     filtered_pose_array.header = filtered_msg.pose.header
                     filtered_pose_array.poses.append(filtered_msg.pose.pose.pose)
 
-            self.filtered_tag_pub.publish(filtered_array_msg)
-            self.filtered_tag_pose_pub.publish(filtered_pose_array)
-            self.tag_pose_pub.publish(pose_array)
+            if len(filtered_array_msg.detections) > 0:
+                self.filtered_tag_pub.publish(filtered_array_msg)
+                self.filtered_tag_pose_pub.publish(filtered_pose_array)
+                self.tag_pose_pub.publish(pose_array)
 
     def get_tag_pose_in(self, destination_frame: str, detection_msg: AprilTagDetection) -> PoseStamped:
         try:
@@ -137,7 +137,6 @@ class FindTagCommand:
 
         rospy.loginfo(f"Finding tag: {goal}")
 
-        tag_id.sort()
         frozen_tag_id = tuple(tag_id)
 
         empty_pose = PoseStamped()

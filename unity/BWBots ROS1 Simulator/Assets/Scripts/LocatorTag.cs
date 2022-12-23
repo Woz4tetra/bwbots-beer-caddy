@@ -7,7 +7,8 @@ class LocatorTag : MonoBehaviour {
     [SerializeField] private int tagId;
     public PoseMsg GetTagPose(Transform cameraTransform) {
         Vector3 relativePoint = cameraTransform.InverseTransformPoint(transform.position);
-        Quaternion LocalRotation = Quaternion.Inverse(transform.rotation) * cameraTransform.rotation;
+        Quaternion LocalRotation = Quaternion.Inverse(cameraTransform.rotation) * transform.rotation;
+        LocalRotation = LocalRotation * Quaternion.AngleAxis(-90.0f, Vector3.up);
         PoseMsg pose = new PoseMsg();
         pose.position = relativePoint.To<FLU>();
         pose.orientation = LocalRotation.To<FLU>();

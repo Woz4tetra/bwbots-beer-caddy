@@ -8,6 +8,7 @@ class LoadCellSensor : MonoBehaviour
     private LoadCellMsg loadCellMsg;
     [SerializeField] private double publishDelay;
     [SerializeField] private string topic;
+    [SerializeField] private string tagName;
     private double _prevPublishTime;
     private uint messageCount;
     List<GameObject> carryingObjects;
@@ -48,11 +49,11 @@ class LoadCellSensor : MonoBehaviour
     void OnCollisionEnter(Collision collision)
     {
         Rigidbody body;
-        if (collision.gameObject.TryGetComponent<Rigidbody>(out body)) {
-            if (!carryingObjects.Contains(collision.gameObject)) {
-                Debug.Log($"collided with {collision.gameObject.name}. It weighs {body.mass} kg");
-                carryingObjects.Add(collision.gameObject);
-            }
+        if (collision.gameObject.TryGetComponent<Rigidbody>(out body) &&
+                collision.gameObject.tag.Equals(tagName) &&
+                !carryingObjects.Contains(collision.gameObject)) {
+            Debug.Log($"collided with {collision.gameObject.name}. It weighs {body.mass} kg");
+            carryingObjects.Add(collision.gameObject);
         }
     }
 

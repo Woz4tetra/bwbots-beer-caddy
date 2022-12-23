@@ -67,6 +67,7 @@ class CameraSensor : MonoBehaviour
         }
         messageCount++;
         if (tagTopic.Length > 0 & publishDelay > 0.0) {
+            tagArrayMsg.detections = tagList.ToArray();
             _ros.Publish(tagTopic, tagArrayMsg);
         }
     }

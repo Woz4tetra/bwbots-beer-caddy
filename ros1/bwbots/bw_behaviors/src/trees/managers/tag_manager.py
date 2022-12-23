@@ -47,7 +47,7 @@ class TagManager:
         else:
             self.tags[name].pose = pose_stamped.pose
             self.tags[name].timestamp = pose_stamped.header.stamp
-            if len(pose_stamped.header.frame_id) == 0:
+            if len(pose_stamped.header.frame_id) != 0:
                 self.tags[name].reference_frame = pose_stamped.header.frame_id
             else:
                 rospy.logwarn(f"The reference frame for tag {name} is not valid! pose_stamped: {pose_stamped}")
