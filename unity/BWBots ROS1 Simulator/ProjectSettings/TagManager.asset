@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 2
   tags:
   - robot
+  - locator_tag
   layers:
   - Default
   - TransparentFX

@@ -2,10 +2,12 @@
     <include file="$(find ros_tcp_endpoint)/launch/endpoint.launch"/>
     <include file="$(find bw_description)/launch/bw_description.launch"/>
     <include file="$(find bw_rplidar)/launch/robeert_filters.launch"/>
-    <include file="$(find bw_kalman)/launch/bw_kalman.launch"/>
     <include file="$(find bw_tunnel)/launch/twist_mux.launch"/>
     <include file="$(find bw_joystick)/launch/bw_joystick.launch">
         <arg name="device" value="/dev/input/js0"/>
+    </include>
+    <include file="$(find bw_description)/launch/imu_joint.launch">
+        <arg name="combine_with_odom" value="true"/>
     </include>
     <include file="$(find bw_move_base)/launch/bw_move_base.launch"/>
     <!-- <include file="$(find bw_behaviors)/launch/bw_behaviors.launch"/> -->

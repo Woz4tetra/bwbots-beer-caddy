@@ -1,8 +1,6 @@
 using UnityEngine;
 using RosMessageTypes.Sensor;
 using Unity.Robotics.ROSTCPConnector;
-using System;
-using RosMessageTypes.BuiltinInterfaces;
 using Unity.Robotics.ROSTCPConnector.ROSGeometry;
 
 class ImuSensor : MonoBehaviour

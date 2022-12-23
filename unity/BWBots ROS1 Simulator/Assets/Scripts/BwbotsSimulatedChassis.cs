@@ -13,16 +13,17 @@ using RosMessageTypes.BwInterfaces;
 /// </summary>
 public class BwbotsSimulatedChassis : MonoBehaviour
 {
-    public ArticulationBody bodyMain;
-    public ArticulationBody bodyWheelBackLeft;
-    public ArticulationBody bodyWheelBackRight;
-    public ArticulationBody bodyWheelFrontLeft;
-    public ArticulationBody bodyWheelFrontRight;
+    [SerializeField] private ArticulationBody bodyMain;
+    [SerializeField] private ArticulationBody bodyWheelBackLeft;
+    [SerializeField] private ArticulationBody bodyWheelBackRight;
+    [SerializeField] private ArticulationBody bodyWheelFrontLeft;
+    [SerializeField] private ArticulationBody bodyWheelFrontRight;
 
-    public ArticulationBody bodyModuleBackLeft;
-    public ArticulationBody bodyModuleBackRight;
-    public ArticulationBody bodyModuleFrontLeft;
-    public ArticulationBody bodyModuleFrontRight;
+    [SerializeField] private ArticulationBody bodyModuleBackLeft;
+    [SerializeField] private ArticulationBody bodyModuleBackRight;
+    [SerializeField] private ArticulationBody bodyModuleFrontLeft;
+    [SerializeField] private ArticulationBody bodyModuleFrontRight;
+    [SerializeField] bool useOdomGroundTruth = false;
 
     private List<ModuleKinematics> modules;
 
@@ -56,9 +57,8 @@ public class BwbotsSimulatedChassis : MonoBehaviour
     private double[] chassis_vector;
     private double[] module_vector;
 
-    double[] prev_position;
-    bool use_odom_ground_truth = false;
-    TwistMsg twistCommand = new TwistMsg();
+    private double[] prev_position;
+    private TwistMsg twistCommand = new TwistMsg();
 
 
     public BwbotsSimulatedChassis() {
@@ -247,17 +247,14 @@ public class BwbotsSimulatedChassis : MonoBehaviour
         double dt = (double)Time.fixedDeltaTime;
         (double vx, double vy, double vt) = computeVelocity();
         double x, y, theta;
-        if (use_odom_ground_truth) {
-            (x, y, theta) = computePosition(vx, vy, vt, dt);
-        }
-        else {
+        if (useOdomGroundTruth) {
             x = transform.position.z;
             y = -transform.position.x;
             theta = ModuleKinematics.WrapAngle(-transform.rotation.eulerAngles.y * Mathf.Deg2Rad);
         }
-        // double x = transform.position.z;
-        // double y = -transform.position.x;
-        // double theta = ModuleKinematics.WrapAngle(-transform.rotation.eulerAngles.y * Mathf.Deg2Rad);
+        else {
+            (x, y, theta) = computePosition(vx, vy, vt, dt);
+        }
         last_odom_msg = MakeOdometryMessage(x, y, theta, vx, vy, vt);
         // Debug.Log($"x computed: {x} ground truth: {transform.position.z}");
         // Debug.Log($"y computed: {y} ground truth: {-transform.position.x}");
