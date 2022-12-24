@@ -58,9 +58,11 @@ public class FpvCamera : MonoBehaviour
     ///     Movement deceleration
     /// </summary>
     [SerializeField]
-    float mMovementDeceleration = -10f;
+    float movementDeceleration = -10f;
     
     public Component followObject;
+    public Vector3 defaultCameraPositionOffset = new Vector3(0.0f, 0.35f, -0.7f);
+    public Quaternion defaultCameraRotationOffset = Quaternion.Euler(0.0f, 0.0f, 0.0f);
     private Vector3 cameraPositionOffset;
     private Quaternion cameraRotationOffset;
     public float smoothSpeed = 1.0f;
@@ -77,29 +79,70 @@ public class FpvCamera : MonoBehaviour
 
     private Vector3 prevMovementVector = Vector3.zero;
 
+    public ViewMode startingMode = ViewMode.FOLLOW_ROBOT;
+    public bool useDefaultOffsetsOnFollow = true;
     private ViewMode viewMode = ViewMode.FOLLOW_ROBOT;
     private bool enableRobotCommands = false;
+    private Vector3 lookingRotation = Vector3.zero;
+    private bool mouseWasLocked = false;
+    private int mouseWasLockedCounter = 0;
+
+    private GUIStyle statusLabelStyle = new GUIStyle();
+    private int labelBorderSize;
 
     void Start()
     {
-        movementLimiter = new SlewLimiter(mMovementDeceleration, movementAcceleration, 0.0f);
-        cameraPositionOffset = this.transform.position;
-        cameraRotationOffset = this.transform.rotation;
-        StopLooking();
+        statusLabelStyle.fontSize = 25;
+        statusLabelStyle.fontStyle = FontStyle.Bold;
+        statusLabelStyle.normal.textColor = Color.white;
+        labelBorderSize = 5;
+        movementLimiter = new SlewLimiter(movementDeceleration, movementAcceleration, 0.0f);
+
+        resetLookingRotation();
+        setMode(startingMode);
+    }
+
+    void resetCameraRelativeOffset() {
+        if (useDefaultOffsetsOnFollow) {
+            resetCameraRelativeOffsetToDefault();
+        }
+        else {
+            Quaternion inverseRotation = Quaternion.Inverse(followObject.transform.rotation);
+            cameraPositionOffset = inverseRotation * (this.transform.position - followObject.transform.position);
+            cameraRotationOffset = inverseRotation * this.transform.rotation;
+        }
+    }
+
+    void resetCameraRelativeOffsetToDefault() {
+        cameraPositionOffset = defaultCameraPositionOffset;
+        cameraRotationOffset = defaultCameraRotationOffset;
+    }
+
+    void resetLookingRotation() {
+        lookingRotation.x = transform.localEulerAngles.x;
+        lookingRotation.y = transform.localEulerAngles.y;
+    }
+
+    private void setMode(ViewMode mode) {
+        if (mode == ViewMode.FOLLOW_ROBOT) {
+            resetCameraRelativeOffset();
+            StopLooking();
+        }
+        viewMode = mode;
+        Debug.Log($"Set mode to {viewMode}");
     }
 
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.V)) {
+            ViewMode mode;
             if (viewMode == ViewMode.FREE_CAM) {
-                viewMode = ViewMode.FOLLOW_ROBOT;
-                Quaternion inverseRotation = Quaternion.Inverse(followObject.transform.rotation);
-                cameraPositionOffset = inverseRotation * (this.transform.position - followObject.transform.position);
-                cameraRotationOffset = inverseRotation * this.transform.rotation;
+                mode = ViewMode.FOLLOW_ROBOT;
             }
             else {
-                viewMode = ViewMode.FREE_CAM;
+                mode = ViewMode.FREE_CAM;
             }
+            setMode(mode);
         }
         
         if (viewMode == ViewMode.FREE_CAM) {
@@ -108,6 +151,28 @@ public class FpvCamera : MonoBehaviour
         else if (viewMode == ViewMode.FOLLOW_ROBOT) {
             FollowRobotUpdate();
         }
+
+        if (Input.GetKeyDown(KeyCode.C)) {
+            enableRobotCommands = !enableRobotCommands;
+            if (enableRobotCommands) {
+                wheelController.setMotorEnable(true);
+                Debug.Log($"Enabling robot control");
+            }
+            else {
+                wheelController.setMotorEnable(false);
+                Debug.Log($"Disabling robot control");
+            }
+        }
+    }
+
+    void OnGUI()
+    {
+        string robotStatusText = "Robot is " + (wheelController.getMotorEnable() ? "enabled" : "disabled");
+        Vector2 size = statusLabelStyle.CalcSize(new GUIContent(robotStatusText));
+        Rect boxRect = new Rect(Screen.width - size.x - 2 * labelBorderSize, 0, size.x + 2 * labelBorderSize, size.y + 2 * labelBorderSize);
+        Rect labelRect = new Rect(boxRect.x + labelBorderSize, boxRect.y + labelBorderSize, size.x, size.y);
+        GUI.Box(boxRect, GUIContent.none);
+        GUI.Label(labelRect, robotStatusText, statusLabelStyle);
     }
 
     void FollowRobotUpdate() {
@@ -133,14 +198,8 @@ public class FpvCamera : MonoBehaviour
                 targetLinearSpeed = forwardSpeed;
             }
         }
-        if (Input.GetKeyDown(KeyCode.C)) {
-            enableRobotCommands = !enableRobotCommands;
-            if (enableRobotCommands) {
-                Debug.Log($"Enabling robot control");
-            }
-            else {
-                Debug.Log($"Disabling robot control");
-            }
+        if (Input.GetKey(KeyCode.R)) {
+            resetCameraRelativeOffsetToDefault();
         }
         targetAngularSpeed = -Input.GetAxisRaw("Horizontal") * angularSpeed;
     }
@@ -168,23 +227,29 @@ public class FpvCamera : MonoBehaviour
         float movementUp = 0.0f;
         float movementSpeed = fastMode ? m_FastMovementSpeed : m_MovementSpeed;
 
-        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
+        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) {
             movementRight -= movementSpeed;
+        }
 
-        if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
+        if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) {
             movementRight += movementSpeed;
+        }
 
-        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
+        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) {
             movementForward += movementSpeed;
+        }
 
-        if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
+        if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) {
             movementForward -= movementSpeed;
+        }
 
-        if (Input.GetKey(KeyCode.Q) || Input.GetKey(KeyCode.LeftShift))
+        if (Input.GetKey(KeyCode.Q) || Input.GetKey(KeyCode.LeftShift)) {
             movementUp -= movementSpeed;
+        }
 
-        if (Input.GetKey(KeyCode.E) || Input.GetKey(KeyCode.Space))
+        if (Input.GetKey(KeyCode.E) || Input.GetKey(KeyCode.Space)) {
             movementUp += movementSpeed;
+        }
         
 
         Vector3 relativeMovementVector = new Vector3(movementRight, movementUp, movementForward);
@@ -195,35 +260,21 @@ public class FpvCamera : MonoBehaviour
             absoluteMovementVector = prevMovementVector;
         }
         else {
-            prevMovementVector = absoluteMovementVector;
+            prevMovementVector = absoluteMovementVector / movementDeltaRaw;
         }
         movementDeltaRaw = SlewLimiter.clamp(movementDeltaRaw, -movementSpeed, movementSpeed);
         float movementDelta = (float)movementLimiter.calculate(movementDeltaRaw);
 
-        Vector3 movementVector = Vector3.MoveTowards(Vector3.zero, absoluteMovementVector, movementDelta);
+        Vector3 movementVector = absoluteMovementVector * movementDelta;
 
         transform.position = transform.position + movementVector * Time.deltaTime;
-
-        if (looking)
-        {
-            var newRotationX = transform.localEulerAngles.y + Input.GetAxis("Mouse X") * m_FreeLookSensitivity;
-            var newRotationY = transform.localEulerAngles.x - Input.GetAxis("Mouse Y") * m_FreeLookSensitivity;
-            transform.localEulerAngles = new Vector3(newRotationY, newRotationX, 0f);
-        }
-
-        var axis = Input.GetAxis("Mouse ScrollWheel");
-        if (axis != 0)
-        {
-            var zoomSensitivity = fastMode ? m_FastZoomSensitivity : m_ZoomSensitivity;
-            transform.position = transform.position + transform.forward * axis * zoomSensitivity;
-        }
 
         bool focusButtonPressed;
         if (looking) {
             focusButtonPressed = Input.GetKeyDown(KeyCode.Escape);
         }
         else {
-            focusButtonPressed = Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Mouse0);
+            focusButtonPressed = Input.GetKeyDown(KeyCode.Mouse0) && IsMouseOverGameWindow(0.0f);
         }
         if (focusButtonPressed != this.focusButtonPressed) {
             this.focusButtonPressed = focusButtonPressed;
@@ -235,7 +286,56 @@ public class FpvCamera : MonoBehaviour
                     StartLooking();
                 }
             }
+            return;
         }
+
+        if (looking)
+        {
+            float deltaX = getMouseDeltaX();
+            float deltaY = getMouseDeltaY();
+            // if (deltaX != 0.0f || deltaY != 0.0f) {
+            //     Debug.Log($"deltaX: {deltaX}, deltaY: {deltaY}");
+            // }
+            if (mouseWasLocked) {
+                if (mouseWasLockedCounter == 0 && deltaX == 0.0f && deltaY == 0.0f) {
+                    return;
+                }
+                mouseWasLockedCounter++;
+                if (mouseWasLockedCounter > 20 && deltaX == 0.0f && deltaY == 0.0f) {
+                    Debug.Log($"cursor is settled");
+                    mouseWasLocked = false;
+                }
+                else {
+                    return;
+                }
+            }
+
+            lookingRotation.y += deltaX * m_FreeLookSensitivity;
+            lookingRotation.x += -deltaY * m_FreeLookSensitivity;
+
+            transform.localEulerAngles = lookingRotation;
+        }
+
+        var axis = Input.GetAxis("Mouse ScrollWheel");
+        if (axis != 0)
+        {
+            var zoomSensitivity = fastMode ? m_FastZoomSensitivity : m_ZoomSensitivity;
+            transform.position = transform.position + transform.forward * axis * zoomSensitivity;
+        }
+
+    }
+    bool IsMouseOverGameWindow(float tolerance) {
+        return !(tolerance > Input.mousePosition.x || 
+            tolerance > Input.mousePosition.y || 
+            (Screen.width - tolerance) < Input.mousePosition.x || 
+            (Screen.height - tolerance) < Input.mousePosition.y
+        );
+    }
+    private float getMouseDeltaX() {
+        return Input.GetAxisRaw("Mouse X");
+    }
+    private float getMouseDeltaY() {
+        return Input.GetAxisRaw("Mouse Y");
     }
 
     void OnDisable()
@@ -250,7 +350,13 @@ public class FpvCamera : MonoBehaviour
     {
         looking = true;
         Cursor.visible = false;
+        // Cursor.visible = true;
+        // Cursor.lockState = CursorLockMode.Confined;
         Cursor.lockState = CursorLockMode.Locked;
+        Debug.Log("Locking cursor");
+        resetLookingRotation();
+        mouseWasLocked = true;
+        mouseWasLockedCounter = 0;
     }
 
     /// <summary>

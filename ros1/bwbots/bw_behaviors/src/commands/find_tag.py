@@ -195,6 +195,7 @@ class FindTagCommand:
                 try:
                     transform = self.tf_buffer.lookup_transform(reference_frame, self.stored_frame, rospy.Time(0), rospy.Duration(1.0))
                 except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+                    rospy.logwarn(f"Failed to transform tag: {e}")
                     continue
                 tf_pose = tf2_geometry_msgs.do_transform_pose(pose_stamped, transform)
                 result.pose = tf_pose
@@ -207,7 +208,7 @@ class FindTagCommand:
             self.action_server.set_aborted(result, "Interrupted while finding tag")
         else:
             if result.success:
-                rospy.loginfo(f"Found tag: {result}")
+                rospy.loginfo(f"Found tag: {goal}")
             else:
-                rospy.loginfo(f"Failed to find tag: {result}")
+                rospy.loginfo(f"Failed to find tag: {goal}")
             self.action_server.set_succeeded(result)

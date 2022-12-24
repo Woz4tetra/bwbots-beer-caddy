@@ -234,12 +234,13 @@ class BehaviorTrees:
             self.tag_manager,
             frame_id=self.go_to_tag_reference_frame,
             controller_type="strafe1",
-            linear_min_vel=0.1,
-            theta_min_vel=0.02,
+            linear_min_vel=0.15,
+            theta_min_vel=0.015,
             xy_tolerance=0.025,
-            yaw_tolerance=0.0125,
+            yaw_tolerance=0.025,
             timeout=10.0,
             reference_linear_speed=0.5,
+            linear_max_accel=0.25,
             rotate_in_place_start=True,
             rotate_while_driving=False,
             rotate_in_place_end=True,
@@ -249,26 +250,50 @@ class BehaviorTrees:
         ))
 
     def go_to_dispenser_type_A0_stage2(self):
-        return self.check_cache("go_to_dispenser_type_A0_stage2", lambda: GoToTagBehavior(
-            -0.05,
-            0.075,
-            self.dispenser_tag_supplier,
-            self.tag_manager,
-            frame_id=self.go_to_tag_reference_frame,
-            controller_type="strafe2",
-            xy_tolerance=0.05,
-            yaw_tolerance=0.25,
-            linear_min_vel=0.4,
-            theta_min_vel=0.02,
-            reference_linear_speed=10.0,
-            reference_angular_speed=3.0,
-            linear_max_accel=5.0,
-            allow_reverse=False,
-            rotate_in_place_start=False,
-            rotate_while_driving=True,
-            rotate_in_place_end=False,
-            failure_on_pose_failure=True
-        ))
+        return self.check_cache("go_to_dispenser_type_A0_stage2", lambda: py_trees.composites.Sequence("Park under A0 stage2", [
+            GoToTagBehavior(
+                -0.13,
+                -0.25,
+                self.dispenser_tag_supplier,
+                self.tag_manager,
+                frame_id=self.go_to_tag_reference_frame,
+                controller_type="strafe1",
+                linear_min_vel=0.15,
+                theta_min_vel=0.015,
+                xy_tolerance=0.025,
+                yaw_tolerance=0.025,
+                timeout=10.0,
+                reference_linear_speed=0.5,
+                linear_max_accel=0.25,
+                rotate_in_place_start=True,
+                rotate_while_driving=False,
+                rotate_in_place_end=True,
+                reference_angular_speed=2.0,
+                allow_reverse=False,
+                failure_on_pose_failure=False
+            ),
+            GoToTagBehavior(
+                -0.13,
+                0.0,
+                self.dispenser_tag_supplier,
+                self.tag_manager,
+                frame_id=self.go_to_tag_reference_frame,
+                controller_type="strafe1",
+                linear_min_vel=0.15,
+                theta_min_vel=0.015,
+                xy_tolerance=0.025,
+                yaw_tolerance=0.025,
+                timeout=10.0,
+                reference_linear_speed=0.5,
+                linear_max_accel=0.25,
+                rotate_in_place_start=False,
+                rotate_while_driving=True,
+                rotate_in_place_end=False,
+                reference_angular_speed=2.0,
+                allow_reverse=False,
+                failure_on_pose_failure=False
+            ),
+        ]))
 
     def dock(self):
         return py_trees.composites.Sequence("Dock", [

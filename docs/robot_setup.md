@@ -76,7 +76,7 @@ Install openssh server if it doesn’t work: `sudo apt-get install openssh-serve
 
 ## SSH setup
 
-If you haven't generated new SSH keys, [follow this guide](networking/ssh_instructions.md)
+If you haven't generated new SSH keys, [follow this guide](ssh_instructions.md)
 
 If you already have a key generated:
 - Upload keys to `~/.ssh` on the Jetson (make the directory if it doesn’t exist)
