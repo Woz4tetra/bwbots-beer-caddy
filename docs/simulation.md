@@ -93,6 +93,8 @@ Toggle between modes while the simulation is running by pressing "V" (for view).
 
 The robot is disabled by default. Press the "C" (for Cnabled) key to toggle motors enabled.
 
+To disable the module physics and control the robot in "ground truth" mode, Press "B".
+
 ### Free cam mode
 
 To move in the X-Z plane, use the WASD keys.

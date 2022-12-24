@@ -2862,7 +2862,7 @@ MonoBehaviour:
   moduleBackRight: {fileID: 384469617}
   moduleFrontLeft: {fileID: 36377864}
   moduleFrontRight: {fileID: 45009360}
-  useGroundTruth: 1
+  useGroundTruth: 0
 --- !u!171741748 &1613416638
 ArticulationBody:
   m_ObjectHideFlags: 0
