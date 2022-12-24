@@ -53,7 +53,7 @@ If you don't see that version, you must install it locally using the steps above
 
 ## VS code editor setup
 
-To use VS Code as your primary Unity editor, [follow this guide](https://code.visualstudio.com/docs/other/unity)
+To use VS Code as your primary Unity editor, [follow this guide](https://code.visualstudio.com/docs/other/unity).
 
 If you're on Ubuntu, I found [this guide from Microsoft](https://learn.microsoft.com/en-us/dotnet/core/install/linux-ubuntu#2004) helpful
 for installing dotnet. I have dotnet 5, but 6 also works.
@@ -78,15 +78,41 @@ A new menu option call "Robotics" should appear. Click Robotics > ROS Settings.
 https://www.youtube.com/watch?v=yX8yrOAjfKM&t=3m51s
 
 1. Assuming you've setup ROS on your local machine [using this guide](local_setup.md),
-run this command in a terminal window: `roslaunch bw_bringup simulation.launch`
+run this command in a terminal window: 
+    ```bash
+    roslaunch bw_bringup simulation.launch
+    ```
 1. Press "Play" in the Unity editor.
-1. The simulation is now running! More steps follow once the project is more ironed out.
+1. The simulation is now running! More steps to follow once the project is more ironed out.
 
 ## Controls
 
-By default, the camera follows the robot. You can enter free cam mode by pressing "V" (for view).
+The default camera mode can be set in `Main Camera > Fpv Camera (Script) > Starting Mode`.
+
+Toggle between modes while the simulation is running by pressing "V" (for view).
+
+The robot is disabled by default. Press the "C" (for Cnabled) key to toggle motors enabled.
+
+### Free cam mode
+
 To move in the X-Z plane, use the WASD keys.
 To go up and down (Y axis), use Shift to go down and Space to go up.
-Moving the mouse 
 
-The robot is disabled by default. To enabling driving commands, make sure you're in robot follow mode.
+Click the game window to lock your cursor. In this state, moving the mouse rotates the camera around.
+To exit mouse capture, press the Esc key
+or switch to follow robot mode.
+
+Holding Left-Ctrl switches to fast movement mode (speed is configurable).
+
+### Follow robot mode
+
+To drive the robot use the QWEASD keys.
+
+|Key|Action|
+|---|---|
+| W | drive forward |
+| A | rotate left |
+| S | drive backward |
+| D | rotate right |
+| Q | strafe left (at an angle) |
+| E | strafe right (at an angle) |
