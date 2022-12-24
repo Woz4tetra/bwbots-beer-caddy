@@ -13,17 +13,20 @@ using RosMessageTypes.BwInterfaces;
 /// </summary>
 public class BwbotsSimulatedChassis : MonoBehaviour
 {
-    [SerializeField] private ArticulationBody bodyMain;
-    [SerializeField] private ArticulationBody bodyWheelBackLeft;
-    [SerializeField] private ArticulationBody bodyWheelBackRight;
-    [SerializeField] private ArticulationBody bodyWheelFrontLeft;
-    [SerializeField] private ArticulationBody bodyWheelFrontRight;
+    [SerializeField] private GameObject robot;
+    [SerializeField] private GameObject wheelBackLeft;
+    [SerializeField] private GameObject wheelBackRight;
+    [SerializeField] private GameObject wheelFrontLeft;
+    [SerializeField] private GameObject wheelFrontRight;
 
-    [SerializeField] private ArticulationBody bodyModuleBackLeft;
-    [SerializeField] private ArticulationBody bodyModuleBackRight;
-    [SerializeField] private ArticulationBody bodyModuleFrontLeft;
-    [SerializeField] private ArticulationBody bodyModuleFrontRight;
-    [SerializeField] bool useOdomGroundTruth = false;
+    [SerializeField] private GameObject moduleBackLeft;
+    [SerializeField] private GameObject moduleBackRight;
+    [SerializeField] private GameObject moduleFrontLeft;
+    [SerializeField] private GameObject moduleFrontRight;
+    [SerializeField] private bool useGroundTruth;
+
+    private ArticulationBody bodyMain;
+    private Transform initialTransform;
 
     private List<ModuleKinematics> modules;
 
@@ -38,14 +41,15 @@ public class BwbotsSimulatedChassis : MonoBehaviour
 
     private const double MAX_WHEEL_SPEED = 1.0;  // meters/second
 
-    private const double min_strafe_angle = -Math.PI;
-    private const double max_strafe_angle = Math.PI;
-    private const double reverse_min_strafe_angle = -Math.PI;
-    private const double reverse_max_strafe_angle = Math.PI;
+    private double min_strafe_angle = -Math.PI;
+    private double max_strafe_angle = Math.PI;
+    private double reverse_min_strafe_angle = -Math.PI;
+    private double reverse_max_strafe_angle = Math.PI;
 
     private double[] odom_covariance;
     private double[] twist_covariance;
     private OdometryMsg last_odom_msg;
+    private double prevOdomX = 0.0, prevOdomY = 0.0, prevOdomTheta = 0.0;
     private uint odomMessageCount = 0;
 
     private const int CHASSIS_STATE_LEN = 3;
@@ -59,6 +63,8 @@ public class BwbotsSimulatedChassis : MonoBehaviour
 
     private double[] prev_position;
     private TwistMsg twistCommand = new TwistMsg();
+    private int commandPriority = -1;
+    private float commandTimeoutStamp = 0.0f;
     private double velocityLimit = 1000.0;
     private double angularVelocityLimit = 1000.0;
     private double positionLimit = 10000.0;
@@ -71,6 +77,7 @@ public class BwbotsSimulatedChassis : MonoBehaviour
 
     void Start()
     {
+        bodyMain = robot.GetComponent<ArticulationBody>();
         ArticulationDrive bodyDrive = bodyMain.xDrive;
         bodyDrive.stiffness = 200.0f;
         bodyDrive.damping = 25.0f;
@@ -83,12 +90,17 @@ public class BwbotsSimulatedChassis : MonoBehaviour
         bodyMain.inertiaTensor = new Vector3(2e-07f, 2e-07f, 2e-07f);
         bodyMain.mass = 0.005f;
 
+        max_strafe_angle = ALCOVE_ANGLE;
+        min_strafe_angle = -ALCOVE_ANGLE;
+        reverse_max_strafe_angle = Math.PI - max_strafe_angle;
+        reverse_min_strafe_angle = -Math.PI - min_strafe_angle;
+
         modules.Add(
             new ModuleKinematics(
                 "back_left",
                 0,
-                bodyWheelBackLeft,
-                bodyModuleBackLeft,
+                wheelBackLeft,
+                moduleBackLeft,
                 -ALCOVE_ANGLE,  // -30 deg
                 -FRONT_ANGLE,  // 75 deg
                 WHEEL_RADIUS,
@@ -103,8 +115,8 @@ public class BwbotsSimulatedChassis : MonoBehaviour
             new ModuleKinematics(
                 "back_right",
                 1,
-                bodyWheelBackRight,
-                bodyModuleBackRight,
+                wheelBackRight,
+                moduleBackRight,
                 FRONT_ANGLE,  // -75 deg
                 ALCOVE_ANGLE,  // 30 deg
                 WHEEL_RADIUS,
@@ -119,8 +131,8 @@ public class BwbotsSimulatedChassis : MonoBehaviour
             new ModuleKinematics(
                 "front_left",
                 2,
-                bodyWheelFrontLeft,
-                bodyModuleFrontLeft,
+                wheelFrontLeft,
+                moduleFrontLeft,
                 FRONT_ANGLE,  // -75 deg
                 ALCOVE_ANGLE,  // 30 deg
                 WHEEL_RADIUS,
@@ -135,8 +147,8 @@ public class BwbotsSimulatedChassis : MonoBehaviour
             new ModuleKinematics(
                 "front_right",
                 3,
-                bodyWheelFrontRight,
-                bodyModuleFrontRight,
+                wheelFrontRight,
+                moduleFrontRight,
                 -ALCOVE_ANGLE,  // -30 deg
                 -FRONT_ANGLE,  // 75 deg
                 WHEEL_RADIUS,
@@ -214,27 +226,46 @@ public class BwbotsSimulatedChassis : MonoBehaviour
         };
 
         last_odom_msg = MakeOdometryMessage(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+
+        setUseGroundTruth(useGroundTruth);
     }
 
     void FixedUpdate()
     {
-        double dt = (double)Time.fixedDeltaTime;
         double vx, vy, vt;
-        if (motorsEnabled) {
-            (vx, vy, vt) = computeVelocity();
-        }
-        else {
-            vx = 0.0;
-            vy = 0.0;
-            vt = 0.0;
-        }
         double x, y, theta;
-        if (useOdomGroundTruth) {
-            x = transform.position.z;
-            y = -transform.position.x;
-            theta = ModuleKinematics.WrapAngle(-transform.rotation.eulerAngles.y * Mathf.Deg2Rad);
+        if (useGroundTruth) {
+            x = bodyMain.transform.position.z;
+            y = -bodyMain.transform.position.x;
+            theta = ModuleKinematics.WrapAngle(-bodyMain.transform.rotation.eulerAngles.y * Mathf.Deg2Rad);
+
+            double dt = Time.fixedDeltaTime;
+
+            double dx = x - prevOdomX;
+            double dy = y - prevOdomY;
+            double dtheta = theta - prevOdomTheta;
+            
+            double rotatedDx = dx * Math.Cos(-theta) - dy * Math.Sin(-theta);
+            double rotatedDy = dx * Math.Sin(-theta) + dy * Math.Cos(-theta);
+
+            vx = rotatedDx / dt;
+            vy = rotatedDy / dt;
+            vt = dtheta / dt;
+
+            prevOdomX = x;
+            prevOdomY = y;
+            prevOdomTheta = theta;
         }
         else {
+            double dt = (double)Time.fixedDeltaTime;
+            if (motorsEnabled) {
+                (vx, vy, vt) = computeVelocity();
+            }
+            else {
+                vx = 0.0;
+                vy = 0.0;
+                vt = 0.0;
+            }
             (x, y, theta) = computePosition(vx, vy, vt, dt);
         }
         last_odom_msg = MakeOdometryMessage(x, y, theta, vx, vy, vt);
@@ -248,8 +279,26 @@ public class BwbotsSimulatedChassis : MonoBehaviour
         }
     }
 
-    public void setTwistCommand(TwistMsg twist) {
-        twistCommand = twist;
+    public bool getUseGroundTruth() {
+        return this.useGroundTruth;
+    }
+    public void setUseGroundTruth(bool useGroundTruth) {
+        this.useGroundTruth = useGroundTruth;
+        foreach (ModuleKinematics module in modules) {
+            module.setUseGroundTruth(useGroundTruth);
+        }
+        if (this.useGroundTruth) {
+            initialTransform = bodyMain.transform;
+        }
+    }
+
+    public void setTwistCommand(TwistMsg twist, int priority, float priorityTimeout) {
+        float now = Time.realtimeSinceStartup;
+        if (commandPriority == -1 || priority <= commandPriority || now > commandTimeoutStamp) {
+            twistCommand = twist;
+            commandPriority = priority;
+            commandTimeoutStamp = now + priorityTimeout;
+        }
     }
 
     public void setMotorEnable(bool enabled) {
@@ -267,6 +316,8 @@ public class BwbotsSimulatedChassis : MonoBehaviour
             vy = 0.0;
             vt = 0.0;
         }
+
+        
         double v_theta = Math.Atan2(vy, vx);
         double dt = (double)Time.unscaledDeltaTime;
 
@@ -289,8 +340,25 @@ public class BwbotsSimulatedChassis : MonoBehaviour
             vx = v_mag * Math.Cos(v_theta);
             vy = v_mag * Math.Sin(v_theta);
         }
-        foreach (ModuleKinematics module in modules) {
-            module.set(vx, vy, vt, dt);
+
+        if (useGroundTruth) {
+            // Debug.Log($"vx: {vx}, vy: {vy}, vt: {vt}");
+            float unityDz = (float)vx * Time.fixedDeltaTime;
+            float unityDx = -(float)vy * Time.fixedDeltaTime;
+            float unityDtheta = -(float)(vt * Mathf.Rad2Deg) * Time.fixedDeltaTime;
+            Vector3 deltaVector = new Vector3(unityDx, 0.0f, unityDz);
+            Vector3 rotatedVector = bodyMain.transform.position + bodyMain.transform.rotation * deltaVector;
+            rotatedVector.y = initialTransform.position.y;
+            Quaternion newRotation = Quaternion.Euler(0.0f, bodyMain.transform.rotation.eulerAngles.y + unityDtheta, 0.0f);
+            bodyMain.TeleportRoot(
+                rotatedVector,
+                newRotation
+            );
+        }
+        else {
+            foreach (ModuleKinematics module in modules) {
+                module.set(vx, vy, vt, dt);
+            }
         }
     }
 

@@ -87,14 +87,19 @@ public class FpvCamera : MonoBehaviour
     private bool mouseWasLocked = false;
     private int mouseWasLockedCounter = 0;
 
-    private GUIStyle statusLabelStyle = new GUIStyle();
+    private GUIStyle robotStatusLabelStyle = new GUIStyle();
+    private GUIStyle groundStatusLabelStyle = new GUIStyle();
     private int labelBorderSize;
+    private float prevNonZeroRobotCommand = 0.0f;
+    private float robotCommandTimeout = 0.5f;
 
     void Start()
     {
-        statusLabelStyle.fontSize = 25;
-        statusLabelStyle.fontStyle = FontStyle.Bold;
-        statusLabelStyle.normal.textColor = Color.white;
+        this.robotStatusLabelStyle.fontSize = 20;
+        this.robotStatusLabelStyle.fontStyle = FontStyle.Bold;
+        this.robotStatusLabelStyle.normal.textColor = Color.white;
+        this.groundStatusLabelStyle = new GUIStyle(this.robotStatusLabelStyle);
+
         labelBorderSize = 5;
         movementLimiter = new SlewLimiter(movementDeceleration, movementAcceleration, 0.0f);
 
@@ -163,16 +168,28 @@ public class FpvCamera : MonoBehaviour
                 Debug.Log($"Disabling robot control");
             }
         }
+        if (Input.GetKeyDown(KeyCode.B)) {
+            wheelController.setUseGroundTruth(!wheelController.getUseGroundTruth());
+        }
     }
 
     void OnGUI()
     {
         string robotStatusText = "Robot is " + (wheelController.getMotorEnable() ? "enabled" : "disabled");
-        Vector2 size = statusLabelStyle.CalcSize(new GUIContent(robotStatusText));
+        Vector2 robotStatusSize = this.robotStatusLabelStyle.CalcSize(new GUIContent(robotStatusText));
+        string groundTruthText = "Ground truth is " + (wheelController.getUseGroundTruth() ? "enabled" : "disabled");
+        Vector2 groundTruthSize = this.groundStatusLabelStyle.CalcSize(new GUIContent(groundTruthText));
+        Vector2 size = new Vector2(
+            Math.Max(robotStatusSize.x, groundTruthSize.x),
+            robotStatusSize.y + groundTruthSize.y
+        );
+        
         Rect boxRect = new Rect(Screen.width - size.x - 2 * labelBorderSize, 0, size.x + 2 * labelBorderSize, size.y + 2 * labelBorderSize);
-        Rect labelRect = new Rect(boxRect.x + labelBorderSize, boxRect.y + labelBorderSize, size.x, size.y);
+        Rect robotStatusLabelRect = new Rect(boxRect.x + labelBorderSize, boxRect.y + labelBorderSize, size.x, size.y);
+        Rect groundTruthLabelRect = new Rect(boxRect.x + labelBorderSize, boxRect.y + robotStatusSize.y + labelBorderSize, size.x, size.y);
         GUI.Box(boxRect, GUIContent.none);
-        GUI.Label(labelRect, robotStatusText, statusLabelStyle);
+        GUI.Label(robotStatusLabelRect, robotStatusText, this.robotStatusLabelStyle);
+        GUI.Label(groundTruthLabelRect, groundTruthText, this.groundStatusLabelStyle);
     }
 
     void FollowRobotUpdate() {
@@ -184,40 +201,67 @@ public class FpvCamera : MonoBehaviour
         Quaternion smoothedRotation = Quaternion.Lerp(transform.rotation, desiredRotation, smoothSpeed);
         transform.rotation = smoothedRotation;
 
-        targetLinearSpeed = Input.GetAxisRaw("Vertical") * forwardSpeed;
+        targetAngularSpeed = 0.0f;
+        targetLinearSpeed = 0.0f;
         targetLateralSpeed = 0.0f;
+        if (Input.GetKey(KeyCode.A)) {
+            targetAngularSpeed += angularSpeed;
+        }
+
+        if (Input.GetKey(KeyCode.D)) {
+            targetAngularSpeed += -angularSpeed;
+        }
+
+        if (Input.GetKey(KeyCode.W)) {
+            targetLinearSpeed += forwardSpeed;
+        }
+
+        if (Input.GetKey(KeyCode.S)) {
+            targetLinearSpeed += -forwardSpeed;
+        }
+
         if (Input.GetKey(KeyCode.Q)) {
-            targetLateralSpeed = lateralSpeed;
-            if (targetLinearSpeed == 0.0f) {
-                targetLinearSpeed = forwardSpeed;
-            }
+            targetLateralSpeed += lateralSpeed;
         }
+
         if (Input.GetKey(KeyCode.E)) {
-            targetLateralSpeed = -lateralSpeed;
-            if (targetLinearSpeed == 0.0f) {
-                targetLinearSpeed = forwardSpeed;
-            }
+            targetLateralSpeed += -lateralSpeed;
         }
-        if (Input.GetKey(KeyCode.R)) {
+
+        if (Input.GetKeyDown(KeyCode.R)) {
             resetCameraRelativeOffsetToDefault();
         }
-        targetAngularSpeed = -Input.GetAxisRaw("Horizontal") * angularSpeed;
     }
 
     void FixedUpdate()
     {
         if (enableRobotCommands) {
-            TwistMsg msg = new TwistMsg {
-                linear = {
-                    x = targetLinearSpeed,
-                    y = targetLateralSpeed
-                },
-                angular = {
-                    z = targetAngularSpeed
-                }
-            };
-            wheelController.setTwistCommand(msg);
+            sendRobotCommand(targetLinearSpeed, targetLateralSpeed, targetAngularSpeed);
         }
+    }
+
+    private void sendRobotCommand(float vx, float vy, float vt) {
+        TwistMsg msg = new TwistMsg {
+            linear = {
+                x = vx,
+                y = vy
+            },
+            angular = {
+                z = vt
+            }
+        };
+        if (msg.linear.x == 0.0 && msg.linear.y == 0.0 && msg.angular.z == 0.0) {
+            if (prevNonZeroRobotCommand == 0.0f) {
+                prevNonZeroRobotCommand = Time.realtimeSinceStartup;
+            }
+            if (Time.realtimeSinceStartup - prevNonZeroRobotCommand > robotCommandTimeout) {
+                return;
+            }
+        }
+        else {
+            prevNonZeroRobotCommand = 0.0f;
+        }
+        wheelController.setTwistCommand(msg, 0, 0.1f);
     }
 
     void FreeCamUpdate() {

@@ -622,7 +622,6 @@ GameObject:
   - component: {fileID: 201100064}
   - component: {fileID: 201100063}
   - component: {fileID: 201100065}
-  - component: {fileID: 201100067}
   - component: {fileID: 201100068}
   m_Layer: 0
   m_Name: wheel_front_right_4
@@ -748,19 +747,6 @@ ArticulationBody:
   m_Immovable: 0
   m_UseGravity: 1
   m_CollisionDetectionMode: 0
---- !u!135 &201100067
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 201100060}
-  m_Material: {fileID: 13400000, guid: 0cb4ac3c8ce56045d8724c734278a51a, type: 2}
-  m_IsTrigger: 0
-  m_Enabled: 0
-  serializedVersion: 2
-  m_Radius: 0.0575
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!64 &201100068
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -1660,7 +1646,6 @@ GameObject:
   - component: {fileID: 914812193}
   - component: {fileID: 914812192}
   - component: {fileID: 914812194}
-  - component: {fileID: 914812196}
   - component: {fileID: 914812197}
   m_Layer: 0
   m_Name: wheel_back_right_2
@@ -1786,19 +1771,6 @@ ArticulationBody:
   m_Immovable: 0
   m_UseGravity: 1
   m_CollisionDetectionMode: 0
---- !u!135 &914812196
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 914812189}
-  m_Material: {fileID: 13400000, guid: 0cb4ac3c8ce56045d8724c734278a51a, type: 2}
-  m_IsTrigger: 0
-  m_Enabled: 0
-  serializedVersion: 2
-  m_Radius: 0.0575
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!64 &914812197
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -2281,7 +2253,6 @@ GameObject:
   - component: {fileID: 1372091405}
   - component: {fileID: 1372091404}
   - component: {fileID: 1372091407}
-  - component: {fileID: 1372091409}
   - component: {fileID: 1372091410}
   m_Layer: 0
   m_Name: wheel_back_left_1
@@ -2407,19 +2378,6 @@ ArticulationBody:
   m_Immovable: 0
   m_UseGravity: 1
   m_CollisionDetectionMode: 0
---- !u!135 &1372091409
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1372091402}
-  m_Material: {fileID: 13400000, guid: 0cb4ac3c8ce56045d8724c734278a51a, type: 2}
-  m_IsTrigger: 0
-  m_Enabled: 0
-  serializedVersion: 2
-  m_Radius: 0.0575
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!64 &1372091410
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -2446,7 +2404,6 @@ GameObject:
   - component: {fileID: 1430557361}
   - component: {fileID: 1430557360}
   - component: {fileID: 1430557362}
-  - component: {fileID: 1430557364}
   - component: {fileID: 1430557365}
   m_Layer: 0
   m_Name: wheel_front_left_3
@@ -2572,19 +2529,6 @@ ArticulationBody:
   m_Immovable: 0
   m_UseGravity: 1
   m_CollisionDetectionMode: 0
---- !u!135 &1430557364
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1430557357}
-  m_Material: {fileID: 13400000, guid: 0cb4ac3c8ce56045d8724c734278a51a, type: 2}
-  m_IsTrigger: 0
-  m_Enabled: 0
-  serializedVersion: 2
-  m_Radius: 0.0575
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!64 &1430557365
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -2909,16 +2853,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c7ce92355f256b942bda13b275fbe299, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bodyMain: {fileID: 1613416638}
-  bodyWheelBackLeft: {fileID: 1372091407}
-  bodyWheelBackRight: {fileID: 914812194}
-  bodyWheelFrontLeft: {fileID: 1430557362}
-  bodyWheelFrontRight: {fileID: 201100065}
-  bodyModuleBackLeft: {fileID: 161279732}
-  bodyModuleBackRight: {fileID: 384469621}
-  bodyModuleFrontLeft: {fileID: 36377868}
-  bodyModuleFrontRight: {fileID: 45009364}
-  useOdomGroundTruth: 0
+  robot: {fileID: 1613416630}
+  wheelBackLeft: {fileID: 1372091402}
+  wheelBackRight: {fileID: 914812189}
+  wheelFrontLeft: {fileID: 1430557357}
+  wheelFrontRight: {fileID: 201100060}
+  moduleBackLeft: {fileID: 161279728}
+  moduleBackRight: {fileID: 384469617}
+  moduleFrontLeft: {fileID: 36377864}
+  moduleFrontRight: {fileID: 45009360}
+  useGroundTruth: 1
 --- !u!171741748 &1613416638
 ArticulationBody:
   m_ObjectHideFlags: 0

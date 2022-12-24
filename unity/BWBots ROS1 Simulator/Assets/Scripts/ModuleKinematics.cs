@@ -7,8 +7,10 @@ using RosMessageTypes.BwInterfaces;
 class ModuleKinematics
 {
     private String name;
-    private ArticulationBody wheel;
-    private ArticulationBody module;
+    private ArticulationBody wheelBody;
+    private ArticulationBody moduleBody;
+    private GameObject wheel;
+    private GameObject module;
 
     private double min_angle;
     private double max_angle;
@@ -20,12 +22,13 @@ class ModuleKinematics
     private double prev_azimuth;
     private double max_wheel_speed;
     private BwDriveModuleMsg module_msg = new BwDriveModuleMsg();
+    private bool useGroundTruth = false;
 
     public ModuleKinematics(
             String name,
             int index,
-            ArticulationBody wheel,
-            ArticulationBody module,
+            GameObject wheel,
+            GameObject module,
             double min_angle,
             double max_angle,
             double wheel_radius,
@@ -35,8 +38,11 @@ class ModuleKinematics
             double armature_length,
             double max_wheel_speed) {
         this.name = name;
+
         this.wheel = wheel;
         this.module = module;
+        this.wheelBody = wheel.GetComponent<ArticulationBody>();
+        this.moduleBody = module.GetComponent<ArticulationBody>();
 
         this.min_angle = min_angle;
         this.max_angle = max_angle;
@@ -48,31 +54,35 @@ class ModuleKinematics
         this.max_wheel_speed = max_wheel_speed;
         prev_azimuth = 0.0;
 
-        ArticulationDrive wheelDrive = wheel.xDrive;
+        ArticulationDrive wheelDrive = this.wheelBody.xDrive;
         wheelDrive.stiffness = 500.0f;
         wheelDrive.damping = 100.0f;
         wheelDrive.forceLimit = 10000.0f;
-        wheel.xDrive = wheelDrive;
+        this.wheelBody.xDrive = wheelDrive;
 
-        wheel.linearDamping = 1.0f;
-        wheel.angularDamping = 1.0f;
-        wheel.jointFriction = 0.1f;
-        wheel.inertiaTensor = new Vector3(1e-06f, 1e-05f, 1e-06f);
-        wheel.mass = 0.005f;
+        this.wheelBody.linearDamping = 1.0f;
+        this.wheelBody.angularDamping = 1.0f;
+        this.wheelBody.jointFriction = 0.1f;
+        this.wheelBody.inertiaTensor = new Vector3(1e-06f, 1e-05f, 1e-06f);
+        this.wheelBody.mass = 0.005f;
 
-        ArticulationDrive moduleDrive = module.xDrive;
+        ArticulationDrive moduleDrive = this.moduleBody.xDrive;
         moduleDrive.stiffness = 10000.0f;
         moduleDrive.damping = 1000.0f;
         moduleDrive.forceLimit = 10000.0f;
-        module.xDrive = moduleDrive;
+        this.moduleBody.xDrive = moduleDrive;
 
-        module.linearDamping = 1.0f;
-        module.angularDamping = 1.0f;
-        module.jointFriction = 1.0f;
-        module.mass = 0.15f;
-        module.inertiaTensor = new Vector3(1e-04f, 1e-02f, 1e-04f);
+        this.moduleBody.linearDamping = 1.0f;
+        this.moduleBody.angularDamping = 1.0f;
+        this.moduleBody.jointFriction = 1.0f;
+        this.moduleBody.mass = 0.015f;
+        this.moduleBody.inertiaTensor = new Vector3(1e-06f, 1e-05f, 1e-06f);
 
         module_msg.module_index = (index + 1).ToString();
+    }
+
+    public void setUseGroundTruth(bool useGroundTruth) {
+        this.useGroundTruth = useGroundTruth;
     }
 
     private (double, double) ComputeState(double vx, double vy, double vt, double dt, double prev_azimuth)
@@ -123,6 +133,9 @@ class ModuleKinematics
     }
 
     public void set(double vx, double vy, double vt, double dt) {
+        if (useGroundTruth) {
+            return;
+        }
         (double azimuth, double wheel_velocity) = ComputeState(vx, vy, vt, dt, prev_azimuth);
         prev_azimuth = azimuth;
 
@@ -163,9 +176,9 @@ class ModuleKinematics
         }
         double angularVelocity = -groundVelocity / wheel_radius;
         double deltaAngle = angularVelocity * Time.fixedDeltaTime;
-        ArticulationDrive drive = wheel.xDrive;
+        ArticulationDrive drive = wheelBody.xDrive;
         drive.target = drive.target + (float)(deltaAngle * Mathf.Rad2Deg);
-        wheel.xDrive = drive;
+        wheelBody.xDrive = drive;
     }
 
     public void setModuleAzimuth(double azimuth) {
@@ -177,23 +190,23 @@ class ModuleKinematics
             azimuth = max_angle;
         }
         azimuth *= -1.0;
-        ArticulationDrive drive = module.xDrive;
+        ArticulationDrive drive = moduleBody.xDrive;
         drive.target = (float)azimuth * Mathf.Rad2Deg;
-        module.xDrive = drive;
+        moduleBody.xDrive = drive;
     }
 
     public double getAzimuth() {
         List<float> states = new List<float>();
-        module.GetJointPositions(states);
+        moduleBody.GetJointPositions(states);
 
         List<int> indices = new List<int>();
-        module.GetDofStartIndices(indices);
+        moduleBody.GetDofStartIndices(indices);
 
-        if (module.index >= indices.Count) {
+        if (moduleBody.index >= indices.Count) {
             Debug.LogWarning("Failed to get azimuth! Not enough joints.");
             return 0.0f;
         }
-        int index = indices[module.index];
+        int index = indices[moduleBody.index];
         if (index >= states.Count) {
             Debug.LogWarning("Failed to get azimuth! Index out of range.");
             return 0.0f;
@@ -211,16 +224,16 @@ class ModuleKinematics
 
     public double getAzimuthVelocity() {
         List<float> states = new List<float>();
-        module.GetJointVelocities(states);
+        moduleBody.GetJointVelocities(states);
 
         List<int> indices = new List<int>();
-        module.GetDofStartIndices(indices);
+        moduleBody.GetDofStartIndices(indices);
 
-        if (module.index >= indices.Count) {
+        if (moduleBody.index >= indices.Count) {
             Debug.LogWarning("Failed to get azimuth velocity! Not enough joints.");
             return 0.0f;
         }
-        int index = indices[module.index];
+        int index = indices[moduleBody.index];
         if (index >= states.Count) {
             Debug.LogWarning("Failed to get azimuth velocity! Index out of range.");
             return 0.0f;
@@ -233,16 +246,16 @@ class ModuleKinematics
 
     public double getWheelVelocity() {
         List<float> states = new List<float>();
-        wheel.GetJointVelocities(states);
+        wheelBody.GetJointVelocities(states);
 
         List<int> indices = new List<int>();
-        wheel.GetDofStartIndices(indices);
+        wheelBody.GetDofStartIndices(indices);
 
-        if (wheel.index >= indices.Count) {
+        if (wheelBody.index >= indices.Count) {
             Debug.LogWarning("Failed to get wheel velocity! Not enough joints.");
             return 0.0f;
         }
-        int index = indices[wheel.index];
+        int index = indices[wheelBody.index];
         if (index >= states.Count) {
             Debug.LogWarning("Failed to get wheel velocity! Index out of range.");
             return 0.0f;

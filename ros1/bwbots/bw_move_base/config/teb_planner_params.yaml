@@ -10,7 +10,7 @@
 acc_lim_x: 0.25 # 0.5
 
 # Maximum angular acceleration of the robot in radians/sec^2
-acc_lim_theta: 3.0 # 12.0
+acc_lim_theta: 2.0 # 12.0
 
 # Maximum translational velocity of the robot in meters/sec
 max_vel_x: 0.35 # max speed 1.0 m/s

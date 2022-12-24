@@ -61,7 +61,7 @@ public class ChassisRosInterface : MonoBehaviour
     }
 
     private void cmdVelCallback(TwistMsg twist) {
-        chassis.setTwistCommand(twist);
+        chassis.setTwistCommand(twist, 100, 0.5f);
     }
 
     private string getJointTopic(int index) {
