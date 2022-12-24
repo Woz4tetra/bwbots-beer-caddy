@@ -67,9 +67,9 @@ Follow the [Unity Robotics quick setup guide](https://github.com/Unity-Technolog
 
 A new menu option call "Robotics" should appear. Click Robotics > ROS Settings.
 
-![alt text](images/UnityShinyNewMenu.jpg "UnityShinyNewMenu")
+![alt text](images/UnityShinyNewMenu.png "UnityShinyNewMenu")
 
-![alt text](images/UnityRosSettings.jpg "UnityRosSettings")
+![alt text](images/UnityRosSettings.png "UnityRosSettings")
 
 
 
