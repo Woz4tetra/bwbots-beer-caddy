@@ -48,9 +48,9 @@ class HasDrinkCommand:
         else:
             if result.success:
                 if result.has_drink:
-                    rospy.loginfo(f"Robot is carrying a drink")
+                    rospy.loginfo(f"Robot is carrying a drink. Mass reading is {self.mass}")
                 else:
-                    rospy.loginfo(f"Robot is not carrying a drink")
+                    rospy.loginfo(f"Robot is not carrying a drink. Mass reading is {self.mass}")
             else:
                 rospy.loginfo(f"Failed to get drink status")
             self.action_server.set_succeeded(result)

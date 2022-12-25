@@ -12,7 +12,7 @@ class SelectBySupplierDecorator(py_trees.decorators.Decorator):
             child.parent = self
     
     def initialise(self):
-        name = self.name_supplier
+        name = self.name_supplier()
         child = self.children_lookup[name]
         self.children[0] = child
         self.decorated = child

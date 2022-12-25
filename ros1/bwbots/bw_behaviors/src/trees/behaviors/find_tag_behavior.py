@@ -35,16 +35,18 @@ class FindTagBehavior(py_trees_ros.actions.ActionClient):
 
         action_result = super().update()
         if action_result == py_trees.Status.SUCCESS:
-            
             result: FindTagResult = self.action_client.get_result()
             self.tag_result_pub.publish(result.pose)
             self.tag_manager.set_tag(self.tag_name, result.pose)
 
-            rospy.loginfo(f"{self.tag_name} found: {result.success}")
+            rospy.loginfo(f"{self.tag_name} found. result: {action_result}")
             if result.success and self.tag_manager.is_tag_valid(self.tag_name):
                 return py_trees.Status.SUCCESS
             else:
                 return py_trees.Status.FAILURE
-        else:
+        elif action_result == py_trees.Status.FAILURE:
+            rospy.loginfo(f"{self.tag_name} was not found. result: {action_result}")
             self.tag_manager.unset_tag(self.tag_name)
-        return action_result
+            return py_trees.Status.FAILURE
+        else:
+            return py_trees.Status.RUNNING

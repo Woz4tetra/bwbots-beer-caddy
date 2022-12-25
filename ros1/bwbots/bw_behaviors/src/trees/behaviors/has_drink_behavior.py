@@ -2,8 +2,6 @@ import rospy
 import py_trees
 import py_trees_ros
 
-from geometry_msgs.msg import PoseStamped
-
 from bw_interfaces.msg import HasDrinkAction, HasDrinkGoal, HasDrinkResult
 
 
@@ -22,7 +20,6 @@ class HasDrinkBehavior(py_trees_ros.actions.ActionClient):
     def update(self):
         action_result = super().update()
         if action_result == py_trees.Status.SUCCESS:
-
             result: HasDrinkResult = self.action_client.get_result()
             if result.success:
                 status = result.has_drink
@@ -31,6 +28,4 @@ class HasDrinkBehavior(py_trees_ros.actions.ActionClient):
                 return py_trees.Status.SUCCESS if status else py_trees.Status.FAILURE
             else:
                 return py_trees.Status.FAILURE
-        else:
-            self.tag_manager.unset_tag(self.tag_name)
         return action_result

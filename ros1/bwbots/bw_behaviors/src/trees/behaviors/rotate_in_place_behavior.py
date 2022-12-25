@@ -17,7 +17,7 @@ class RotateInPlaceBehavior(py_trees.behaviour.Behaviour):
     
     def update(self):
         if rospy.Time.now() - self.start_time > self.timeout:
-            return py_trees.Status.FAILURE
+            return py_trees.Status.SUCCESS
         twist = Twist()
         twist.angular.z = self.angular_velocity
         self.cmd_vel_pub.publish(twist)

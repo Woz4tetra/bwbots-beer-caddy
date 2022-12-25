@@ -1,0 +1,9 @@
+<launch>
+    <arg name="simulated" default="false"/>
+
+    <group ns="bw">
+        <node pkg="bw_dispensers" type="bw_dispensers_node.py" name="bw_dispensers">
+            <param name="simulated" value="$(arg simulated)"/>
+        </node>
+    </group>
+</launch>

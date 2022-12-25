@@ -60,17 +60,24 @@ class TagManager:
             return False
         if valid_tag_window is None:
             valid_tag_window = self.valid_tag_window
+        if valid_tag_window == rospy.Duration(0.0):
+            return True
         return rospy.Time.now() - self.tags[name].timestamp < valid_tag_window
 
     def get_tag(self, name) -> Tag:
         return self.tags[name]
 
-    def get_offset_tag(self, name: str, x_offset: float, y_offset: float) -> Optional[PoseStamped]:
-        if not self.is_tag_valid(name):
+    def get_offset_tag(self,
+            name: str,
+            x_offset: float,
+            y_offset: float,
+            theta_offset: float,
+            valid_tag_window: Optional[rospy.Duration] = None) -> Optional[PoseStamped]:
+        if not self.is_tag_valid(name, valid_tag_window):
             return None
         tag = self.get_tag(name)
         tag_pose2d = Pose2d.from_ros_pose(tag.pose)
-        offset = Pose2d(y_offset, x_offset, math.pi / 2.0)
+        offset = Pose2d(y_offset, x_offset, math.pi / 2.0 + theta_offset)
         rotate_tag_pose2d = offset.transform_by(tag_pose2d)
         rotate_tag_pose_stamped = PoseStamped()
         rotate_tag_pose_stamped.header.frame_id = tag.reference_frame

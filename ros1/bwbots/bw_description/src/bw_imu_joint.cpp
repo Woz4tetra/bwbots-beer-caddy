@@ -82,6 +82,13 @@ void BwImuJoint::odom_callback(const nav_msgs::OdometryConstPtr& odom) {
     x += rotated_tx;
     y += rotated_ty;
 
+    if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(theta)) {
+        x = 0.0;
+        y = 0.0;
+        theta = 0.0;
+        ROS_WARN("Resetting odometry position! NaN or Inf encountered");
+    }
+
     geometry_msgs::TransformStamped tf_stamped;
     tf_stamped.header = odom->header;
     tf_stamped.child_frame_id = odom->child_frame_id;

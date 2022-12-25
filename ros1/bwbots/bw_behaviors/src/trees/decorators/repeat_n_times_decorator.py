@@ -13,9 +13,13 @@ class RepeatNTimesDecorator(py_trees.decorators.Decorator):
         if result == py_trees.Status.SUCCESS:
             return result
         elif result == py_trees.Status.FAILURE:
+            self.attempt += 1
+            rospy.loginfo(f"Decorated node failed on attempt {self.attempt} of {self.total_attempts}")
             if self.attempt < self.total_attempts:
                 self.decorated.initialise()
+                return py_trees.Status.RUNNING
             else:
+                rospy.loginfo("Out of attempts. Returning failure.")
                 return result
-            self.attempt += 1
-        return result
+        else:
+            return py_trees.Status.RUNNING

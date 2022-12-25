@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Optional
 import rospy
 import py_trees
 import py_trees_ros
@@ -10,9 +10,18 @@ from trees.managers.tag_manager import TagManager
 
 
 class GoToTagBehavior(py_trees_ros.actions.ActionClient):
-    def __init__(self, x_offset: float, y_offset: float, tag_name_supplier: Callable[[], str], tag_manager: TagManager, **kwargs):
+    def __init__(self,
+            x_offset: float,
+            y_offset: float,
+            theta_offset: float,
+            tag_name_supplier: Callable[[], str],
+            tag_manager: TagManager,
+            valid_tag_window: Optional[rospy.Duration] = None,
+            **kwargs):
         self.x_offset = x_offset
         self.y_offset = y_offset
+        self.theta_offset = theta_offset
+        self.valid_tag_window = valid_tag_window
         self.tag_name_supplier = tag_name_supplier
         self.tag_manager = tag_manager
         
@@ -44,9 +53,13 @@ class GoToTagBehavior(py_trees_ros.actions.ActionClient):
         if not self.sent_goal:
             tag_name = self.tag_name_supplier()
             if type(tag_name) != str:
+                rospy.logwarn(f"Supplied tag name is not a string: {tag_name}")
                 return py_trees.Status.FAILURE
-            tag_pose_stamped = self.tag_manager.get_offset_tag(tag_name, self.x_offset, self.y_offset)
+            tag_pose_stamped = self.tag_manager.get_offset_tag(
+                tag_name, self.x_offset, self.y_offset, self.theta_offset, self.valid_tag_window
+            )
             if tag_pose_stamped is None:
+                rospy.logwarn(f"Failed to get pose of tag {tag_name}")
                 return py_trees.Status.FAILURE
             self.action_goal.goal.pose = tag_pose_stamped.pose
             self.action_goal.goal.header.frame_id = tag_pose_stamped.header.frame_id

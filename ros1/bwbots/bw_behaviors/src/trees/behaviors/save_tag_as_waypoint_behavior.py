@@ -16,12 +16,14 @@ class SaveTagAsWaypointBehavior(py_trees.behaviour.Behaviour):
     def __init__(self,
                 x_offset: float,
                 y_offset: float,
+                theta_offset: float,
                 global_frame_id: str,
                 waypoint_name_supplier: Callable[[], str],
                 tag_name_supplier: Callable[[], str],
                 tag_manager: TagManager):
         self.x_offset = x_offset
         self.y_offset = y_offset
+        self.theta_offset = theta_offset
         self.tag_name_supplier = tag_name_supplier
         self.waypoint_name_supplier = waypoint_name_supplier
         self.tag_manager = tag_manager
@@ -38,7 +40,7 @@ class SaveTagAsWaypointBehavior(py_trees.behaviour.Behaviour):
         tag_name = self.tag_name_supplier()
         if type(tag_name) != str:
             return py_trees.Status.FAILURE
-        tag_pose_stamped = self.tag_manager.get_offset_tag(tag_name, self.x_offset, self.y_offset)
+        tag_pose_stamped = self.tag_manager.get_offset_tag(tag_name, self.x_offset, self.y_offset, self.theta_offset)
         if tag_pose_stamped is None:
             return py_trees.Status.FAILURE
         try:

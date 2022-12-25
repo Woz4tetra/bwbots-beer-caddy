@@ -11,6 +11,9 @@ class CameraSensor : MonoBehaviour
     [SerializeField] private double publishDelay;
     [SerializeField] private string tagTopic;
     [SerializeField] private string frameId;
+    [SerializeField] private float rayCastOffset = 0.01f;
+    [SerializeField] private float rayCastTolerance = 0.015f;
+    [SerializeField] private bool debugRayCast = false;
     private double _prevPublishTime;
     private uint messageCount;
 
@@ -27,11 +30,7 @@ class CameraSensor : MonoBehaviour
     void Update() 
     {
         double now = Time.realtimeSinceStartup;
-        if (now - _prevPublishTime < publishDelay) {
-            return;
-        }
-        _prevPublishTime = now;
-        
+
         AprilTagDetectionArrayMsg tagArrayMsg = new AprilTagDetectionArrayMsg {
             header = {
                 seq = messageCount,
@@ -67,6 +66,11 @@ class CameraSensor : MonoBehaviour
         }
         messageCount++;
         if (tagTopic.Length > 0 & publishDelay > 0.0) {
+            if (now - _prevPublishTime < publishDelay) {
+                return;
+            }
+            _prevPublishTime = now;
+            
             tagArrayMsg.detections = tagList.ToArray();
             _ros.Publish(tagTopic, tagArrayMsg);
         }
@@ -76,9 +80,23 @@ class CameraSensor : MonoBehaviour
     {
         Plane[] planes = GeometryUtility.CalculateFrustumPlanes(cameraView);
 
-        if (GeometryUtility.TestPlanesAABB(planes, renderer.bounds))
-            return true;
-        else
+        if (GeometryUtility.TestPlanesAABB(planes, renderer.bounds)) {
+            RaycastHit hit;
+            Vector3 directionVector = renderer.bounds.center - cameraView.transform.position;
+            var measurementStart = rayCastOffset * directionVector + transform.position;
+            var measurementRay = new Ray(measurementStart, directionVector.normalized);
+            if (Physics.Raycast(measurementRay, out hit)) {
+                float castDistance = hit.distance + rayCastTolerance + rayCastOffset;
+                bool isUnObstructed = castDistance >= directionVector.magnitude;
+                if (debugRayCast) {
+                    Debug.DrawRay(measurementStart, directionVector.normalized * hit.distance, isUnObstructed ? Color.green : Color.yellow);
+                }
+                return isUnObstructed;
+            }
             return false;
+        }
+        else {
+            return false;
+        }
     }
 }

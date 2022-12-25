@@ -1,3 +1,4 @@
+import rospy
 from typing import Callable
 import py_trees
 import py_trees_ros
@@ -17,6 +18,7 @@ class FollowWaypointBehavior(py_trees_ros.actions.ActionClient):
     def update(self):
         if not self.sent_goal:
             waypoint_name = self.waypoint_name_supplier()
+            rospy.loginfo(f"Follow waypoint behavior: {waypoint_name}")
             if type(waypoint_name) != str:
                 return py_trees.Status.FAILURE
             waypoint_array = self.waypoint_manager.get_waypoint(waypoint_name)

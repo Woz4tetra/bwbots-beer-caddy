@@ -1,0 +1,8 @@
+string waypoint_key
+float32 prep_x_offset
+float32 prep_y_offset
+---
+bool success
+---
+string status
+string node_name

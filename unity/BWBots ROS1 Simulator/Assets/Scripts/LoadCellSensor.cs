@@ -14,6 +14,7 @@ class LoadCellSensor : MonoBehaviour
     List<GameObject> carryingObjects;
 
     private ROSConnection _ros;
+    private double totalMass = 0.0;
 
     void Start() {
         loadCellMsg = new LoadCellMsg();
@@ -32,15 +33,26 @@ class LoadCellSensor : MonoBehaviour
             return;
         }
         Rigidbody body;
-        double totalMass = 0.0;
+        double massSum = 0.0;
         foreach (GameObject obj in carryingObjects) {
-            if (obj.TryGetComponent<Rigidbody>(out body)) {
-                totalMass += body.mass;
+            if (obj == null) {
+                carryingObjects.Remove(obj);
+                continue;
             }
+            if (obj.TryGetComponent<Rigidbody>(out body)) {
+                massSum += body.mass;
+            }
+        }
+        if (massSum > totalMass) {
+            totalMass = massSum;
+        }
+        else {
+            totalMass += 0.1 * (massSum - totalMass);
         }
         double now = Time.realtimeSinceStartup;
         if (now - _prevPublishTime > publishDelay)
         {
+            loadCellMsg.mass = (float)totalMass;
             _ros.Publish(topic, loadCellMsg);
             _prevPublishTime = now;
         }
@@ -52,7 +64,6 @@ class LoadCellSensor : MonoBehaviour
         if (collision.gameObject.TryGetComponent<Rigidbody>(out body) &&
                 collision.gameObject.tag.Equals(tagName) &&
                 !carryingObjects.Contains(collision.gameObject)) {
-            Debug.Log($"collided with {collision.gameObject.name}. It weighs {body.mass} kg");
             carryingObjects.Add(collision.gameObject);
         }
     }
@@ -61,7 +72,6 @@ class LoadCellSensor : MonoBehaviour
     {
         if (carryingObjects.Contains(collision.gameObject)) {
             carryingObjects.Remove(collision.gameObject);
-            Debug.Log($"no longer collided with {collision.gameObject.name}");
         }
     }
 }

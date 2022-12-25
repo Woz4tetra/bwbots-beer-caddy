@@ -91,6 +91,7 @@ add_action_files(
   GoToPose.action
   RunBehavior.action
   RunSequence.action
+  SaveTagAsWaypoint.action
   SetRobotState.action
   ShuffleUntilCharging.action
 )

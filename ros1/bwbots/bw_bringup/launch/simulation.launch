@@ -16,8 +16,11 @@
     <include file="$(find bw_waypoints)/launch/bw_waypoints.launch">
         <arg name="waypoints_path" value="$(find bw_waypoints)/waypoints/$(arg map_name)"/>
     </include>
+    <include file="$(find bw_dispensers)/launch/bw_dispensers.launch">
+        <arg name="simulated" value="true"/>
+    </include>
 
-    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find bw_viz)/rviz/standard.rviz" />
+    <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find bw_viz)/rviz/standard.rviz" /> -->
 
     <node pkg="tf" type="static_transform_publisher" name="imu_tf" args="0.0 0.0 0.0  0 0 0 1 camera_link zed2_imu_link 20" />
 

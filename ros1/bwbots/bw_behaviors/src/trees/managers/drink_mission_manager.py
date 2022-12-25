@@ -16,6 +16,7 @@ class DrinkMissionManager:
     def callback(self, msg):
         with self.mission_lock:
             self.missions.missions.append(msg)
+            rospy.loginfo(f"Queuing mission: {msg}. {len(self.missions.missions)} missions in the queue.")
 
     def set_complete(self):
         with self.mission_lock:

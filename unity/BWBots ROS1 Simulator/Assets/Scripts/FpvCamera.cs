@@ -82,7 +82,6 @@ public class FpvCamera : MonoBehaviour
     public ViewMode startingMode = ViewMode.FOLLOW_ROBOT;
     public bool useDefaultOffsetsOnFollow = true;
     private ViewMode viewMode = ViewMode.FOLLOW_ROBOT;
-    private bool enableRobotCommands = false;
     private Vector3 lookingRotation = Vector3.zero;
     private bool mouseWasLocked = false;
     private int mouseWasLockedCounter = 0;
@@ -158,15 +157,7 @@ public class FpvCamera : MonoBehaviour
         }
 
         if (Input.GetKeyDown(KeyCode.C)) {
-            enableRobotCommands = !enableRobotCommands;
-            if (enableRobotCommands) {
-                wheelController.setMotorEnable(true);
-                Debug.Log($"Enabling robot control");
-            }
-            else {
-                wheelController.setMotorEnable(false);
-                Debug.Log($"Disabling robot control");
-            }
+            wheelController.setMotorEnable(!wheelController.getMotorEnable());
         }
         if (Input.GetKeyDown(KeyCode.B)) {
             wheelController.setUseGroundTruth(!wheelController.getUseGroundTruth());
@@ -235,7 +226,7 @@ public class FpvCamera : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (enableRobotCommands) {
+        if (wheelController.getMotorEnable()) {
             sendRobotCommand(targetLinearSpeed, targetLateralSpeed, targetAngularSpeed);
         }
     }

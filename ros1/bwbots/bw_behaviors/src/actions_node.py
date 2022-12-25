@@ -15,7 +15,7 @@ def main():
     rospy.init_node(
         node_name,
         # disable_signals=True,
-        # log_level=rospy.DEBUG
+        log_level=rospy.DEBUG
     )
     
     commands["follow_waypoint"] = FollowWaypoint()

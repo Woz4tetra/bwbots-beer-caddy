@@ -1,1 +1,1 @@
-bw_interfaces/DrinkMission missions
+bw_interfaces/DrinkMission[] missions

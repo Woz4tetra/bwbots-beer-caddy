@@ -181,7 +181,6 @@ class FindTagCommand:
                 timestamp, computed_pose = self.computed_poses[frozen_tag_id]
             
             if current_time - timestamp > self.stale_tag_time:
-                rospy.logdebug("Computed pose is too old. Trying again.")
                 continue
             else:
                 rospy.loginfo(f"Computed average of tag {frozen_tag_id}: {computed_pose}")

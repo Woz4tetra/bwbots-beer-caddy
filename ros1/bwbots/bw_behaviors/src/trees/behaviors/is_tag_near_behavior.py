@@ -1,3 +1,4 @@
+import rospy
 from typing import Callable, Optional
 import tf2_ros
 import py_trees
