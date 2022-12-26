@@ -2,7 +2,7 @@
 #include <Arduino.h>
 
 
-class SpeedPID {
+class PID {
 private:
     double target;
     double error_sum, prev_error;
@@ -15,12 +15,11 @@ public:
     double Kp, Ki, Kd;
     double K_ff;  // feedforward constant
     double deadzone_command;
-    double standstill_deadzone_command;
     double error_sum_clamp;
     double command_min, command_max;
     double epsilon;  // values that are basically zero
 
-    SpeedPID();
+    PID();
     void set_target(double target);
     double get_target();
     void reset();

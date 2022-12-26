@@ -1,8 +1,8 @@
 #include <Arduino.h>
 #include <Adafruit_MotorShield.h>
-#include <Encoder.h>
 #include <PubSubClient.h>
 #include <ESP8266WiFi.h>
+#include <PID.h>
 
 #ifndef WIFI_SSID
 #error WIFI_SSID is not defined
@@ -33,18 +33,134 @@ unsigned long lastMsg = 0;
 char msg[MSG_BUFFER_SIZE];
 int value = 0;
 
+const int MOTOR1_ENCA = 12;
+const int MOTOR1_ENCB = 14;
+Adafruit_MotorShield AFMS = Adafruit_MotorShield();
+Adafruit_DCMotor* motor1;
+
+// const double GEAR_RATIO = 18.75;
+const double GEAR_RATIO = 18.3;
+const double ENCODER_PPR = 64.0;  // pulses per rotation
+const double OUTPUT_RATIO = 360.0 / (GEAR_RATIO * ENCODER_PPR);  // encoder counts (pulses) * output_ratio = degrees at shaft
+
+const int DEADZONE_COMMAND = 0;  // 60
+const int MAX_SPEED_COMMAND = 100;
+
+PID* pid;
+const double RAMP_K = 0.05;  // ramp up damping constant
+const double ERROR_TOLERANCE = 5.0;  // degrees
+
+double prev_command = 0.0;
+double prev_measurement = 0.0;
+bool goal_reached = false;
+
+const int BUTTON = 13;
+
+volatile uint8_t enc1_state = 0;
+volatile int32_t enc1_position = 0;
+
+#define UPDATE_ENC1_STATE() \
+    uint8_t new_state = enc1_state & 3; \
+    if (digitalRead(MOTOR1_ENCA)) new_state |= 4; \
+    if (digitalRead(MOTOR1_ENCB)) new_state |= 8; \
+    switch (new_state) { \
+        case 0: case 5: case 10: case 15: break; \
+        case 1: case 7: case 8: case 14: enc1_position++; break; \
+        case 2: case 4: case 11: case 13: enc1_position--; break; \
+        case 3: case 12: enc1_position += 2; break; \
+        default: enc1_position -= 2; break; \
+    } \
+    enc1_state = new_state >> 2;
+
+IRAM_ATTR void channel_a_callback() {
+    UPDATE_ENC1_STATE()
+}
+
+IRAM_ATTR void channel_b_callback() {
+    UPDATE_ENC1_STATE()
+}
+
+void dispense() {
+    goal_reached = false;
+    pid->reset();
+    // if (pid->get_target() > 0.0) {
+    //     pid->set_target(0.0);
+    // }
+    // else {
+    //     pid->set_target(360.0);
+    // }
+    pid->set_target(pid->get_target() + 360.0);
+}
+
+void set_speed(int speed) {
+    if (speed > 0) {
+        motor1->run(FORWARD);
+    }
+    else if (speed < 0) {
+        motor1->run(BACKWARD);
+    }
+    else {
+        motor1->run(RELEASE);
+    }
+    motor1->setSpeed(abs(speed));
+}
+
+double get_position() {
+    return OUTPUT_RATIO * enc1_position;
+}
+
+
 void setup_wifi() {
+    motor1 = AFMS.getMotor(1);
+
+    pid = new PID();
+    pid->Kp = 3.0;
+    pid->Ki = 1.5;
+    pid->Kd = 0.1;
+    pid->K_ff = 0.0;
+    pid->deadzone_command = (double)DEADZONE_COMMAND;
+    pid->error_sum_clamp = 50000.0;
+    pid->command_min = (double)(-MAX_SPEED_COMMAND);
+    pid->command_max = (double)(MAX_SPEED_COMMAND);
+
+    pinMode(MOTOR1_ENCA, INPUT_PULLUP);
+    pinMode(MOTOR1_ENCB, INPUT_PULLUP);
+
+    attachInterrupt(digitalPinToInterrupt(MOTOR1_ENCA), channel_a_callback, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(MOTOR1_ENCB), channel_b_callback, CHANGE);
+
+    pinMode(BUTTON, INPUT_PULLUP);
+
     Serial.begin(115200);
     delay(100);
 
-    Serial.print("Connecting to ");
-    Serial.println(ssid);
-    WiFi.begin(ssid, password);
-  
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
+    unsigned int blink = 0;
+    if (!AFMS.begin()) {         // create with the default frequency 1.6KHz
+        Serial.println("Could not find Motor Shield. Check wiring.");
+        while (true) {
+            digitalWrite(LED_BUILTIN, blink % 2 == 0);
+            blink++;
+            delay(50);
+        }
     }
+
+    set_speed(0);
+
+    // Serial.print("Connecting to ");
+    // Serial.println(ssid);
+    // WiFi.begin(ssid, password);
+
+    // while (WiFi.status() != WL_CONNECTED) {
+    //     delay(500);
+    //     digitalWrite(LED_BUILTIN, blink % 2 == 0);
+    //     Serial.print(".");
+    //     blink++;
+    // }
+    for (blink = 0; blink < 16; blink++) {
+        digitalWrite(LED_BUILTIN, blink % 2 == 0);
+        delay(50);
+    }
+    digitalWrite(LED_BUILTIN, LOW);
 
     randomSeed(micros());
 
@@ -87,13 +203,19 @@ void reconnect() {
             client.publish("outTopic", "hello world");
             // ... and resubscribe
             client.subscribe("inTopic");
+            digitalWrite(LED_BUILTIN, LOW);
         }
         else {
+            for (unsigned int blink = 0; blink < 6; blink++) {
+                digitalWrite(LED_BUILTIN, blink % 2 == 0);
+                delay(50);
+            }
+            digitalWrite(LED_BUILTIN, LOW);
             Serial.print("failed, rc=");
             Serial.print(client.state());
-            Serial.println(" try again in 5 seconds");
-            // Wait 5 seconds before retrying
-            delay(5000);
+            Serial.println(" try again in 1 second");
+            // Wait 1 second before retrying
+            delay(1000);
         }
     }
 }
@@ -107,18 +229,68 @@ void setup() {
 }
 
 void loop() {
-    if (!client.connected()) {
-        reconnect();
+    double measurement = get_position();
+    double command = pid->compute(measurement);
+    double error = pid->get_target() - measurement;
+    if (goal_reached) {
+        set_speed(0);
+        prev_command = 0;
     }
-    client.loop();
+    else {
+        if (abs(error) < ERROR_TOLERANCE && !goal_reached) {
+            set_speed(0);
+            goal_reached = true;
+            prev_command = 0;
+        }
+        else {
+            prev_command += RAMP_K * (command - prev_command);
+            set_speed((int)prev_command);
+        }
+    }
+    Serial.print(measurement);
+    Serial.print('\t');
+    Serial.print(pid->get_target());
+    Serial.print('\t');
+    Serial.println(enc1_position);
 
-    unsigned long now = millis();
-    if (now - lastMsg > 2000) {
-        lastMsg = now;
-        ++value;
-        snprintf (msg, MSG_BUFFER_SIZE, "hello world #%d", value);
-        Serial.print("Publish message: ");
-        Serial.println(msg);
-        client.publish("outTopic", msg);
+    if (Serial.available()) {
+        char c = Serial.read();
+        switch (c)
+        {
+        case 's':
+            dispense();
+            break;
+        case 'p':
+            pid->Kp = (double)Serial.parseFloat();
+            Serial.print("Kp: ");
+            Serial.println(pid->Kp);
+            break;
+        case 'i':
+            pid->Ki = (double)Serial.parseFloat();
+            Serial.print("Ki: ");
+            Serial.println(pid->Ki);
+            break;
+        case 'd':
+            pid->Kd = (double)Serial.parseFloat();
+            Serial.print("Kd: ");
+            Serial.println(pid->Kd);
+            break;
+        default:
+            break;
+        }
     }
+    // if (!client.connected()) {
+    //     reconnect();
+    // }
+    // client.loop();
+
+    // unsigned long now = millis();
+    // if (now - lastMsg > 2000) {
+    //     lastMsg = now;
+    //     ++value;
+    //     snprintf (msg, MSG_BUFFER_SIZE, "hello world #%d", value);
+    //     Serial.print("Publish message: ");
+    //     Serial.println(msg);
+    //     client.publish("outTopic", msg);
+    // }
 }
