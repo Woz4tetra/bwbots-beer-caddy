@@ -52,6 +52,9 @@
   <build_depend>rospy</build_depend>
   <build_export_depend>rospy</build_export_depend>
   <exec_depend>rospy</exec_depend>
+  <exec_depend>joy</exec_depend>
+  <exec_depend>topic_tools</exec_depend>
+  <exec_depend>bw_interfaces</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

@@ -64,7 +64,8 @@
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>amcl</exec_depend>
   <exec_depend>map_server</exec_depend>
-
+  <exec_depend>gmapping</exec_depend>
+  <exec_depend>bw_interfaces</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

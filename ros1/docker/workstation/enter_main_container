@@ -1,0 +1,14 @@
+#!/bin/bash
+
+function cleanup {
+    xhost -local:root
+}
+trap cleanup EXIT
+
+xhost +local:root
+
+docker exec -it \
+    --env="DISPLAY" \
+    --env="QT_X11_NO_MITSHM=1" \
+    bwbots_workstation \
+    /bin/bash

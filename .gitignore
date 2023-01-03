@@ -9,6 +9,8 @@ torch/pretrained/
 torch/outputs
 torch/dataset
 torch/pretrained
+ros1/logs/
+ros1/bags/
 
 # training
 wandb

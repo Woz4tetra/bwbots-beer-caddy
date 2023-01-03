@@ -73,7 +73,41 @@ A new menu option call "Robotics" should appear. Click Robotics > ROS Settings.
 
 
 
-# Running the Simulation
+# Running the Simulation using Docker (recommended)
+
+These steps assume you have `bwbots-beer-caddy` cloned into your home folder.
+This also assumes you're running on a linux operating system that supports docker.
+These scripts won't work on a non-linux system.
+
+1. `cd ~/bwbots-beer-caddy/ros1/docker/workstation`
+1. `sudo ./install_docker_dependencies`
+1. `sudo ./build_container`
+
+## Updating container
+
+All scripts in this section are in `~/bwbots-beer-caddy/ros1/docker/workstation`
+
+If changes are made to the container, simply run `sudo ./build_container` again.
+
+The bwbots packages and workspace are mounted to the container when the container starts.
+This means when `catkin_make` is run in the container, the build is saved to the host.
+This is done to save rebuilding the container everytime a change is made.
+If a change is made that requires rebuilding the catkin workspace, run `./build_bwbots`
+
+## Running the containers
+
+1. `cd ~/bwbots-beer-caddy/ros1/docker/workstation`
+1. `./run_containers`
+1. View container logs: `./tail-session`
+1. Open rviz: `./run_viz`
+1. Enter the container: `./enter_main_container`
+
+## Stopping the containers
+
+1. Stop bwbots and roscore containers: `./stop_all_containers`
+1. Stop bwbots container: `./stop_main_container`
+
+# Running the Simulation (non-docker)
 
 https://www.youtube.com/watch?v=yX8yrOAjfKM&t=3m51s
 

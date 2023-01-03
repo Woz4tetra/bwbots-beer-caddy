@@ -1,0 +1,29 @@
+version: "3"
+
+services:
+  bwbots_workstation:
+    image: bwbots_workstation:latest
+    container_name: bwbots_workstation
+    restart: "no"
+    network_mode: "host"
+    privileged: true
+    stop_signal: SIGINT
+    environment:
+      - DISPLAY=${DISPLAY}
+      - XAUTHORITY=${XAUTHORITY}
+    # Share IPC with the host: enables us to request X to draw things, see
+    # https://askubuntu.com/questions/1237400/how-to-fix-x-error-badaccess-baddrawable-badshmseg-while-running-graphical-ap
+    ipc: host
+    volumes:
+      - /home/${USER}/docker_ros_ws:/root/ros_ws:rw
+      - /home/${USER}/bwbots-beer-caddy/ros1/bwbots:/root/ros_ws/src/bwbots:rw
+      - /home/${USER}/bwbots-beer-caddy/ros1/docker/workstation/resources/scripts:/root/scripts:rw
+      - /home/${USER}/bwbots-beer-caddy/ros1/logs:/root/logs:rw
+      - /home/${USER}/bwbots-beer-caddy/ros1/bags:/root/bags:rw
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /home/${USER}/.Xauthority:/home/${USER}/.Xauthority:rw
+      # Allow container to control docker
+      - /home/${USER}/.docker:/root/.docker:rw # docker looks here inside a container
+      - /home/${USER}/.docker:/home/${USER}/.docker:rw # but we need to satisfy spice-lib.sh
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: [ "/launch.sh" ]

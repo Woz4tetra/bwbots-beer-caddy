@@ -75,7 +75,7 @@
   <exec_depend>tf2</exec_depend>
   <exec_depend>nav_msgs</exec_depend>
   <exec_depend>bw_interfaces</exec_depend>
-
+  <exec_depend>twist_mux</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
