@@ -51,7 +51,7 @@ To switch versions:
 
 If you don't see that version, you must install it locally using the steps above.
 
-## VS code editor setup
+## VS Code editor setup
 
 To use VS Code as your primary Unity editor, [follow this guide](https://code.visualstudio.com/docs/other/unity).
 
@@ -110,7 +110,7 @@ Here's a table of actions if you don't want to run `sudo ./build_container` ever
 |A source file in a bwbots package needs to be recompiled|`./build_bwbots`|
 |A config, launch, or python file is changed|No action|
 
-Running `./build_container` does all three of these actions.
+Running `./build_container` includes the `post_build` and `build_bwbots` actions.
 
 After any of these actions, restart the container (see the next two sections).
 
