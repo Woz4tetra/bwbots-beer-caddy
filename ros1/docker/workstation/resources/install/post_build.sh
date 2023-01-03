@@ -2,7 +2,7 @@
 echo "ros workspace src: ${ROS_WS_SRC}"
 
 cd ${ROS_WS_SRC}
-/root/install/clone_ros_packages.sh
+/root/scripts/clone_ros_packages.sh
 
 source /opt/ros/${ROS_DISTRO}/setup.bash
 

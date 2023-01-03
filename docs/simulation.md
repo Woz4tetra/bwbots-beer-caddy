@@ -72,7 +72,6 @@ A new menu option call "Robotics" should appear. Click Robotics > ROS Settings.
 ![alt text](images/UnityRosSettings.png "UnityRosSettings")
 
 
-
 # Running the Simulation using Docker (recommended)
 
 These steps assume you have `bwbots-beer-caddy` cloned into your home folder.
@@ -81,18 +80,39 @@ These scripts won't work on a non-linux system.
 
 1. `cd ~/bwbots-beer-caddy/ros1/docker/workstation`
 1. `sudo ./install_docker_dependencies`
-1. `sudo ./build_container`
+1. `./build_container`
+
+If you run into permission issues with docker, you'll need to look into fixing that.
+A bandaid fix is to put this in your `.bashrc`:
+
+`alias docker="sudo docker"`
 
 ## Updating container
 
 All scripts in this section are in `~/bwbots-beer-caddy/ros1/docker/workstation`
 
-If changes are made to the container, simply run `sudo ./build_container` again.
+If changes are made to the container, simply run `./build_container` again.
 
 The bwbots packages and workspace are mounted to the container when the container starts.
 This means when `catkin_make` is run in the container, the build is saved to the host.
 This is done to save rebuilding the container everytime a change is made.
-If a change is made that requires rebuilding the catkin workspace, run `./build_bwbots`
+
+If a change is made that requires rebuilding the catkin workspace, run `./build_bwbots`.
+
+If a package that isn't in the bwbots metapackage is added or changed, run `./post_build`.
+This script also rebuilds bwbots packages.
+
+Here's a table of actions if you don't want to run `sudo ./build_container` every time:
+|Change|Action|
+|---|---|
+|Dockerfile change (major dependency addition)|`./build_container`|
+|New package added to `./resources/install/clone_ros_packages.sh`|`./post_build`|
+|A source file in a bwbots package needs to be recompiled|`./build_bwbots`|
+|A config, launch, or python file is changed|No action|
+
+Running `./build_container` does all three of these actions.
+
+After any of these actions, restart the container (see the next two sections).
 
 ## Running the containers
 
@@ -116,10 +136,13 @@ run this command in a terminal window:
     ```bash
     roslaunch bw_bringup simulation.launch
     ```
+
+# Start the Unity simulation
+
 1. Press "Play" in the Unity editor.
 1. The simulation is now running! More steps to follow once the project is more ironed out.
 
-## Controls
+# Controls
 
 The default camera mode can be set in `Main Camera > Fpv Camera (Script) > Starting Mode`.
 
@@ -129,7 +152,7 @@ The robot is disabled by default. Press the "C" (for Cnabled) key to toggle moto
 
 To disable the module physics and control the robot in "ground truth" mode, Press "B".
 
-### Free cam mode
+## Free cam mode
 
 To move in the X-Z plane, use the WASD keys.
 To go up and down (Y axis), use Shift to go down and Space to go up.
@@ -140,7 +163,7 @@ or switch to follow robot mode.
 
 Holding Left-Ctrl switches to fast movement mode (speed is configurable).
 
-### Follow robot mode
+## Follow robot mode
 
 To drive the robot use the QWEASD keys.
 
