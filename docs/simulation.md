@@ -102,7 +102,7 @@ If a change is made that requires rebuilding the catkin workspace, run `./build_
 If a package that isn't in the bwbots metapackage is added or changed, run `./post_build`.
 This script also rebuilds bwbots packages.
 
-Here's a table of actions if you don't want to run `sudo ./build_container` every time:
+Here's a table of actions if you don't want to run `./build_container` every time:
 |Change|Action|
 |---|---|
 |Dockerfile change (major dependency addition)|`./build_container`|
