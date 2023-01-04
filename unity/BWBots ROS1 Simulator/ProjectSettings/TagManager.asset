@@ -8,6 +8,8 @@ TagManager:
   - locator_tag
   - charge_pins
   - beer_can
+  - pickup
+  - person
   layers:
   - Default
   - TransparentFX

@@ -81,6 +81,7 @@ public class FpvCamera : MonoBehaviour
 
     public ViewMode startingMode = ViewMode.FOLLOW_ROBOT;
     public bool useDefaultOffsetsOnFollow = true;
+    public bool useDefaultOffsetsOnStartup = true;
     private ViewMode viewMode = ViewMode.FOLLOW_ROBOT;
     private Vector3 lookingRotation = Vector3.zero;
     private bool mouseWasLocked = false;
@@ -104,6 +105,9 @@ public class FpvCamera : MonoBehaviour
 
         resetLookingRotation();
         setMode(startingMode);
+        if (useDefaultOffsetsOnStartup) {
+            resetCameraRelativeOffsetToDefault();
+        }
     }
 
     void resetCameraRelativeOffset() {
