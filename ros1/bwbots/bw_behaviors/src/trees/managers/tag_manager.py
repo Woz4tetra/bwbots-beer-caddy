@@ -1,7 +1,8 @@
 import math
+import genpy
 import rospy
 from dataclasses import dataclass
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional, Union
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import PoseStamped
 from bw_tools.robot_state import Pose2d
@@ -13,7 +14,7 @@ class Tag:
     tag_id: Tuple[int]
     reference_frame: str
     pose: Optional[Pose] = None
-    timestamp: Optional[rospy.Time] = None
+    timestamp: Optional[genpy.Time] = None
     prep: str = ""
     tag_type: str = ""
 
@@ -22,25 +23,12 @@ class TagManager:
     def __init__(self, valid_tag_window: float) -> None:
         self.tags: Dict[str, Tag] = {}
         self.metadata = {}
-        self.valid_tag_window = rospy.Duration(valid_tag_window)
+        self.valid_tag_window = rospy.Duration(valid_tag_window)  # type: ignore
 
-    def register_tag(self, **kwargs) -> None:
-        if "name" in kwargs and "tag_id" in kwargs and "reference_frame" in kwargs:
-            name = kwargs.get("name")
-            tag_id = tuple(kwargs.get("tag_id"))
-            reference_frame = kwargs.get("reference_frame")
-            pose = kwargs.get("pose", None)
-            timestamp = kwargs.get("timestamp", None)
-            prep = kwargs.get("prep")
-            tag_type = kwargs.get("tag_type")
-            tag = Tag(name, tag_id, reference_frame, pose, timestamp, prep, tag_type)
-        elif "tag" in kwargs:
-            tag = kwargs.get("tag")
-        else:
-            raise ValueError(f"Invalid parameters: {kwargs}")
+    def register_tag(self, tag: Tag) -> None:
         self.tags[tag.name] = tag
 
-    def set_tag(self, name, pose_stamped: Optional[PoseStamped]) -> None:
+    def set_tag(self, name: str, pose_stamped: Optional[PoseStamped]) -> None:
         if pose_stamped is None:
             self.tags[name].pose = None
             self.tags[name].timestamp = None
@@ -50,29 +38,35 @@ class TagManager:
             if len(pose_stamped.header.frame_id) != 0:
                 self.tags[name].reference_frame = pose_stamped.header.frame_id
             else:
-                rospy.logwarn(f"The reference frame for tag {name} is not valid! pose_stamped: {pose_stamped}")
+                rospy.logwarn(
+                    f"The reference frame for tag {name} is not valid! pose_stamped: {pose_stamped}"
+                )
 
     def unset_tag(self, name: str) -> None:
         self.set_tag(name, None)
 
-    def is_tag_valid(self, name, valid_tag_window: Optional[rospy.Duration] = None) -> bool:
+    def is_tag_valid(
+        self, name, valid_tag_window: Optional[rospy.Duration] = None
+    ) -> bool:
         if self.tags[name].timestamp is None or self.tags[name].pose is None:
             return False
         if valid_tag_window is None:
             valid_tag_window = self.valid_tag_window
-        if valid_tag_window == rospy.Duration(0.0):
+        if valid_tag_window == rospy.Duration(0):
             return True
         return rospy.Time.now() - self.tags[name].timestamp < valid_tag_window
 
     def get_tag(self, name) -> Tag:
         return self.tags[name]
 
-    def get_offset_tag(self,
-            name: str,
-            x_offset: float,
-            y_offset: float,
-            theta_offset: float,
-            valid_tag_window: Optional[rospy.Duration] = None) -> Optional[PoseStamped]:
+    def get_offset_tag(
+        self,
+        name: str,
+        x_offset: float,
+        y_offset: float,
+        theta_offset: float,
+        valid_tag_window: Optional[rospy.Duration] = None,
+    ) -> Optional[PoseStamped]:
         if not self.is_tag_valid(name, valid_tag_window):
             return None
         tag = self.get_tag(name)

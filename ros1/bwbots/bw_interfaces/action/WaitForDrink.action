@@ -1,0 +1,8 @@
+duration timeout
+float32 mass_threshold
+bool expected_state
+---
+bool state_matched
+bool success
+---
+bool has_drink

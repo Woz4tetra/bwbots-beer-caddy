@@ -17,11 +17,11 @@ go_to_pose:
   ramsete_zeta: 0.7
   loop_rate: 50.0
   global_frame: "odom"
-  robot_frame: "base_link"
   settling_time: 0.5
 
-follow_pose:
-  move_base_namespace: /move_base
+move_base_namespace: /move_base
+base_frame: base_link
+global_frame: map
 
 shuffle_until_charging:
   is_charging_cooldown: 5.0

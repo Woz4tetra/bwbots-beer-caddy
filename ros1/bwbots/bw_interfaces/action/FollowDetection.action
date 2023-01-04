@@ -1,0 +1,9 @@
+string class_name
+float32 offset_distance
+duration detection_timeout
+---
+bool success
+---
+geometry_msgs/PoseStamped current_pose
+geometry_msgs/PoseStamped chase_pose
+float32 distance_from_detection
