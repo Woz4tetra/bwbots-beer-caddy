@@ -74,7 +74,9 @@ RUN apt-get install -y --ignore-missing ros-noetic-rospy \
     ros-noetic-costmap-converter \
     ros-noetic-py-trees-ros \
     ros-noetic-py-trees-msgs \
-    ros-noetic-py-trees
+    ros-noetic-py-trees \
+    ros-noetic-rqt-py-trees
+
 
 # ---
 # bwbots build environment
