@@ -27,8 +27,8 @@ class SimpleMoveBaseClient:
         self.move_base = actionlib.SimpleActionClient(
             self.move_base_namespace, MoveBaseAction
         )
-        self.is_move_base_done = False
-        self.move_base_succeeded = False
+        self.is_move_base_done = True
+        self.move_base_succeeded = True
 
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
@@ -93,11 +93,23 @@ class SimpleMoveBaseClient:
         mb_goal.target_pose.header.frame_id = pose_stamped.header.frame_id
         mb_goal.target_pose.pose = pose_stamped.pose
 
+        if not self.is_done():
+            rospy.loginfo("move_base already has a goal. Cancelling for new one.")
+            self.cancel()
+
         self.is_move_base_done = False
         self.move_base_succeeded = False
         self.move_base.send_goal(
             mb_goal, feedback_cb=feedback_callback, done_cb=self.move_base_done
         )
+
+    def cancel(self, wait_for_done=False):
+        self.move_base.cancel_all_goals()
+        if wait_for_done:
+            while not self.is_move_base_done:
+                if rospy.is_shutdown():
+                    break
+                rospy.sleep(0.05)
 
     def move_base_done(self, goal_status: GoalStatus, result: MoveBaseResult):
         rospy.loginfo("move_base finished: %s. %s" % (goal_status, result))
@@ -115,7 +127,10 @@ class SimpleMoveBaseClient:
         return self.transform_to_global_frame(base_pose)
 
     def goal_offset_radius(
-        self, goal_pose: PoseStamped, offset_radius: float
+        self,
+        goal_pose: PoseStamped,
+        offset_radius: float,
+        use_last_pose_as_last_orientation: bool = False,
     ) -> Optional[PoseStamped]:
         """
         Get a pose at a radial distance along move_base's computed path to the goal.
@@ -128,7 +143,7 @@ class SimpleMoveBaseClient:
             return copy.deepcopy(goal_pose)
 
         start_pose = self.get_robot_pose()
-        if start_pose:
+        if start_pose is None:
             rospy.logwarn(
                 f"Failed to get path to goal. Couldn't transform from {self.base_frame} to {self.global_frame}."
             )
@@ -143,8 +158,8 @@ class SimpleMoveBaseClient:
             last_pose = resp.plan.poses[-1]
             path_index = len(resp.plan.poses) - 1
             while (
-                self.get_pose_distance(start_pose, resp.plan.poses[path_index])
-                > offset_radius
+                self.get_pose_distance(goal_pose, resp.plan.poses[path_index])
+                < offset_radius
             ):
                 path_index -= 1
                 if path_index < 0:
@@ -155,7 +170,8 @@ class SimpleMoveBaseClient:
                     path_index = 0
                     break
             result_pose = resp.plan.poses[path_index]
-            result_pose.pose.orientation = last_pose.pose.orientation
+            if use_last_pose_as_last_orientation:
+                result_pose.pose.orientation = last_pose.pose.orientation
             return result_pose
         else:
             rospy.logwarn(

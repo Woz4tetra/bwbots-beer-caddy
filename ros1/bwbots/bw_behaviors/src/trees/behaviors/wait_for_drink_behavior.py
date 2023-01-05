@@ -7,7 +7,7 @@ from bw_interfaces.msg import WaitForDrinkAction, WaitForDrinkGoal, WaitForDrink
 
 class WaitForDrinkBehavior(py_trees_ros.actions.ActionClient):
     def __init__(
-        self, timeout: float, mass_threshold: float, expected_state: bool = False
+        self, timeout: float, mass_threshold: float, expected_state: bool = True
     ):
         goal = WaitForDrinkGoal()
         goal.timeout = rospy.Duration(timeout)  # type: ignore
@@ -15,7 +15,7 @@ class WaitForDrinkBehavior(py_trees_ros.actions.ActionClient):
         self.expected_state = expected_state
 
         super().__init__(
-            "Wait for Drink",
+            f"Wait for {'' if expected_state else 'No '}Drink",
             WaitForDrinkAction,
             goal,
             action_namespace="/bw/wait_for_drink",
@@ -25,12 +25,8 @@ class WaitForDrinkBehavior(py_trees_ros.actions.ActionClient):
         action_result = super().update()
         if action_result == py_trees.Status.SUCCESS:
             result: WaitForDrinkResult = self.action_client.get_result()  # type: ignore
-            if result.success:
-                status = result.state_matched
-                if status == self.expected_state:
-                    return py_trees.Status.SUCCESS
-                else:
-                    return py_trees.Status.FAILURE
+            if result.success and result.state_matched:
+                return py_trees.Status.SUCCESS
             else:
                 return py_trees.Status.FAILURE
         return action_result

@@ -67,6 +67,8 @@ class FollowDetectionCommand:
         closest_pose_stamped = PoseStamped()
         for detection in msg.detections:
             obj_hyp = detection.results[0]
+            if len(self.class_names) == 0:
+                rospy.logwarn_throttle(1.0, "No class names loaded! Can't check label.")
             if self.get_label(obj_hyp.id) != self.chase_label:
                 continue
             distance = self.get_pose_distance(obj_hyp.pose.pose)
@@ -79,6 +81,7 @@ class FollowDetectionCommand:
                 closest_pose_stamped
             )
             if chase_pose is not None:
+                chase_pose.pose.position.z = 0.0
                 self.chase_pose = chase_pose
                 self.chase_distance = closest_distance
 
@@ -98,7 +101,7 @@ class FollowDetectionCommand:
             with open(path) as file:
                 return file.read().splitlines()
         else:
-            rospy.loginfo(f"No class names path defined. Not loading class names")
+            rospy.logwarn(f"No class names path defined. Not loading class names")
             return []
 
     def get_label(self, obj_id: int):
@@ -133,6 +136,18 @@ class FollowDetectionCommand:
             < self.ignore_detections_once_in_distance
         )
 
+    def wait_for_detection(self, timeout):
+        start_time = rospy.Time.now()
+        current_time = rospy.Time.now()
+        while current_time - start_time < timeout:
+            current_time = rospy.Time.now()
+            detection_duration: rospy.Duration = current_time - self.chase_pose.header.stamp
+            if detection_duration < timeout:
+                return True
+            if self.action_server.is_preempt_requested() or rospy.is_shutdown():
+                return False
+        return False
+
     def action_callback(self, goal: FollowDetectionGoal) -> None:
         self.chase_label = goal.class_name
         offset_radius = goal.offset_distance
@@ -140,19 +155,28 @@ class FollowDetectionCommand:
 
         result = FollowDetectionResult()
 
-        current_time = rospy.Time.now()
+        rospy.loginfo("Waiting for detections")
         aborted = False
+        if not self.wait_for_detection(detection_timeout):
+            rospy.logwarn(
+                f"Received no detections for {detection_timeout.to_sec():0.3f} seconds while waiting."
+            )
+            aborted = True
+        if not aborted:
+            rospy.loginfo("Found detection")
+
+        current_time = rospy.Time.now()
         is_goal_active = False
         mb_result = -1
         sent_chase_pose = PoseStamped()
         rate = rospy.Rate(10.0)
-        while not rospy.is_shutdown():
+        while not aborted and not rospy.is_shutdown():
             rate.sleep()
             current_time = rospy.Time.now()
             detection_duration: rospy.Duration = current_time - self.chase_pose.header.stamp
             if detection_duration > detection_timeout:
                 rospy.logwarn(
-                    f"Received no detections for {detection_timeout:0.3f} seconds."
+                    f"Received no detections for {detection_timeout.to_sec():0.3f} seconds."
                 )
                 aborted = True
                 break
@@ -170,6 +194,8 @@ class FollowDetectionCommand:
                         f"Chase goal {self.chase_label} moved by at least {self.replan_distance:0.4f}m. Replanning."
                     )
                     is_goal_active = False
+                    self.move_base_client.cancel(wait_for_done=True)
+                    continue
 
                 if self.is_detection_nearby(sent_chase_pose):
                     rospy.loginfo(
@@ -184,13 +210,17 @@ class FollowDetectionCommand:
                     mb_result = self.move_base_client.get_state()
                     break
 
+        self.chase_label = ""
+        if not self.move_base_client.is_done():
+            self.move_base_client.cancel()
+
         if aborted:
             self.action_server.set_aborted(
                 result, f"Interrupted while following detection {self.chase_label}"
             )
         else:
             if mb_result != GoalStatus.SUCCEEDED:
-                rospy.loginfo(f"Move base is reporting a failure code: {mb_result}")
+                rospy.loginfo(f"move_base is reporting a failure code: {mb_result}")
                 result.success = False
             else:
                 result.success = True

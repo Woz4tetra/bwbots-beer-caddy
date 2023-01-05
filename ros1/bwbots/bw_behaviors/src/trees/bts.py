@@ -556,7 +556,7 @@ class BehaviorTrees:
     def follow_person(self):
         return self.check_cache(
             "follow_person",
-            lambda: FollowDetectionBehavior(self.person_label, 0.5, 30.0),
+            lambda: FollowDetectionBehavior(self.person_label, 0.75, 30.0),
         )
 
     def collect_drink(self):
