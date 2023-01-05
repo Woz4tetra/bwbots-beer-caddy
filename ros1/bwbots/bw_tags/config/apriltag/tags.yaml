@@ -20,7 +20,7 @@
 standalone_tags:
   [
       {id: 11, size: 0.112, name: charge_dock_tag},
-      {id: 12, size: 0.2, name: dispenser1},
+      {id: 12, size: 0.15, name: dispenser1},
   ]
 # ## Tag bundle definitions
 # ### Remarks

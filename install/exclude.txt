@@ -8,6 +8,8 @@ python/logs/
 *.egg-info/
 ros1/bwbots/bw_laser_slam/bags/
 ros1/playground/module_tuning/bags/
+ros1/logs/
+ros1/bags/
 unity/
 *.egg
 torch/

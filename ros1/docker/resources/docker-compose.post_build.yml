@@ -13,7 +13,7 @@ services:
     volumes:
       - /home/${USER}/docker_ros_ws:/root/ros_ws:rw
       - /home/${USER}/bwbots-beer-caddy/ros1/bwbots:/root/ros_ws/src/bwbots:rw
-      - /home/${USER}/bwbots-beer-caddy/ros1/scripts:/root/scripts:rw
+      - /home/${USER}/bwbots-beer-caddy/ros1/docker/resources/scripts:/root/scripts:rw
       - /run/systemd:/run/systemd:rw
       - /dev:/dev:rw
       - /tmp/.X11-unix:/tmp/.X11-unix
@@ -22,7 +22,7 @@ services:
       - /home/${USER}/.docker:/root/.docker:rw # docker looks here inside a container
       - /home/${USER}/.docker:/home/${USER}/.docker:rw # but we need to satisfy spice-lib.sh
       - /var/run/docker.sock:/var/run/docker.sock
-    entrypoint: ["/root/install/post_build.sh"]
+    entrypoint: [ "/root/install/post_build.sh" ]
     deploy:
       resources:
         reservations:

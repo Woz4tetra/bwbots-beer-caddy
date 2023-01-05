@@ -136,8 +136,8 @@ class BehaviorTrees:
             reference_angular_speed=3.0,
             linear_max_accel=1.0,
             allow_reverse=False,
-            rotate_in_place_start=False,
-            rotate_while_driving=True,
+            rotate_in_place_start=True,
+            rotate_while_driving=False,
             rotate_in_place_end=False,
             failure_on_pose_failure=True,
         )
