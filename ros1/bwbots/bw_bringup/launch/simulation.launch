@@ -2,6 +2,11 @@
     <arg name="map_name" default="$(env ROS_MAP_NAME)" />
 
     <include file="$(find ros_tcp_endpoint)/launch/endpoint.launch" />
+    <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
+        <arg name="port" value="9090" />
+        <arg name="address" value="0.0.0.0" />
+    </include>
+
     <include file="$(find bw_description)/launch/bw_description.launch" />
     <include file="$(find bw_rplidar)/launch/robeert_filters.launch" />
     <include file="$(find bw_tunnel)/launch/twist_mux.launch" />

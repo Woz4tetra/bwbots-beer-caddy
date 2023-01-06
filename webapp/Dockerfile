@@ -17,9 +17,6 @@ COPY . .
 # Install dependencies (npm ci makes sure the exact versions in the lockfile gets installed)
 RUN npm ci
 
-# Build the app
-RUN npm run build
-
 # ---
 # Run
 # ---
@@ -31,4 +28,4 @@ ENV NODE_ENV production
 EXPOSE 3000
 
 # Start the app
-CMD [ "npx", "serve", "build" ]
+CMD [ "npm", "start" ]

@@ -8,4 +8,4 @@ services:
     network_mode: "host"
     privileged: false
     stop_signal: SIGTERM
-    ports: [ "3000:3000" ]
+    ports: [ "3000:3000", "9090:9090" ]

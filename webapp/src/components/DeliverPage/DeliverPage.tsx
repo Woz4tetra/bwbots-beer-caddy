@@ -3,11 +3,11 @@ import { useEffect, useState } from "react";
 export default function DeliverPage(props: any) {
     const { rosClient } = props;
 
-    const [ runBehaviorClient, setRunBehaviorClient ] = useState<any>(null);
-    const [ addMissionTopic, setAddMissionTopic ] = useState<any>(null);
+    const [runBehaviorClient, setRunBehaviorClient] = useState<any>(null);
+    const [addMissionTopic, setAddMissionTopic] = useState<any>(null);
 
-    const [ dispenserTag, setDispenserTag ] = useState('');
-    const [ waypointName, setWaypointName ] = useState('');
+    const [dispenserTag, setDispenserTag] = useState('');
+    const [waypointName, setWaypointName] = useState('');
 
     // setup publisher/action server
     useEffect(() => {
@@ -33,7 +33,7 @@ export default function DeliverPage(props: any) {
             setRunBehaviorClient(null);
             setAddMissionTopic(null);
         }
-    },[rosClient]);
+    }, [rosClient]);
 
     // handle inputs
     const onDispenserTagChange = (e: any) => setDispenserTag(e.target.value);
@@ -50,8 +50,8 @@ export default function DeliverPage(props: any) {
 
         // send waypoint to /bw/add_mission
         var mission = new ROSLIB.Message({
-            delivery_waypoint: waypointName,
-            drink_dispenser_waypoint: dispenserTag
+            delivery_waypoint_key: waypointName,
+            drink_dispenser_tag: dispenserTag
         });
         addMissionTopic.publish(mission);
         console.log('Mission sent');
@@ -80,19 +80,19 @@ export default function DeliverPage(props: any) {
         <div>
             <form>
                 <label>Dispenser Tag: </label>
-                <input 
+                <input
                     type="text"
                     value={dispenserTag}
                     onChange={onDispenserTagChange}
                 />
-                <br/>
+                <br />
                 <label>Waypoint: </label>
-                <input 
+                <input
                     type="text"
                     value={waypointName}
                     onChange={onWaypointNameChange}
                 />
-                <br/>
+                <br />
                 <button onClick={onDeliverPress}>
                     Deliver Now
                 </button>

@@ -38,6 +38,7 @@ RUN apt-get install -y --ignore-missing ros-noetic-rospy \
     ros-noetic-geometry-msgs \
     ros-noetic-tf2-ros \
     ros-noetic-tf2-geometry-msgs \
+    ros-noetic-geometry2 \
     ros-noetic-xacro \
     ros-noetic-robot-state-publisher \
     ros-noetic-joint-state-publisher \
@@ -75,7 +76,8 @@ RUN apt-get install -y --ignore-missing ros-noetic-rospy \
     ros-noetic-py-trees-ros \
     ros-noetic-py-trees-msgs \
     ros-noetic-py-trees \
-    ros-noetic-rqt-py-trees
+    ros-noetic-rqt-py-trees \
+    ros-noetic-rosbridge-suite
 
 
 # ---

@@ -8,6 +8,7 @@ services:
     network_mode: "host"
     privileged: true
     stop_signal: SIGINT
+    ports: [ "9090:9090", "10000:10000" ]
     environment:
       - DISPLAY=${DISPLAY}
       - XAUTHORITY=${XAUTHORITY}
