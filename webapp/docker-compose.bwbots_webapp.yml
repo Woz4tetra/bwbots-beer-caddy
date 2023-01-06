@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+  bwbots_webapp:
+    image: bwbots_webapp:latest
+    container_name: bwbots_webapp
+    restart: "no"
+    network_mode: "host"
+    privileged: false
+    stop_signal: SIGTERM
+    ports: [ "3000:3000" ]
