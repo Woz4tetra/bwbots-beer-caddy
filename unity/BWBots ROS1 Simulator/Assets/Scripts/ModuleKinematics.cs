@@ -36,7 +36,8 @@ class ModuleKinematics
             double x_location,
             double y_location,
             double armature_length,
-            double max_wheel_speed) {
+            double max_wheel_speed)
+    {
         this.name = name;
 
         this.wheel = wheel;
@@ -63,8 +64,8 @@ class ModuleKinematics
         this.wheelBody.linearDamping = 1.0f;
         this.wheelBody.angularDamping = 1.0f;
         this.wheelBody.jointFriction = 0.1f;
-        this.wheelBody.inertiaTensor = new Vector3(1e-06f, 1e-05f, 1e-06f);
-        this.wheelBody.mass = 0.005f;
+        this.wheelBody.inertiaTensor = new Vector3(6.16E-05f, 1.20E-04f, 6.15E-05f);
+        this.wheelBody.mass = 0.048f;
 
         ArticulationDrive moduleDrive = this.moduleBody.xDrive;
         moduleDrive.stiffness = 10000.0f;
@@ -75,13 +76,14 @@ class ModuleKinematics
         this.moduleBody.linearDamping = 1.0f;
         this.moduleBody.angularDamping = 1.0f;
         this.moduleBody.jointFriction = 1.0f;
-        this.moduleBody.mass = 0.015f;
-        this.moduleBody.inertiaTensor = new Vector3(1e-06f, 1e-05f, 1e-06f);
+        this.moduleBody.mass = 1.0f;
+        this.moduleBody.inertiaTensor = new Vector3(1.59E-03f, 1.86E-04f, 1.57E-03f);
 
         module_msg.module_index = (index + 1).ToString();
     }
 
-    public void setUseGroundTruth(bool useGroundTruth) {
+    public void setUseGroundTruth(bool useGroundTruth)
+    {
         this.useGroundTruth = useGroundTruth;
     }
 
@@ -94,31 +96,37 @@ class ModuleKinematics
         double v_mag = Math.Sqrt(vx * vx + vy * vy);
         double module_vx, module_vy;
         double radius_of_curvature;
-        if (theta_mag == 0.0) {
+        if (theta_mag == 0.0)
+        {
             radius_of_curvature = 0.0;
         }
-        else {
+        else
+        {
             radius_of_curvature = Math.Sign(vx) * (v_mag * dt) / Math.Tan(theta_mag);
         }
-        
-        if (theta_mag == 0.0 || Double.IsNaN(radius_of_curvature) || Double.IsInfinity(radius_of_curvature)) {
+
+        if (theta_mag == 0.0 || Double.IsNaN(radius_of_curvature) || Double.IsInfinity(radius_of_curvature))
+        {
             // Strafe regime
             module_vx = vx;
             module_vy = vy;
-            if (Math.Abs(v_mag) > 0.0) {
+            if (Math.Abs(v_mag) > 0.0)
+            {
                 // set azimuth if v_mag is > 0.0. Otherwise, use the previous angle
                 azimuth = Math.Atan2(module_vy, module_vx);
             }
             wheel_velocity = v_mag;
         }
-        else if (Math.Abs(radius_of_curvature) < min_radius_of_curvature) {
+        else if (Math.Abs(radius_of_curvature) < min_radius_of_curvature)
+        {
             // Rotate in place regime
             module_vx = vt * -y_location;
             module_vy = vt * x_location;
             azimuth = Math.Atan2(module_vy, module_vx);
             wheel_velocity = Math.Sqrt(module_vx * module_vx + module_vy * module_vy);
         }
-        else {
+        else
+        {
             // Ackermann + strafe regime
             double module_angle = Math.Atan2(x_location, radius_of_curvature - y_location);
             double module_radc = x_location / Math.Sin(module_angle) - armature_length;
@@ -132,21 +140,25 @@ class ModuleKinematics
         return (azimuth, wheel_velocity);
     }
 
-    public void set(double vx, double vy, double vt, double dt) {
-        if (useGroundTruth) {
+    public void set(double vx, double vy, double vt, double dt)
+    {
+        if (useGroundTruth)
+        {
             return;
         }
         (double azimuth, double wheel_velocity) = ComputeState(vx, vy, vt, dt, prev_azimuth);
         prev_azimuth = azimuth;
 
         azimuth = WrapAngle(azimuth);
-        if (azimuth < min_angle || azimuth > max_angle) {
+        if (azimuth < min_angle || azimuth > max_angle)
+        {
             azimuth = WrapAngle(azimuth + Math.PI);
             wheel_velocity = -wheel_velocity;
         }
 
         double azimuthVelocity = getAzimuthVelocity();
-        if (Math.Abs(azimuthVelocity) > 0.001) {
+        if (Math.Abs(azimuthVelocity) > 0.001)
+        {
             double delta = azimuthVelocity * wheel_radius;
             wheel_velocity += delta;
         }
@@ -160,18 +172,21 @@ class ModuleKinematics
     {
         // wrap to -pi..pi
         angle = angle % (2.0 * Math.PI);
-        if (angle >= Math.PI) {
+        if (angle >= Math.PI)
+        {
             angle -= 2.0 * Math.PI;
         }
-        if (angle < -Math.PI) {
+        if (angle < -Math.PI)
+        {
             angle += 2.0 * Math.PI;
         }
         return angle;
     }
-    
+
     public void setWheelVelocity(double groundVelocity)
     {
-        if (Math.Abs(groundVelocity) > max_wheel_speed) {
+        if (Math.Abs(groundVelocity) > max_wheel_speed)
+        {
             groundVelocity = Math.Sign(groundVelocity) * max_wheel_speed;
         }
         double angularVelocity = -groundVelocity / wheel_radius;
@@ -181,12 +196,15 @@ class ModuleKinematics
         wheelBody.xDrive = drive;
     }
 
-    public void setModuleAzimuth(double azimuth) {
+    public void setModuleAzimuth(double azimuth)
+    {
         azimuth = WrapAngle(azimuth);
-        if (azimuth < min_angle) {
+        if (azimuth < min_angle)
+        {
             azimuth = min_angle;
         }
-        if (azimuth > max_angle) {
+        if (azimuth > max_angle)
+        {
             azimuth = max_angle;
         }
         azimuth *= -1.0;
@@ -195,19 +213,22 @@ class ModuleKinematics
         moduleBody.xDrive = drive;
     }
 
-    public double getAzimuth() {
+    public double getAzimuth()
+    {
         List<float> states = new List<float>();
         moduleBody.GetJointPositions(states);
 
         List<int> indices = new List<int>();
         moduleBody.GetDofStartIndices(indices);
 
-        if (moduleBody.index >= indices.Count) {
+        if (moduleBody.index >= indices.Count)
+        {
             Debug.LogWarning("Failed to get azimuth! Not enough joints.");
             return 0.0f;
         }
         int index = indices[moduleBody.index];
-        if (index >= states.Count) {
+        if (index >= states.Count)
+        {
             Debug.LogWarning("Failed to get azimuth! Index out of range.");
             return 0.0f;
         }
@@ -216,25 +237,29 @@ class ModuleKinematics
         azimuth = WrapAngle(azimuth);
 
         module_msg.azimuth_position = azimuth;
-        if (x_location < 0.0) {
+        if (x_location < 0.0)
+        {
             module_msg.azimuth_position = WrapAngle(module_msg.azimuth_position + Math.PI);
         }
         return azimuth;
     }
 
-    public double getAzimuthVelocity() {
+    public double getAzimuthVelocity()
+    {
         List<float> states = new List<float>();
         moduleBody.GetJointVelocities(states);
 
         List<int> indices = new List<int>();
         moduleBody.GetDofStartIndices(indices);
 
-        if (moduleBody.index >= indices.Count) {
+        if (moduleBody.index >= indices.Count)
+        {
             Debug.LogWarning("Failed to get azimuth velocity! Not enough joints.");
             return 0.0f;
         }
         int index = indices[moduleBody.index];
-        if (index >= states.Count) {
+        if (index >= states.Count)
+        {
             Debug.LogWarning("Failed to get azimuth velocity! Index out of range.");
             return 0.0f;
         }
@@ -244,19 +269,22 @@ class ModuleKinematics
         return azimuthVelocity;
     }
 
-    public double getWheelVelocity() {
+    public double getWheelVelocity()
+    {
         List<float> states = new List<float>();
         wheelBody.GetJointVelocities(states);
 
         List<int> indices = new List<int>();
         wheelBody.GetDofStartIndices(indices);
 
-        if (wheelBody.index >= indices.Count) {
+        if (wheelBody.index >= indices.Count)
+        {
             Debug.LogWarning("Failed to get wheel velocity! Not enough joints.");
             return 0.0f;
         }
         int index = indices[wheelBody.index];
-        if (index >= states.Count) {
+        if (index >= states.Count)
+        {
             Debug.LogWarning("Failed to get wheel velocity! Index out of range.");
             return 0.0f;
         }
@@ -266,15 +294,18 @@ class ModuleKinematics
         return angularVelocity;
     }
 
-    public double getXLocation() {
+    public double getXLocation()
+    {
         return x_location;
     }
 
-    public double getYLocation() {
+    public double getYLocation()
+    {
         return y_location;
     }
 
-    public BwDriveModuleMsg getMessage() {
+    public BwDriveModuleMsg getMessage()
+    {
         return module_msg;
     }
 }
