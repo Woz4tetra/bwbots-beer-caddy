@@ -1,7 +1,0 @@
-#!/bin/bash
-BASE_DIR=$(realpath "$(dirname $0)")
-
-cd ${BASE_DIR}/../../..
-docker build -f ./ros1/docker/workstation/resources/Dockerfile -t bwbots_workstation:latest .
-
-${BASE_DIR}/post_build

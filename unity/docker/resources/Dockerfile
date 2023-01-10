@@ -94,7 +94,7 @@ ENV ROS_WS_SRC=${HOME}/ros_ws/src
 ENV FLASK_ENV=development
 ENV PYTHONPATH="${PYTHONPATH}:${ROS_WS_SRC}/bwbots/bw_tools"
 
-COPY ./ros1/docker/workstation/resources/install ${HOME}/install
+COPY ./unity/docker/resources/install ${HOME}/install
 
 # ---
 # bwbots launch environment
@@ -103,8 +103,8 @@ COPY ./ros1/docker/workstation/resources/install ${HOME}/install
 RUN cat ${HOME}/install/bashrc >> ${HOME}/.bashrc
 RUN rm ${HOME}/install/bashrc
 
-COPY ./ros1/docker/workstation/resources/install/entrypoint.sh /entrypoint.sh
-COPY ./ros1/docker/workstation/resources/install/launch.sh /launch.sh
-COPY ./ros1/docker/workstation/resources/install/roscore.sh /roscore.sh
+COPY ./unity/docker/resources/install/entrypoint.sh /entrypoint.sh
+COPY ./unity/docker/resources/install/launch.sh /launch.sh
+COPY ./unity/docker/resources/install/roscore.sh /roscore.sh
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]

@@ -16,7 +16,7 @@ docker run -it \
     --privileged \
     --stop-signal=SIGINT \
     -v /home/${USER}/bwbots-beer-caddy/ros1/bwbots:/root/ros_ws/src/bwbots:rw \
-    -v /home/${USER}/bwbots-beer-caddy/ros1/docker/workstation/resources/scripts:/root/scripts:rw \
+    -v /home/${USER}/bwbots-beer-caddy/unity/docker/resources/scripts:/root/scripts:rw \
     -v /home/${USER}/docker_ros_ws:/root/ros_ws:rw \
     --rm \
     bwbots_workstation:latest \

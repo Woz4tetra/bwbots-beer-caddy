@@ -18,7 +18,7 @@ services:
     volumes:
       - /home/${USER}/docker_ros_ws:/root/ros_ws:rw
       - /home/${USER}/bwbots-beer-caddy/ros1/bwbots:/root/ros_ws/src/bwbots:rw
-      - /home/${USER}/bwbots-beer-caddy/ros1/docker/workstation/resources/scripts:/root/scripts:rw
+      - /home/${USER}/bwbots-beer-caddy/unity/docker/resources/scripts:/root/scripts:rw
       - /home/${USER}/bwbots-beer-caddy/ros1/logs:/root/logs:rw
       - /home/${USER}/bwbots-beer-caddy/ros1/bags:/root/bags:rw
       - /tmp/.X11-unix:/tmp/.X11-unix
