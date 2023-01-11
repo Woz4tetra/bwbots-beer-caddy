@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using RosMessageTypes.Sensor;
 using RosMessageTypes.Std;
-using RosMessageTypes.BuiltinInterfaces;
 using Unity.Robotics.ROSTCPConnector;
 using UnityEngine;
 using System;

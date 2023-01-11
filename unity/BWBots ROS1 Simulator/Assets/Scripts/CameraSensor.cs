@@ -1,6 +1,9 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using RosMessageTypes.ApriltagRos;
 using RosMessageTypes.Geometry;
+using RosMessageTypes.Sensor;
 using RosMessageTypes.Vision;
 using RosMessageTypes.ZedInterfaces;
 using Unity.Robotics.ROSTCPConnector;
@@ -15,25 +18,47 @@ class CameraSensor : MonoBehaviour
     [SerializeField] private string tagTopic;
     [SerializeField] private string detectTopic;
     [SerializeField] private string zedObjectsTopic;
+    [SerializeField] private string zedCloudTopic;
     [SerializeField] private string frameId;
     [SerializeField] private float rayCastOffset = 0.01f;
     [SerializeField] private bool debugRayCast = false;
     [SerializeField] private string[] labels;
     [SerializeField] private string personLabel;
+    [SerializeField] private bool enablePointCloud = false;
+    [SerializeField] private uint pointCloudNumVerticalRays = 10;
+    [SerializeField] private uint pointCloudNumHorizontalRays = 10;
+    [SerializeField] private float[] pointCloudWindow;
     private double _prevPublishTime;
     private uint aprilTagMessageCount;
     private uint detectionMessageCount;
+    private PointCloud2Msg cloudMsg;
+    private float[] pointCloudXIterator;
+    private float[] pointCloudYIterator;
 
 
-    void Awake()
+    void Start()
     {
         cameraView = GetComponent<Camera>();
-        if (tagTopic.Length > 0)
-        {
-            _ros = ROSConnection.GetOrCreateInstance();
-            _ros.RegisterPublisher<AprilTagDetectionArrayMsg>(tagTopic);
-            _ros.RegisterPublisher<Detection3DArrayMsg>(detectTopic);
-            _ros.RegisterPublisher<ObjectsStampedMsg>(zedObjectsTopic);
+        _ros = ROSConnection.GetOrCreateInstance();
+        _ros.RegisterPublisher<AprilTagDetectionArrayMsg>(tagTopic);
+        _ros.RegisterPublisher<Detection3DArrayMsg>(detectTopic);
+        _ros.RegisterPublisher<ObjectsStampedMsg>(zedObjectsTopic);
+        if (enablePointCloud) {
+            _ros.RegisterPublisher<PointCloud2Msg>(zedCloudTopic);
+            cloudMsg = makeEmptyCloudMsg(pointCloudNumHorizontalRays, pointCloudNumVerticalRays);
+            float x0, y0, x1, y1;
+            x0 = 0.0f;
+            y0 = Screen.width;
+            x1 = 0.0f;
+            y1 = Screen.height;
+            if (pointCloudWindow.Length == 4) {
+                x0 = Screen.width * pointCloudWindow[0];
+                x1 = Screen.width * pointCloudWindow[1];
+                y0 = Screen.height * pointCloudWindow[2];
+                y1 = Screen.height * pointCloudWindow[3];
+            }
+            pointCloudXIterator = LinearSpacedIndices(x0, x1, (int)pointCloudNumHorizontalRays);
+            pointCloudYIterator = LinearSpacedIndices(y0, y1, (int)pointCloudNumVerticalRays);
         }
     }
 
@@ -47,9 +72,10 @@ class CameraSensor : MonoBehaviour
         AprilTagDetectionArrayMsg tagArrayMsg = GetAprilTagArrayMsg(tags);
         Detection3DArrayMsg detectArrayMsg = GetDetectionArrayMsg(people);
 
+        PointCloud2Msg cloud = GeneratePointCloud();
+
         if (publishDelay > 0.0)
         {
-
             if (now - _prevPublishTime < publishDelay)
             {
                 return;
@@ -60,6 +86,9 @@ class CameraSensor : MonoBehaviour
             _ros.Publish(tagTopic, tagArrayMsg);
             _ros.Publish(detectTopic, detectArrayMsg);
             _ros.Publish(zedObjectsTopic, ConvertToZedObjects(detectArrayMsg));
+            if (enablePointCloud) {
+                _ros.Publish(zedCloudTopic, cloud);
+            }
         }
     }
     private Detection3DArrayMsg GetDetectionArrayMsg(GameObject[] people)
@@ -304,6 +333,123 @@ class CameraSensor : MonoBehaviour
         {
             return false;
         }
+    }
+
+    void OnDrawGizmos () {
+        // Gizmo Frustum
+        if (cameraView && debugRayCast) {
+            Gizmos.matrix = transform.localToWorldMatrix;           // For the rotation bug
+            Gizmos.DrawFrustum(transform.position, cameraView.fieldOfView, cameraView.nearClipPlane, cameraView.farClipPlane, cameraView.aspect);
+        }
+    }
+
+    private PointCloud2Msg makeEmptyCloudMsg(uint numHorizontalRays, uint numVerticalRays) {
+        PointCloud2Msg cloud = new PointCloud2Msg();
+        cloud.width = numHorizontalRays;
+        cloud.height = numVerticalRays;
+        cloud.header.frame_id = frameId;
+        cloud.is_bigendian = false;
+        cloud.is_dense = false;
+
+        uint data_size_bytes = 4;
+        uint num_fields = 3;
+        cloud.point_step = data_size_bytes * num_fields;
+        cloud.row_step = numHorizontalRays * cloud.point_step;
+        
+        cloud.fields = new PointFieldMsg[num_fields];
+        uint field_index = 0;
+        PointFieldMsg xfield = new PointFieldMsg();
+        xfield.datatype = PointFieldMsg.FLOAT32;
+        xfield.name = "x";
+        xfield.offset = 0;
+        xfield.count = 1;
+
+        PointFieldMsg yfield = new PointFieldMsg();
+        yfield.datatype = PointFieldMsg.FLOAT32;
+        yfield.name = "y";
+        yfield.offset = 4;
+        yfield.count = 1;
+
+        PointFieldMsg zfield = new PointFieldMsg();
+        zfield.datatype = PointFieldMsg.FLOAT32;
+        zfield.name = "z";
+        zfield.offset = 8;
+        zfield.count = 1;
+
+        cloud.fields[field_index++] = xfield;
+        cloud.fields[field_index++] = yfield;
+        cloud.fields[field_index++] = zfield;
+
+        uint data_length = numHorizontalRays * numVerticalRays * cloud.point_step;
+        cloud.data = new byte[data_length];
+
+        return cloud;
+    }
+
+    private PointCloud2Msg GeneratePointCloud() {
+        if (!enablePointCloud) {
+            return cloudMsg;
+        }
+        cloudMsg.header.stamp = RosUtil.GetTimeMsg();
+        uint data_index = 0;
+        foreach (float xindex in pointCloudXIterator) {
+            foreach (float yindex in pointCloudYIterator) {
+                Ray ray = cameraView.ScreenPointToRay(new Vector3(xindex, yindex, 0.0f));
+                float x, y, z;
+                RaycastHit hit;
+                if (Physics.Raycast(ray, out hit)) {
+                    Transform objectHit = hit.transform;
+                    if (debugRayCast) {
+                        Debug.DrawRay(ray.origin, ray.direction * hit.distance, Color.blue);
+                    }
+
+                    Vector3 relativePoint = cameraView.transform.InverseTransformPoint(hit.point);
+
+                    Vector3Msg coord = relativePoint.To<FLU>();
+                    x = (float)coord.x;
+                    y = (float)coord.y;
+                    z = (float)coord.z;
+                }
+                else {
+                    x = float.PositiveInfinity;
+                    y = float.PositiveInfinity;
+                    z = float.PositiveInfinity;
+                }
+
+                byte[] xbytes = floatToBytes(x);
+                byte[] ybytes = floatToBytes(y);
+                byte[] zbytes = floatToBytes(z);
+                for (uint byte_index = 0; byte_index < xbytes.Length; byte_index++) {
+                    cloudMsg.data[data_index++] = xbytes[byte_index];
+                }
+                for (uint byte_index = 0; byte_index < ybytes.Length; byte_index++) {
+                    cloudMsg.data[data_index++] = ybytes[byte_index];
+                }
+                for (uint byte_index = 0; byte_index < zbytes.Length; byte_index++) {
+                    cloudMsg.data[data_index++] = zbytes[byte_index];
+                }
+            }
+        }
+        if (data_index != cloudMsg.data.Length) {
+            Debug.LogWarning($"Expected data length doesn't match calculated data length! {cloudMsg.data.Length} != {data_index}");
+        }
+        return cloudMsg;
+    }
+
+    private static byte[] floatToBytes(float value) {
+        var byteArray = new byte[4];
+        var floatArray = new float[1];
+        floatArray[0] = value;
+        Buffer.BlockCopy(floatArray, 0, byteArray, 0, byteArray.Length);
+        return byteArray;
+
+    }
+
+    public static float[] LinearSpacedIndices(float startval, float endval, int steps)
+    {
+        float interval = (endval / Mathf.Abs(endval)) * Mathf.Abs(endval - startval) / (steps - 1);
+        return (from val in Enumerable.Range(0, steps)
+                select startval + (val * interval)).ToArray();
     }
 
     private GameObject GetTopLevelObject(GameObject obj)

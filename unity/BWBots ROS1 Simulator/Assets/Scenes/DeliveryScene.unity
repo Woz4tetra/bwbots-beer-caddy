@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028328, g: 0.22571328, b: 0.3069218, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -4116,7 +4116,7 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.3
+  near clip plane: 0.01
   far clip plane: 1000
   field of view: 60
   orthographic: 0
@@ -4152,12 +4152,21 @@ MonoBehaviour:
   tagTopic: /apriltag_left/tag_detections
   detectTopic: /zed/obj_det/detections
   zedObjectsTopic: /zed/obj_det/yolo_objects
+  zedCloudTopic: /zed/point_cloud/cloud_registered
   frameId: camera_link
   rayCastOffset: 0
   debugRayCast: 1
   labels:
   - person
   personLabel: person
+  enablePointCloud: 1
+  pointCloudNumVerticalRays: 100
+  pointCloudNumHorizontalRays: 50
+  pointCloudWindow:
+  - 0.25
+  - 0.75
+  - 0
+  - 0.5
 --- !u!1001 &2666558030874181953
 PrefabInstance:
   m_ObjectHideFlags: 0

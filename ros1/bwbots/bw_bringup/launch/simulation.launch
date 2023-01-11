@@ -3,7 +3,7 @@
 
     <include file="$(find ros_tcp_endpoint)/launch/endpoint.launch" />
     <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
-        <arg name="port" value="9090" />
+        <arg name="port" value="9091" />
         <arg name="address" value="0.0.0.0" />
     </include>
 
