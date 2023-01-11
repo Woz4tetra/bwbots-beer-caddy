@@ -28,6 +28,8 @@ class CameraSensor : MonoBehaviour
     [SerializeField] private uint pointCloudNumVerticalRays = 10;
     [SerializeField] private uint pointCloudNumHorizontalRays = 10;
     [SerializeField] private float[] pointCloudWindow;
+    [SerializeField] private float noiseMagnitude = 0.05f;
+    [SerializeField] private float RangeMetersMax = 1000;
     private double _prevPublishTime;
     private uint aprilTagMessageCount;
     private uint detectionMessageCount;
@@ -397,8 +399,8 @@ class CameraSensor : MonoBehaviour
                 Ray ray = cameraView.ScreenPointToRay(new Vector3(xindex, yindex, 0.0f));
                 float x, y, z;
                 RaycastHit hit;
-                if (Physics.Raycast(ray, out hit)) {
-                    Transform objectHit = hit.transform;
+                if (Physics.Raycast(ray, out hit) && hit.distance <= RangeMetersMax) {
+
                     if (debugRayCast) {
                         Debug.DrawRay(ray.origin, ray.direction * hit.distance, Color.blue);
                     }
@@ -406,9 +408,17 @@ class CameraSensor : MonoBehaviour
                     Vector3 relativePoint = cameraView.transform.InverseTransformPoint(hit.point);
 
                     Vector3Msg coord = relativePoint.To<FLU>();
-                    x = (float)coord.x;
-                    y = (float)coord.y;
-                    z = (float)coord.z;
+                    if (noiseMagnitude == 0.0f) {
+                        x = (float)coord.x;
+                        y = (float)coord.y;
+                        z = (float)coord.z;
+                    }
+                    else {
+                        float magnitude = noiseMagnitude * hit.distance / RangeMetersMax;
+                        x = (float)coord.x + UnityEngine.Random.Range(-magnitude, magnitude);
+                        y = (float)coord.y + UnityEngine.Random.Range(-magnitude, magnitude);
+                        z = (float)coord.z + UnityEngine.Random.Range(-magnitude, magnitude);
+                    }
                 }
                 else {
                     x = float.PositiveInfinity;
