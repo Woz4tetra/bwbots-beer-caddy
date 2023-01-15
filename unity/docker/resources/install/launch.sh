@@ -21,7 +21,6 @@ int_handler() {
         kill -SIGINT $pid
         tail --pid=$pid -f /dev/null
     fi
-    # exit 143;  # 128 + 15 -- SIGTERM
     exit 0;
 }
 trap 'int_handler' SIGINT

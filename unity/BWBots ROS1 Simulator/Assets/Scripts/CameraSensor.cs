@@ -36,6 +36,7 @@ class CameraSensor : MonoBehaviour
     private PointCloud2Msg cloudMsg;
     private float[] pointCloudXIterator;
     private float[] pointCloudYIterator;
+    private uint prevScreenSize = 0;
 
 
     void Start()
@@ -48,19 +49,6 @@ class CameraSensor : MonoBehaviour
         if (enablePointCloud) {
             _ros.RegisterPublisher<PointCloud2Msg>(zedCloudTopic);
             cloudMsg = makeEmptyCloudMsg(pointCloudNumHorizontalRays, pointCloudNumVerticalRays);
-            float x0, y0, x1, y1;
-            x0 = 0.0f;
-            y0 = Screen.width;
-            x1 = 0.0f;
-            y1 = Screen.height;
-            if (pointCloudWindow.Length == 4) {
-                x0 = Screen.width * pointCloudWindow[0];
-                x1 = Screen.width * pointCloudWindow[1];
-                y0 = Screen.height * pointCloudWindow[2];
-                y1 = Screen.height * pointCloudWindow[3];
-            }
-            pointCloudXIterator = LinearSpacedIndices(x0, x1, (int)pointCloudNumHorizontalRays);
-            pointCloudYIterator = LinearSpacedIndices(y0, y1, (int)pointCloudNumVerticalRays);
         }
     }
 
@@ -135,6 +123,7 @@ class CameraSensor : MonoBehaviour
                 }
             };
             Vector3 sizeVector = person.GetComponent<Renderer>().bounds.size;
+            Vector3Msg sizeMsg = sizeVector.To<FLU>();
             Detection3DMsg detectMsg = new Detection3DMsg
             {
                 header = detectArrayMsg.header,
@@ -142,7 +131,11 @@ class CameraSensor : MonoBehaviour
                 bbox = new RosMessageTypes.Vision.BoundingBox3DMsg
                 {
                     center = pose,
-                    size = sizeVector.To<FLU>()
+                    size = new Vector3Msg {
+                        x = Math.Abs(sizeMsg.x),
+                        y = Math.Abs(sizeMsg.y),
+                        z = Math.Abs(sizeMsg.z),
+                    }
                 }
             };
             detectList.Add(detectMsg);
@@ -392,6 +385,24 @@ class CameraSensor : MonoBehaviour
         if (!enablePointCloud) {
             return cloudMsg;
         }
+        uint screenSize = (uint)(Screen.width * Screen.height);
+        if (screenSize != prevScreenSize) {
+            prevScreenSize = screenSize;
+            float x0, y0, x1, y1;
+            x0 = 0.0f;
+            y0 = Screen.width;
+            x1 = 0.0f;
+            y1 = Screen.height;
+            if (pointCloudWindow.Length == 4) {
+                x0 = Screen.width * pointCloudWindow[0];
+                x1 = Screen.width * pointCloudWindow[1];
+                y0 = Screen.height * pointCloudWindow[2];
+                y1 = Screen.height * pointCloudWindow[3];
+            }
+            pointCloudXIterator = LinearSpacedIndices(x0, x1, (int)pointCloudNumHorizontalRays);
+            pointCloudYIterator = LinearSpacedIndices(y0, y1, (int)pointCloudNumVerticalRays);
+        }
+            
         cloudMsg.header.stamp = RosUtil.GetTimeMsg();
         uint data_index = 0;
         foreach (float xindex in pointCloudXIterator) {

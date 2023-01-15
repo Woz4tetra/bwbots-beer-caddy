@@ -87,7 +87,7 @@ public class Person : MonoBehaviour
 
     public PoseMsg GetPose(Transform cameraTransform)
     {
-        Vector3 relativePoint = cameraTransform.InverseTransformPoint(transform.position);
+        Vector3 relativePoint = cameraTransform.InverseTransformPoint(GetComponent<Renderer>().bounds.center);
         Quaternion LocalRotation = Quaternion.Inverse(cameraTransform.rotation) * transform.rotation;
         LocalRotation = LocalRotation * Quaternion.AngleAxis(-90.0f, Vector3.up);
         PoseMsg pose = new PoseMsg();

@@ -16,12 +16,12 @@ from bw_interfaces.msg import (
     FollowDetectionGoal,
     FollowDetectionFeedback,
     FollowDetectionResult,
+    Labels
 )
 
 
 class FollowDetectionCommand:
     def __init__(self, move_base_client: SimpleMoveBaseClient) -> None:
-        self.class_names_path = rospy.get_param("~class_names_path", "")
         self.stale_detections_timeout = rospy.Duration(
             rospy.get_param("~follow_detection/stale_detections_timeout", 1.0)
         )
@@ -45,7 +45,8 @@ class FollowDetectionCommand:
             queue_size=10,
         )
 
-        self.class_names = self.read_class_names(self.class_names_path)
+        self.class_names = []
+        self.labels_sub = rospy.Subscriber("labels", Labels, self.labels_callback, queue_size=1)
 
         self.chase_pose = PoseStamped()
         self.chase_label = ""
@@ -59,6 +60,9 @@ class FollowDetectionCommand:
         )
         self.action_server.start()
         rospy.loginfo("follow_detection is ready")
+
+    def labels_callback(self, msg):
+        self.class_names = [x.data for x in msg.labels]
 
     def detections_callback(self, msg: Detection3DArray) -> None:
         if len(self.chase_label) == 0:
