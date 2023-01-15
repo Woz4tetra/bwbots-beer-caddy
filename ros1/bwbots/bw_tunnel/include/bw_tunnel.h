@@ -17,6 +17,8 @@
 #include <mutex>
 #include <condition_variable>
 #include <boost/thread/thread.hpp>
+#include <memory>
+#include <stdexcept>
 
 #include "ros/ros.h"
 #include "ros/console.h"
@@ -47,6 +49,16 @@
 
 using namespace std;
 
+template<typename ... Args>
+std::string string_format( const std::string& format, Args ... args )
+{
+    int size_s = std::snprintf( nullptr, 0, format.c_str(), args ... ) + 1; // Extra space for '\0'
+    if( size_s <= 0 ){ throw std::runtime_error( "Error during formatting." ); }
+    auto size = static_cast<size_t>( size_s );
+    std::unique_ptr<char[]> buf( new char[ size ] );
+    std::snprintf( buf.get(), size, format.c_str(), args ... );
+    return std::string( buf.get(), buf.get() + size - 1 ); // We don't want the '\0' inside
+}
 
 class BwTunnel : public BwSerialTunnel {
 private:
@@ -62,6 +74,10 @@ private:
     std::vector<std::string> _joint_names;
     int _num_modules;
 
+    float _voltage_delta_warning;
+    float _voltage_minimum_warning;
+    ros::Duration _min_terminal_log_interval;
+
     // Members
 
     // Messages
@@ -70,6 +86,12 @@ private:
 
     ros::Time _prev_twist_timestamp;
     double _twist_cmd_vx, _twist_cmd_vy, _twist_cmd_vt;
+
+    ros::Time _largest_voltage_time;
+    float _largest_voltage;
+
+    ros::Time _prev_log_time;
+    float _prev_log_voltage;
 
     // Publishers
     tf2_ros::TransformBroadcaster _tf_broadcaster;
@@ -96,6 +118,8 @@ private:
     ros::ServiceServer _stop_sequence_srv;
 
     void addJointPub(string name);
+    void logCharger(float voltage);
+    void warnAllTerminals(string message);
 
     // Service callbacks
     bool odomResetCallback(bw_interfaces::OdomReset::Request &req, bw_interfaces::OdomReset::Response &resp);

@@ -62,7 +62,7 @@ class FollowDetectionCommand:
         rospy.loginfo("follow_detection is ready")
 
     def labels_callback(self, msg):
-        self.class_names = [x.data for x in msg.labels]
+        self.class_names = [str(x) for x in msg.labels]
 
     def detections_callback(self, msg: Detection3DArray) -> None:
         if len(self.chase_label) == 0:

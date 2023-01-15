@@ -17,7 +17,7 @@ class LastSequencePlayer:
         self.start_seq_srv = rospy.ServiceProxy("/bw/play_sequence", PlaySequence)
 
         self.serial = int(rospy.get_param("~serial", 0))
-        self.from_flash = int(rospy.get_param("~from_flash", False))
+        self.from_flash = int(rospy.get_param("~from_flash", True))
 
         rospy.loginfo("%s init complete" % self.node_name)
 

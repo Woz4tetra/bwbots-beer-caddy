@@ -28,6 +28,7 @@ def main():
     stored_sequences = []
     paths = []
     names = []
+    num_channels = 4
     for filepath in args.filepaths:
         generator = SequenceGenerator()
         name = os.path.splitext(os.path.basename(filepath))[0]
@@ -36,17 +37,30 @@ def main():
             lights.generate(generator)
         elif filepath.endswith(".mid"):
             if name in config:
-                volume = config[name].get("volume", 30)
+                volume = config[name].get("volume", 45)
                 tempo_multiplier = config[name].get("tempo_multiplier", 1.0)
-                tracks = config[name].get("tracks", None)
+                tracks = config[name].get("tracks", [0, 1, 2, 3, 4, 5, 6, 7])
                 num_leds = config[name].get("num_leds", None)
+                channel_dithering = config[name].get("channel_dithering", 2)
+                dither_delay = config[name].get("dither_delay", 0.05)
             else:
-                volume = 30
+                volume = 45
                 tempo_multiplier = 1.0
-                tracks = None
+                tracks = [0, 1, 2, 3, 4, 5, 6, 7]
                 num_leds = None
+                channel_dithering = 2
+                dither_delay = 0.05
             print(f"Set volume to {volume}. Set tempo multipler to {tempo_multiplier}")
-            midi_sequencer = MidiSequencer(filepath, int(volume), True, float(tempo_multiplier), tracks, num_leds)
+            midi_sequencer = MidiSequencer(
+                filepath,
+                int(volume),
+                channel_dithering,
+                dither_delay,
+                float(tempo_multiplier),
+                tracks,
+                num_leds,
+                num_channels
+            )
             midi_sequencer.generate(generator)
         else:
             raise RuntimeError(f"Invalid file type: {filepath}")

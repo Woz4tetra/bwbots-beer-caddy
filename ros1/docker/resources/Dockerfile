@@ -156,7 +156,7 @@ RUN make -j4 && make install
 
 
 RUN apt-get install -y libceres-dev
-RUN python3 -m pip install py-trees==0.7.6
+RUN python3 -m pip install py-trees==0.7.6 tqdm
 
 RUN apt-get install -y dumb-init
 
@@ -177,6 +177,7 @@ ENV ROS_WS_SRC=${HOME}/ros_ws/src
 
 ENV FLASK_ENV=development
 ENV PYTHONPATH="${PYTHONPATH}:${ROS_WS_SRC}/bwbots/bw_tools"
+ENV PYTHONIOENCODING=utf-8
 
 COPY ./install ${HOME}/install
 COPY ./configs ${HOME}/configs

@@ -72,5 +72,6 @@ class RunSequenceCommand:
             self.state = msg
             if self.feedback.index != self.state.index:
                 self.feedback.index = self.state.index
+                self.feedback.length = self.state.length
                 self.action_server.publish_feedback(self.feedback)
 

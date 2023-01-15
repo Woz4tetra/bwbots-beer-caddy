@@ -45,6 +45,7 @@ public:
     void stop_sequence();
     uint8_t get_status() { return (uint8_t)_prev_status; }
     uint16_t get_index() { return _selected_index; }
+    uint64_t get_current_length();
     uint8_t get_current_sequence() { return _selected_serial; }
     bool is_current_from_flash() { return _from_flash; }
     int update();

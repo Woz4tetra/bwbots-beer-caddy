@@ -18,6 +18,7 @@ BwImuJoint::BwImuJoint(ros::NodeHandle* nodehandle) :
         _combined_odom_pub = nh.advertise<nav_msgs::Odometry>("odom/filtered", 50);
     }
     _base_quat_msg.w = 1.0;
+    _imu_msg.orientation.w = 1.0;
     x = 0.0;
     y = 0.0;
     theta = 0.0;

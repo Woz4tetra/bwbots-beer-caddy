@@ -4,11 +4,14 @@ function cleanup {
 }
 trap cleanup EXIT
 
+HOST_MACHINE=$1
+
 xhost +local:root
 docker run -it \
     --name workstation_rviz \
     --env="DISPLAY" \
     --env="QT_X11_NO_MITSHM=1" \
+    --env="HOST_MACHINE=$HOST_MACHINE" \
     --restart="no" \
     --net="host" \
     --privileged \

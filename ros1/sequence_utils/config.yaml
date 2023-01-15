@@ -1,20 +1,29 @@
 BOT99:
   tempo_multiplier: 2.0
-  tracks: [0, 1, 2, 3, 4, 5, 6, 7]
   num_leds: 24
 fur_elise:
-  tracks: [0, 1, 2, 3, 4, 5, 6, 7]
+  channel_dithering: 0
 brawl:
-  tracks: [0, 1, 2, 3, 4, 5, 6, 7]
+  channel_dithering: 0
 mii_channel:
-  tracks: [0, 1, 2, 3, 4, 5, 6, 7]
   num_leds: 24
 megalovania:
-  tracks: [0, 1, 2, 3, 4, 5, 6, 7]
   num_leds: 24
 ruins:
-  tracks: [0, 1, 2, 3, 4, 5, 6, 7]
   num_leds: 24
+  channel_dithering: 0
 nokia:
   tracks: [0, 1, 5, 6, 7]
   num_leds: 24
+cs1-1pre:
+  channel_dithering: 0
+cs6-1pre: {}
+cs6-6gig: 
+  tempo_multiplier: 2.25
+dedede: {}
+bramble_blast: {}
+tetris: {}
+once_upon_a_time: {}
+pokemon_battle: {}
+pokemon_center: {}
+one_winged_angel: {}

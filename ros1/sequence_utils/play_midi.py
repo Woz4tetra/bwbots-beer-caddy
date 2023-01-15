@@ -27,7 +27,19 @@ class MidiPlayer:
         self.loop = rospy.get_param("~loop", False)
         self.allowed_tracks = rospy.get_param("~allowed_tracks", [0, 1, 2, 3, 4, 5, 6, 7])
         self.num_leds = rospy.get_param("~num_leds", 24)
-        self.midi_sequencer = MidiSequencer(self.midi_path, self.volume, True, self.tempo_multiplier, self.allowed_tracks, self.num_leds)
+        self.channel_dithering = rospy.get_param("~channel_dithering", 0)
+        self.dither_delay = rospy.get_param("~dither_delay", 0.1)
+        self.num_channels = rospy.get_param("~num_channels", 4)
+        self.midi_sequencer = MidiSequencer(
+            self.midi_path,
+            self.volume,
+            self.channel_dithering,
+            self.dither_delay,
+            self.tempo_multiplier,
+            self.allowed_tracks,
+            self.num_leds,
+            self.num_channels
+        )
         self.gen = SequenceGenerator()
 
         rospy.loginfo("%s init complete" % self.node_name)

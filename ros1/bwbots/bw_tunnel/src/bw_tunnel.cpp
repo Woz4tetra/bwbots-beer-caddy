@@ -11,6 +11,13 @@ BwTunnel::BwTunnel(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~cmd_vel_timeout", _cmd_vel_timeout_param, 0.5);
     ros::param::param<int>("~num_modules", _num_modules, 4);
 
+    ros::param::param<float>("~voltage_delta_warning", _voltage_delta_warning, 1.0);
+    ros::param::param<float>("~voltage_minimum_warning", _voltage_minimum_warning, 9.0);
+
+    double min_terminal_log_interval;
+    ros::param::param<double>("~min_terminal_log_interval", min_terminal_log_interval, 30.0);
+    _min_terminal_log_interval = ros::Duration(min_terminal_log_interval);
+
     string key;
     if (!ros::param::search("joint_names", key)) {
         ROS_ERROR("Failed to find joint_names parameter");
@@ -85,6 +92,10 @@ BwTunnel::BwTunnel(ros::NodeHandle* nodehandle) :
     _twist_cmd_vy = 0.0;
     _twist_cmd_vt = 0.0;
 
+    _largest_voltage_time = ros::Time(0);
+    _largest_voltage = 0.0;
+    _prev_log_voltage = 0.0;
+
     _odom_reset_srv = nh.advertiseService("odom_reset_service", &BwTunnel::odomResetCallback, this);
     _play_sequence_srv = nh.advertiseService("play_sequence", &BwTunnel::playSequenceCallback, this);
     _stop_sequence_srv = nh.advertiseService("stop_sequence", &BwTunnel::stopSequenceCallback, this);
@@ -156,6 +167,8 @@ void BwTunnel::packetCallback(PacketResult* result)
         msg.charge_current = current;
         msg.is_charging = is_charging;
         _charge_pub.publish(msg);
+
+        logCharger(voltage);
     }
     else if (category.compare("bu") == 0) {
         bool button_state;
@@ -194,18 +207,51 @@ void BwTunnel::packetCallback(PacketResult* result)
         uint8_t sequence;
         bool is_from_flash;
         uint16_t index;
+        uint64_t length;
         if (!result->getBool(status))  { ROS_ERROR("Failed to get status"); return; }
         if (!result->getUInt8(sequence))  { ROS_ERROR("Failed to get sequence"); return; }
         if (!result->getBool(is_from_flash))  { ROS_ERROR("Failed to get is_from_flash"); return; }
         if (!result->getUInt16(index))  { ROS_ERROR("Failed to get index"); return; }
+        if (!result->getUInt64(length))  { ROS_ERROR("Failed to get length"); return; }
 
         bw_interfaces::BwSequenceState state;
         state.serial = sequence;
         state.is_from_flash = is_from_flash;
         state.is_running = status;
         state.index = index;
+        state.length = length;
         _sequence_state_pub.publish(state);
     }
+}
+
+void BwTunnel::logCharger(float voltage)
+{
+    ros::Time current_time = ros::Time::now();
+    if (voltage > _largest_voltage) {
+        _largest_voltage = voltage;
+        _largest_voltage_time = current_time;
+    }
+
+    double minutes_since = (current_time - _largest_voltage_time).toSec() / 60.0;
+    if (voltage < _voltage_minimum_warning) {
+        warnAllTerminals(string_format("Battery voltage below driving minimum! %.2f V. %0.4f minutes since %.2f V.", voltage, minutes_since, _largest_voltage));
+    }
+    else if (_prev_log_voltage - voltage < -_voltage_delta_warning && current_time - _largest_voltage_time > _min_terminal_log_interval) {
+        _prev_log_voltage = voltage;
+        warnAllTerminals(string_format("Battery voltage is %.2f V. %0.4f minutes since %.2f V.", voltage, minutes_since, _largest_voltage));
+    }
+}
+
+void BwTunnel::warnAllTerminals(string message) {
+    ros::Time current_time = ros::Time::now();
+    if (current_time - _prev_log_time > _min_terminal_log_interval) {
+        _prev_log_time = current_time;
+        int result = system(string_format("for f in /dev/pts/*; do echo '\n%s' > $f; done", message.c_str()).c_str());
+        if (result != 0) {
+            ROS_DEBUG_STREAM("warn all terminals system call result: " << result);
+        }
+    }
+    ROS_WARN_STREAM(message);
 }
 
 void BwTunnel::publishOdom(ros::Time recv_time, double x, double y, double t, double vx, double vy, double vt)

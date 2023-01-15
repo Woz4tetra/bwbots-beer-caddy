@@ -9,7 +9,8 @@ RUN python3 -m pip install scipy==1.5.4 \
     shapely==1.6.4 \
     mido \
     pyperclip \
-    dataclasses
+    dataclasses \
+    tqdm
 
 RUN apt-get install -y llvm-7*
 RUN ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin
@@ -95,6 +96,10 @@ ENV FLASK_ENV=development
 ENV PYTHONPATH="${PYTHONPATH}:${ROS_WS_SRC}/bwbots/bw_tools"
 
 COPY ./unity/docker/resources/install ${HOME}/install
+
+RUN apt-get install -y xclip xvfb
+RUN Xvfb :99 -screen 0 1280x720x16 &
+RUN export DISPLAY=:99
 
 # ---
 # bwbots launch environment

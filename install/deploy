@@ -1,8 +1,11 @@
+#!/bin/bash
 BASE_DIR=$(realpath "$(dirname $0)")
 PARENT_DIR=$(dirname $BASE_DIR)
 DESTINATION_NAME=$1
 REMOTE_KEY=$2
-RESTART_ROSLAUNCH=$3
+RESTART_SERVICE=$3
+POST_BUILD=${4:-y}
+SERVICE_NAME=bwbots
 
 USERNAME=nvidia
 LOCAL_PATH=${PARENT_DIR}
@@ -24,19 +27,21 @@ DEST_FULL_PATH=${DESTINATION_PATH}/${LOCAL_NAME}
 CATKIN_WS_PATH=${DESTINATION_PATH}/ros_ws
 PACKAGES_PATH=${LOCAL_PATH}/ros1/bwbots
 
-${BASE_DIR}/upload.sh ${DESTINATION_NAME} ${REMOTE_KEY} n
+${BASE_DIR}/upload ${DESTINATION_NAME} ${REMOTE_KEY} n
 
 SSH_COMMAND="ssh -i ${REMOTE_KEY} ${USERNAME}@${DESTINATION_NAME}"
 
-# stop roslaunch
-echo "Stopping roslaunch"
-${SSH_COMMAND} -t "sudo systemctl stop roslaunch.service"
+# stop service
+echo "Stopping ${SERVICE_NAME}"
+${SSH_COMMAND} -t "sudo systemctl stop ${SERVICE_NAME}.service"
 
-# build catkin ws
+# build bwbots
+${SSH_COMMAND} "sudo ${DEST_FULL_PATH}/ros1/docker/native/build_container"
 
-PACKAGE_LIST=`ls $PACKAGES_PATH`
-PACKAGE_LIST=`echo "$PACKAGE_LIST" | tr '\n' ';'`
+if [[ $POST_BUILD == "n" ]]; then
+    echo "Skipping post build"
+else
+    echo "Running post build" && ${SSH_COMMAND} "${DEST_FULL_PATH}/ros1/docker/native/post_build"
+fi
 
-${SSH_COMMAND} -t "export OPENBLAS_CORETYPE=ARMV8 && cd ${CATKIN_WS_PATH} && source /home/${USERNAME}/noetic_ws/install_isolated/setup.bash && source ${CATKIN_WS_PATH}/devel/setup.bash && catkin_make -DCATKIN_WHITELIST_PACKAGES='$PACKAGE_LIST'"
-
-${BASE_DIR}/restart.sh ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART_ROSLAUNCH}
+${BASE_DIR}/restart ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART_SERVICE}

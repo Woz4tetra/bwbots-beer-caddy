@@ -35,6 +35,8 @@ def main():
     commands["set_robot_state"] = SetRobotStateCommand()
     commands["has_drink"] = HasDrinkCommand()
     commands["follow_detection"] = FollowDetectionCommand(move_base_client)
+    
+    rospy.loginfo("bw_behaviors actions are ready")
 
     rospy.spin()
 

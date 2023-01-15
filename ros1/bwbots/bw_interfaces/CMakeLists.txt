@@ -55,6 +55,7 @@ add_message_files(
   DrinkMission.msg
   DrinkMissionArray.msg
   LoadCell.msg
+  Labels.msg
   BwSequence.msg
   BwSequenceElement.msg
   BwSequenceState.msg

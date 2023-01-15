@@ -497,11 +497,12 @@ void set_voltage_compensation(double compensation)
 
 void report_sequence()
 {
-    tunnel->writePacket("|seq", "bcbg",
+    tunnel->writePacket("|seq", "bcbgm",
         sequencer->get_status() > 0,
         sequencer->get_current_sequence(),
         sequencer->is_current_from_flash(),
-        sequencer->get_index()
+        sequencer->get_index(),
+        sequencer->get_current_length()
     );
 }
 

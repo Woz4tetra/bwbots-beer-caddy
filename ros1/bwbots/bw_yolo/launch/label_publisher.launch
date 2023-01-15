@@ -1,0 +1,7 @@
+<launch>
+    <group ns="bw" >
+        <node name="label_publisher" pkg="bw_yolo" type="label_publisher.py" output="screen" required="false">
+            <param name="class_names_path" value="$(find bw_yolo)/models/person.names"/>
+        </node>
+    </group>
+</launch>

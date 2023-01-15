@@ -5,3 +5,4 @@ bool from_flash
 bool success
 ---
 uint16 index
+uint64 length

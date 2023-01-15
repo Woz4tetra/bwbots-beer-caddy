@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import rospy
 from bw_interfaces.msg import Labels
-from std_msgs.msg import String
 
 
 class LabelPublisher:
@@ -11,7 +10,7 @@ class LabelPublisher:
         self.publish_rate = rospy.get_param("~publish_rate", 5.0)
         self.class_names = self.read_class_names(self.class_names_path)
         self.label_msg = Labels()
-        self.label_msg.labels = [String(x) for x in self.class_names]
+        self.label_msg.labels = [str(x) for x in self.class_names]
         self.label_pub = rospy.Publisher("labels", Labels, queue_size=10)
 
     def read_class_names(self, path: str):

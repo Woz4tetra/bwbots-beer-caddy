@@ -20,7 +20,7 @@ services:
       - /home/${USER}/.Xauthority:/home/${USER}/.Xauthority:rw
       # Allow container to control docker
       - /home/${USER}/.docker:/root/.docker:rw # docker looks here inside a container
-      - /home/${USER}/.docker:/home/${USER}/.docker:rw # but we need to satisfy spice-lib.sh
+      - /home/${USER}/.docker:/home/${USER}/.docker:rw
       - /var/run/docker.sock:/var/run/docker.sock
     entrypoint: [ "/root/install/post_build.sh" ]
     deploy:

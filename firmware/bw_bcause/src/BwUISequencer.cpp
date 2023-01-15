@@ -65,18 +65,26 @@ void BwUISequencer::stop_sequence()
     _selected_serial = MAX_NUM_SEQUENCES + 1;
 }
 
+uint64_t BwUISequencer::get_current_length()
+{
+    if (_selected_serial >= MAX_NUM_SEQUENCES) {
+        return 0;
+    }
+    if (_from_flash) {
+        return get_stored_element(_selected_serial, 0);
+    }
+    else {
+        return _sequences[_selected_serial][0];
+    }
+}
+
 int BwUISequencer::update()
 {
     if (_selected_serial == MAX_NUM_SEQUENCES + 1) {
         return 0;
     }
-    uint64_t sequence_length;
-    if (_from_flash) {
-        sequence_length = get_stored_element(_selected_serial, 0);
-    }
-    else {
-        sequence_length = _sequences[_selected_serial][0];
-    }
+    uint64_t sequence_length = get_current_length();
+    
     if (_selected_index >= sequence_length) {
         if (_loop_sequence) {
             _selected_index = 0;
@@ -109,12 +117,12 @@ int BwUISequencer::update()
         parameter = _sequences[_selected_serial][_selected_index + 1];
     }
     BwSequenceType_t type = static_cast<BwSequenceType_t>(parameter & 0b1111);
-    DEBUG_SERIAL.print("Sequence index ");
-    DEBUG_SERIAL.print(_selected_index);
-    DEBUG_SERIAL.print(" of ");
-    DEBUG_SERIAL.print(sequence_length);
-    DEBUG_SERIAL.print(", type=");
-    DEBUG_SERIAL.println(type);
+    // DEBUG_SERIAL.print("Sequence index ");
+    // DEBUG_SERIAL.print(_selected_index);
+    // DEBUG_SERIAL.print(" of ");
+    // DEBUG_SERIAL.print(sequence_length);
+    // DEBUG_SERIAL.print(", type=");
+    // DEBUG_SERIAL.println(type);
 
     switch (type)
     {

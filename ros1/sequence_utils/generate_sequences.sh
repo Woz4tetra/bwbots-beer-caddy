@@ -7,11 +7,14 @@ python3 stored_sequence_generator.py \
     lights/idle.csv \
     midi/BOT99.mid \
     midi/fur_elise.mid \
+    midi/cs1-1pre.mid \
+    midi/cs6-1pre.mid \
+    midi/cs6-6gig.mid \
     midi/brawl.mid \
     midi/mii_channel.mid \
     midi/megalovania.mid \
     midi/ruins.mid \
-    midi/scale1.mid \
-    midi/scale2.mid \
+    midi/dedede.mid \
+    midi/pokemon_center.mid \
     midi/scale3.mid \
     midi/nokia.mid
