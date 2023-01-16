@@ -18,6 +18,7 @@
     </include>
     <include file="$(find bw_move_base)/launch/bw_move_base.launch" />
     <include file="$(find bw_behaviors)/launch/bw_behaviors.launch" />
+    <include file="$(find bw_yolo)/launch/label_publisher.launch"/>
     <include file="$(find bw_waypoints)/launch/bw_waypoints.launch">
         <arg name="waypoints_path" value="$(find bw_waypoints)/waypoints/$(arg map_name)" />
     </include>

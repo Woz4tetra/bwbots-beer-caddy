@@ -15,9 +15,12 @@ public class ChassisRosInterface : MonoBehaviour
     [SerializeField] private string cmdVelTopic = "/bw/cmd_vel";
     [SerializeField] private string setMotorEnableTopic = "/bw/set_motors_enabled";
     [SerializeField] private string getMotorEnableTopic = "/bw/are_motors_enabled";
+    [SerializeField] private string groundTruthTopic = "/bw/ground_truth";
+    [SerializeField] private string groundTruthFrame = "map";
     
     private ROSConnection _ros;
     private double _prevPublishTime;
+    private uint groundTruthMessageCount = 0;
     
     // Start is called before the first frame update
     public void Start()
@@ -30,6 +33,7 @@ public class ChassisRosInterface : MonoBehaviour
             _ros.RegisterPublisher<BwDriveModuleMsg>(getModuleTopic(index));
         }
         _ros.RegisterPublisher<BoolMsg>(getMotorEnableTopic);
+        _ros.RegisterPublisher<PoseStampedMsg>(groundTruthTopic);
         _ros.Subscribe<BoolMsg>(setMotorEnableTopic, setMotorEnableCallback);
 
         _ros.Subscribe<TwistMsg>(cmdVelTopic, cmdVelCallback);
@@ -51,6 +55,17 @@ public class ChassisRosInterface : MonoBehaviour
             _ros.Publish(getMotorEnableTopic, new BoolMsg {
                 data = chassis.getMotorEnable()
             });
+
+            PoseStampedMsg groundTruthMsg = new PoseStampedMsg {
+                header = {
+                    seq = groundTruthMessageCount,
+                    stamp = RosUtil.GetTimeMsg(),
+                    frame_id = groundTruthFrame
+                },
+                pose = chassis.GetGroundTruthPose()
+            };
+            _ros.Publish(groundTruthTopic, groundTruthMsg);
+            groundTruthMessageCount++;
 
             _prevPublishTime = now;
         }

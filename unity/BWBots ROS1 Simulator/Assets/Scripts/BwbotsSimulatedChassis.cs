@@ -32,7 +32,7 @@ public class BwbotsSimulatedChassis : MonoBehaviour
 
     private const double FRONT_ANGLE = -1.2967;  // -74.293 degrees
     private const double ALCOVE_ANGLE = 0.5236;  // 30 degrees
-    private const double MIN_RADIUS_OF_CURVATURE = 0.15;
+    private const double MIN_RADIUS_OF_CURVATURE = 0.2;
     private const double WHEEL_RADIUS = 0.115 / 2.0;  // meters
 
     private const double WIDTH = 0.115;  // meters, chassis pivot to pivot Y dimension
@@ -230,6 +230,13 @@ public class BwbotsSimulatedChassis : MonoBehaviour
         setUseGroundTruth(useGroundTruth);
     }
 
+    public PoseMsg GetGroundTruthPose() {
+        return new PoseMsg {
+            position = bodyMain.transform.position.To<FLU>(),
+            orientation = bodyMain.transform.rotation.To<FLU>()
+        };
+    }
+
     void FixedUpdate()
     {
         double vx, vy, vt;
@@ -399,8 +406,8 @@ public class BwbotsSimulatedChassis : MonoBehaviour
             else {
                 geometric_azimuth = azimuth;
             }
-            double x = module.getXLocation() + 2 * ARMATURE * Math.Sin(geometric_azimuth);
-            double y = module.getYLocation() + 2 * ARMATURE * Math.Cos(geometric_azimuth);
+            double x = module.getXLocation() + ARMATURE * Math.Sin(geometric_azimuth);
+            double y = module.getYLocation() + ARMATURE * Math.Cos(geometric_azimuth);
 
             //  0  1  2 -- channel 0, -y0
             //  3  4  5 -- channel 0, x0

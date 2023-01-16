@@ -192,9 +192,9 @@ class BehaviorTrees:
                 Pose2d(self.tag_prep_offset, 0.0, 0.0),
                 self.robot_frame,
                 controller_type="strafe2",
-                xy_tolerance=0.15,
-                yaw_tolerance=0.15,
-                linear_min_vel=0.4,
+                xy_tolerance=0.3,
+                yaw_tolerance=0.3,
+                linear_min_vel=0.15,
                 reference_linear_speed=1.0,
                 reference_angular_speed=3.0,
                 linear_max_accel=5.0,
@@ -303,7 +303,7 @@ class BehaviorTrees:
             controller_type="strafe1",
             linear_min_vel=0.15,
             theta_min_vel=0.015,
-            xy_tolerance=0.025,
+            xy_tolerance=0.05,
             yaw_tolerance=0.025,
             timeout=10.0,
             reference_linear_speed=0.5,
@@ -321,7 +321,7 @@ class BehaviorTrees:
             "Park under A0 stage2",
             [
                 GoToTagBehavior(
-                    -0.2,
+                    -0.17,
                     -0.25,
                     -math.pi / 2.0,
                     self.dispenser_tag_supplier,
@@ -344,7 +344,7 @@ class BehaviorTrees:
                     valid_tag_window=rospy.Duration(60.0),  # type: ignore
                 ),
                 GoToTagBehavior(
-                    -0.15,
+                    -0.075,
                     -0.05,
                     -math.pi / 2.0,
                     self.dispenser_tag_supplier,
@@ -354,7 +354,7 @@ class BehaviorTrees:
                     linear_min_vel=0.01,
                     theta_min_vel=0.015,
                     xy_tolerance=0.025,
-                    yaw_tolerance=0.015,
+                    yaw_tolerance=0.03,
                     timeout=20.0,
                     reference_linear_speed=0.25,
                     linear_max_accel=0.5,

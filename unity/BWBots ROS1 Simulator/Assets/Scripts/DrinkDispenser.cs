@@ -16,7 +16,7 @@ class DrinkDispenser : MonoBehaviour
         _ros = ROSConnection.GetOrCreateInstance();
         _ros.Subscribe<StringMsg>(dispenseTopic, dispenseCallback);
         if (dispenserType.Equals("A0")) {
-            spawnPoint = new Vector3(0.0f, 0.362f, 0.0f);
+            spawnPoint = new Vector3(0.0f, 0.29f, 0.0f);
         }
         else {
             spawnPoint = new Vector3(0.0f, 1.0f, 0.0f);

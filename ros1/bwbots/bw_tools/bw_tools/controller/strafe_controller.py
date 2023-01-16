@@ -4,6 +4,7 @@ import math
 from typing import Optional
 from ..robot_state import Pose2d, Velocity
 from .pid import PIDController
+from .profiled_pid import ProfiledPIDController
 from .controller import Controller
 
 class StrafeControllerState(Enum):
@@ -33,6 +34,25 @@ class StrafeController(Controller):
 
     def reset(self):
         self.state = StrafeControllerState.START
+        self.reset_linear_controllers()
+        self.reset_angular_controller()
+
+    def reset_linear_controllers(self):
+        if type(self.x_controller) == ProfiledPIDController:
+            self.x_controller.reset(0.0)
+        else:
+            self.x_controller.reset()
+        if self.y_controller is not None:
+            if type(self.y_controller) == ProfiledPIDController:
+                self.y_controller.reset(0.0)
+            else:
+                self.y_controller.reset()
+
+    def reset_angular_controller(self):
+        if type(self.theta_controller) == ProfiledPIDController:
+            self.theta_controller.reset(0.0)
+        else:
+            self.theta_controller.reset()
 
     def calculate(self, **kwargs) -> Velocity:
         current_pose: Pose2d = kwargs["current_pose"]
@@ -62,14 +82,19 @@ class StrafeController(Controller):
 
         if self.state == StrafeControllerState.START:
             self.state = StrafeControllerState.INITIAL_TURN
+            self.reset_angular_controller()
+
+        rospy.logdebug(f"Strafe controller state: {self.state}")
         
         if self.state == StrafeControllerState.INITIAL_TURN:
             if rotate_in_place_start:
                 vel = Velocity(theta=self.theta_controller.calculate(0.0, heading))
                 if abs(heading) < self.pose_tolerance.theta:
                     self.state = StrafeControllerState.STRAFING
+                    self.reset_linear_controllers()
             else:
                 self.state = StrafeControllerState.STRAFING
+                self.reset_linear_controllers()
                 vel = Velocity()
         elif self.state == StrafeControllerState.STRAFING:
             if rotate_while_driving:
@@ -87,20 +112,24 @@ class StrafeController(Controller):
             if rotate_while_driving:
                 if self.at_reference():
                     self.state = StrafeControllerState.END_TURN
+                    self.reset_angular_controller()
             else:
                 if abs(self.pose_error.x) < self.pose_tolerance.x and \
                         abs(self.pose_error.y) < self.pose_tolerance.y:
                     self.state = StrafeControllerState.END_TURN
+                    self.reset_angular_controller()
 
         elif self.state == StrafeControllerState.END_TURN:
             if rotate_in_place_end:
                 if abs(self.pose_error.x) >= self.pose_tolerance.x or \
                     abs(self.pose_error.y) >= self.pose_tolerance.y:
                     self.state = StrafeControllerState.STRAFING
+                    self.reset_linear_controllers()
                 vel = Velocity(x=0.0, y=0.0, theta=self.theta_controller.calculate(0.0, pose_error.theta))
             else:
                 if not self.at_reference():
                     self.state = StrafeControllerState.STRAFING
+                    self.reset_linear_controllers()
                 vel = Velocity()
         else:
             raise RuntimeError(f"Invalid state for strafe controller: {self.state}")

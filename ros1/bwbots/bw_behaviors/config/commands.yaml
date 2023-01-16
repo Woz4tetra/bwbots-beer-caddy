@@ -4,15 +4,15 @@ find_tag:
 
 go_to_pose:
   controller_type: strafe
-  x_kP: 1.1
-  x_kI: 0.0
-  x_kD: 0.0
-  y_kP: 1.1
-  y_kI: 0.0
-  y_kD: 0.0
+  x_kP: 1.25
+  x_kI: 0.001
+  x_kD: 0.05
+  y_kP: 1.25
+  y_kI: 0.001
+  y_kD: 0.05
   theta_kP: 3.0
-  theta_kI: 0.0
-  theta_kD: 0.0
+  theta_kI: 0.001
+  theta_kD: 0.05
   ramsete_b: 2.0
   ramsete_zeta: 0.7
   loop_rate: 50.0

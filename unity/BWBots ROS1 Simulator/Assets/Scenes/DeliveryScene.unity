@@ -847,11 +847,11 @@ MeshCollider:
   m_GameObject: {fileID: 201100060}
   m_Material: {fileID: 13400000, guid: 0cb4ac3c8ce56045d8724c734278a51a, type: 2}
   m_IsTrigger: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 4
   m_Convex: 1
   m_CookingOptions: 30
-  m_Mesh: {fileID: 4300000, guid: 08296603f2586e323b79df2836287891, type: 2}
+  m_Mesh: {fileID: -8498245220137350075, guid: dc8cd159364b31b30bb85256bb085e62, type: 3}
 --- !u!135 &201100069
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -861,7 +861,7 @@ SphereCollider:
   m_GameObject: {fileID: 201100060}
   m_Material: {fileID: 13400000, guid: 0cb4ac3c8ce56045d8724c734278a51a, type: 2}
   m_IsTrigger: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Radius: 0.0575
   m_Center: {x: 0, y: 0, z: 0}
@@ -2156,11 +2156,11 @@ MeshCollider:
   m_GameObject: {fileID: 914812189}
   m_Material: {fileID: 13400000, guid: 0cb4ac3c8ce56045d8724c734278a51a, type: 2}
   m_IsTrigger: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 4
   m_Convex: 1
   m_CookingOptions: 30
-  m_Mesh: {fileID: 4300000, guid: 08296603f2586e323b79df2836287891, type: 2}
+  m_Mesh: {fileID: -8498245220137350075, guid: dc8cd159364b31b30bb85256bb085e62, type: 3}
 --- !u!135 &914812198
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -2170,7 +2170,7 @@ SphereCollider:
   m_GameObject: {fileID: 914812189}
   m_Material: {fileID: 13400000, guid: 0cb4ac3c8ce56045d8724c734278a51a, type: 2}
   m_IsTrigger: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Radius: 0.0575
   m_Center: {x: 0, y: 0, z: 0}
@@ -2984,11 +2984,11 @@ MeshCollider:
   m_GameObject: {fileID: 1372091402}
   m_Material: {fileID: 13400000, guid: 0cb4ac3c8ce56045d8724c734278a51a, type: 2}
   m_IsTrigger: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 4
   m_Convex: 1
   m_CookingOptions: 30
-  m_Mesh: {fileID: 4300000, guid: 08296603f2586e323b79df2836287891, type: 2}
+  m_Mesh: {fileID: -8498245220137350075, guid: dc8cd159364b31b30bb85256bb085e62, type: 3}
 --- !u!135 &1372091411
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -2998,7 +2998,7 @@ SphereCollider:
   m_GameObject: {fileID: 1372091402}
   m_Material: {fileID: 13400000, guid: 0cb4ac3c8ce56045d8724c734278a51a, type: 2}
   m_IsTrigger: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Radius: 0.0575
   m_Center: {x: 0, y: 0, z: 0}
@@ -3149,11 +3149,11 @@ MeshCollider:
   m_GameObject: {fileID: 1430557357}
   m_Material: {fileID: 13400000, guid: 0cb4ac3c8ce56045d8724c734278a51a, type: 2}
   m_IsTrigger: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 4
   m_Convex: 1
   m_CookingOptions: 30
-  m_Mesh: {fileID: 4300000, guid: 08296603f2586e323b79df2836287891, type: 2}
+  m_Mesh: {fileID: -8498245220137350075, guid: dc8cd159364b31b30bb85256bb085e62, type: 3}
 --- !u!135 &1430557366
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -3163,7 +3163,7 @@ SphereCollider:
   m_GameObject: {fileID: 1430557357}
   m_Material: {fileID: 13400000, guid: 0cb4ac3c8ce56045d8724c734278a51a, type: 2}
   m_IsTrigger: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Radius: 0.0575
   m_Center: {x: 0, y: 0, z: 0}
@@ -3543,6 +3543,8 @@ MonoBehaviour:
   cmdVelTopic: /bw/cmd_vel
   setMotorEnableTopic: /bw/set_motors_enabled
   getMotorEnableTopic: /bw/are_motors_enabled
+  groundTruthTopic: /bw/ground_truth
+  groundTruthFrame: map
 --- !u!114 &1613416640
 MonoBehaviour:
   m_ObjectHideFlags: 0
