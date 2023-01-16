@@ -54,7 +54,8 @@ class BwDispensers:
                     result.success = True
                     break
             else:
-                pass
+                result.success = True
+                break
                 # TODO: connect to dispenser over wifi/bluetooth
                 # firmware contains name. Look up by name and send specialized dispense command
 

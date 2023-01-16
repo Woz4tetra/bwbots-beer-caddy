@@ -230,6 +230,9 @@ void BwTunnel::logCharger(float voltage)
     if (voltage > _largest_voltage) {
         _largest_voltage = voltage;
         _largest_voltage_time = current_time;
+        if (_prev_log_voltage == 0.0) {
+            _prev_log_voltage = voltage;
+        }
     }
 
     double minutes_since = (current_time - _largest_voltage_time).toSec() / 60.0;

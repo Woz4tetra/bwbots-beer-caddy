@@ -22,6 +22,7 @@ class IsChargingBehavior(py_trees.behaviour.Behaviour):
     def update(self):
         if rospy.Time.now() - self.start_time > self.timeout:
             return py_trees.Status.FAILURE
-        if self.charger_state.is_charging and rospy.Time.now() - self.state_timestamp < self.timeout:
+        is_charging = self.charger_state.is_charging or self.charger_state.battery_voltage > 12.2
+        if is_charging and rospy.Time.now() - self.state_timestamp < self.timeout:
             return py_trees.Status.SUCCESS
         return py_trees.Status.RUNNING
