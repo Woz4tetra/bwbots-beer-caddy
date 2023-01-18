@@ -1,0 +1,5 @@
+version: '3'
+services:
+  bwbots_devcontainer:
+    environment:
+      - HAS_GPU=disable

@@ -6,6 +6,8 @@ services:
     container_name: roscore
     restart: "no"
     network_mode: "host"
+    environment:
+      - ROS_MASTER_INTERFACE=wlan0
     privileged: true
     entrypoint: ["/roscore.sh"]
     stop_signal: SIGTERM

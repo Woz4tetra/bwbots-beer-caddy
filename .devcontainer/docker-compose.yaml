@@ -1,9 +1,9 @@
 version: "3"
 
 services:
-  bwbots_workstation:
+  bwbots_devcontainer:
     image: bwbots_workstation:latest
-    container_name: bwbots_workstation
+    container_name: bwbots_devcontainer
     restart: "no"
     network_mode: "host"
     privileged: true
@@ -21,10 +21,12 @@ services:
       - /home/${USER}/bwbots-beer-caddy/unity/docker/resources/scripts:/root/scripts:rw
       - /home/${USER}/bwbots-beer-caddy/ros1/logs:/root/logs:rw
       - /home/${USER}/bwbots-beer-caddy/ros1/bags:/root/bags:rw
-      - /home/${USER}/bwbots-beer-caddy/ros1/sequence_utils:/root/sequence_utils:rw
+      - /home/${USER}/bwbots-beer-caddy:/root/bwbots-beer-caddy:rw
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /home/${USER}/.Xauthority:/home/${USER}/.Xauthority:rw
       # Allow container to control docker
       - /home/${USER}/.docker:/root/.docker:rw # docker looks here inside a container
       - /var/run/docker.sock:/var/run/docker.sock
-    command: [ "/launch.sh" ]
+
+    # Overrides default command so things don't shut down after the process ends.
+    command: /bin/sh -c "sleep infinity"

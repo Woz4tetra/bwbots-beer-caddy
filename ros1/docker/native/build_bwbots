@@ -3,5 +3,16 @@ BASE_DIR=$(realpath "$(dirname $0)")
 
 cd ${BASE_DIR}/../resources
 
-docker-compose -f docker-compose.build_bwbots.yml up -d
-docker logs -f build_bwbots
+docker-compose -f docker-compose.bwbots.yml stop
+docker run \
+    --restart="no" \
+    --net="host" \
+    --privileged \
+    --stop-signal=SIGINT \
+    -v=/home/${USER}/docker_ros_ws:/root/ros_ws:rw \
+    -v=/home/${USER}/bwbots-beer-caddy/ros1/bwbots:/root/ros_ws/src/bwbots:rw \
+    -v=/home/${USER}/bwbots-beer-caddy/ros1/docker/resources/scripts:/root/scripts:rw \
+    --rm \
+    --gpus all \
+    bwbots:latest \
+    /root/install/build_bwbots.sh

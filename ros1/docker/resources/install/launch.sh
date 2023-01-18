@@ -26,6 +26,7 @@ int_handler() {
 trap 'int_handler' SIGINT
 
 tmux send -t $SESSION 'source ${HOME}/install/enable_tmux_logger.sh bw' ENTER
+tmux send -t $SESSION 'source ${HOME}/scripts/set_master.sh ${ROS_MASTER_INTERFACE}' ENTER
 tmux send -t $SESSION 'source /opt/ros/${ROS_DISTRO}/setup.bash' ENTER
 tmux send -t $SESSION 'source ${HOME}/ros_ws/devel/setup.bash' ENTER
 tmux send -t $SESSION 'source ${HOME}/scripts/startup.sh' ENTER

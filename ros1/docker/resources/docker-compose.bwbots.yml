@@ -11,6 +11,8 @@ services:
     stop_signal: SIGINT
     group_add:
       - dialout
+    environment:
+      - ROS_MASTER_INTERFACE=wlan0
     volumes:
       - /home/${USER}/docker_ros_ws:/root/ros_ws:rw
       - /home/${USER}/bwbots-beer-caddy/ros1/bwbots:/root/ros_ws/src/bwbots:rw
@@ -22,10 +24,6 @@ services:
       - /dev:/dev:rw
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /home/${USER}/.Xauthority:/home/${USER}/.Xauthority:rw
-      # Allow container to control docker
-      - /home/${USER}/.docker:/root/.docker:rw # docker looks here inside a container
-      - /home/${USER}/.docker:/home/${USER}/.docker:rw
-      - /var/run/docker.sock:/var/run/docker.sock
     command: [ "/launch.sh" ]
     deploy:
       resources:
