@@ -94,6 +94,7 @@ ENV ROS_WS_SRC=${HOME}/ros_ws/src
 
 ENV FLASK_ENV=development
 ENV PYTHONPATH="${PYTHONPATH}:${ROS_WS_SRC}/bwbots/bw_tools"
+ENV PYTHONIOENCODING=utf-8
 
 COPY ./unity/docker/resources/install ${HOME}/install
 
