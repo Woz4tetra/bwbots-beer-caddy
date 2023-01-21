@@ -16,3 +16,6 @@ git apply /root/install/fix-imu-tools.patch --reject --whitespace=fix
 cd ${BASE_DIR}/src/geometry2/
 git checkout -f
 git apply /root/install/fix-geometry2.patch --reject --whitespace=fix 
+
+cd ${BASE_DIR}/src/zed-ros-wrapper/
+touch rviz-plugin-zed-od/CATKIN_IGNORE

@@ -85,7 +85,7 @@ branches=(
     develop     # https://github.com/ros-drivers/usb_cam.git
     noetic-devel    # https://github.com/ros-perception/image_transport_plugins
     main  # https://github.com/ros/rosbag_snapshot.git
-    tj2_detection_no_rviz  # https://github.com/frc-88/zed-ros-wrapper.git
+    tj2_detections  # https://github.com/frc-88/zed-ros-wrapper.git
     master  # https://github.com/alireza-hosseini/ipcamera_driver
     melodic-devel  # https://github.com/ros-teleop/twist_mux.git
     melodic-devel  # https://github.com/ros-teleop/twist_mux_msgs.git
