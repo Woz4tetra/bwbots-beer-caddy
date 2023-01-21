@@ -68,6 +68,8 @@ class RunSequenceCommand:
         self.is_active = False
 
     def sequence_state_callback(self, msg):
+        if not self.is_active:
+            return
         with self.state_lock:
             self.state = msg
             if self.feedback.index != self.state.index:
