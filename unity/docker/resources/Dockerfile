@@ -2,8 +2,10 @@ FROM osrf/ros:noetic-desktop-full
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends apt-utils
-RUN apt-get install -y git nano tmux curl htop net-tools iproute2 iputils-ping dumb-init gdb
-RUN apt-get install -y libsdl-image1.2-dev libsdl-dev python3-pip
+RUN apt-get update && \
+    apt-get install -y git nano tmux curl htop net-tools iproute2 iputils-ping dumb-init gdb
+RUN apt-get update && \
+    apt-get install -y libsdl-image1.2-dev libsdl-dev python3-pip
 
 RUN python3 -m pip install scipy==1.5.4 \
     shapely==1.6.4 \
@@ -12,7 +14,7 @@ RUN python3 -m pip install scipy==1.5.4 \
     dataclasses \
     tqdm
 
-RUN apt-get install -y llvm-7*
+RUN apt-get update && apt-get install -y llvm-7*
 RUN ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin
 RUN python3 -m pip install Cython
 RUN python3 -m pip install llvmlite==0.32.0
@@ -20,12 +22,17 @@ RUN python3 -m pip install numba==0.49.0
 
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
+
+RUN python3 -c "$(curl -fsSL https://raw.githubusercontent.com/platformio/platformio/master/scripts/get-platformio.py)"
+RUN ln -s $HOME/.platformio/penv/bin/platformio /usr/local/bin
+
+
 # ---
 # bwbots dependencies
 # ---
 
 # generated using rosdep install --from-paths . -r --reinstall --simulate
-RUN apt-get install -y --ignore-missing ros-noetic-rospy \
+RUN apt-get update && apt-get install -y --ignore-missing ros-noetic-rospy \
     ros-noetic-catkin \
     ros-noetic-tf \
     ros-noetic-robot-localization \

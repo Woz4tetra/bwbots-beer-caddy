@@ -1,11 +1,9 @@
 {
-  "name": "bwbots_devcontainer",
-  "service": "bwbots_devcontainer",
-  "dockerComposeFile": ["docker-compose.yaml", "docker-compose.gpu.yaml"],
-  "initializeCommand": ".devcontainer/setup_container.sh",
-  "workspaceFolder": "/root/bwbots-beer-caddy",
+  "name": "bwbots_webapp_devcontainer",
+  "service": "bwbots_webapp_devcontainer",
+  "dockerComposeFile": ["docker-compose.yaml"],
+  "workspaceFolder": "/opt/webapp",
   "shutdownAction": "stopCompose",
-  "postCreateCommand": ".devcontainer/post_create.sh",
   "extensions": [
     "editorconfig.editorconfig",
     "ms-python.python",

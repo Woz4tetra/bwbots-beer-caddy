@@ -3,11 +3,6 @@ import re
 import yaml
 import argparse
 import textwrap
-try:
-    import pyperclip
-    CLIPBOARD = True
-except ImportError:
-    CLIPBOARD = False
 from bw_tools.sequencers import LightsSequencer, SequenceGenerator, MidiSequencer
 
 def main():
@@ -19,6 +14,12 @@ def main():
                         default="config.yaml",
                         help="sequence config file")
     args = parser.parse_args()
+    
+    stored_sequences_file_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "../../firmware/bw_bcause/include/StoredSequences.h"
+    )
+    file_columns = 120
 
     with open(args.config) as file:
         config = yaml.safe_load(file)
@@ -75,6 +76,9 @@ def main():
             stored_sequences.append(element.parameters)
     
     code = """
+#pragma once
+#include <Arduino.h>
+
 const uint64_t STORED_SEQUENCES[] = {
     %s
 };
@@ -91,19 +95,18 @@ Sequences:
 */
 
 %s
+
+uint64_t get_stored_element(uint8_t serial, uint64_t index);
 """ % (
-    "\n    ".join(textwrap.wrap(", ".join(["0x%02x" % x for x in stored_sequences]))),
-    "\n    ".join(textwrap.wrap(", ".join(["0x%02x" % x for x in sequence_locations]))),
+    "\n    ".join(textwrap.wrap(", ".join(["0x%02x" % x for x in stored_sequences]), width=file_columns)),
+    "\n    ".join(textwrap.wrap(", ".join(["0x%02x" % x for x in sequence_locations]), width=file_columns)),
     len(sequence_locations),
     "\n".join(["    %s: %s" % (index, path) for index, path in enumerate(paths)]),
     "\n".join(["const uint8_t STORED_SEQUENCE_%s = %s;" % (re.sub(r"[\s\W]", "_", name.upper()), index) for index, name in enumerate(names)])
 )
     print(f"Generated code for {len(sequence_locations)} sequences. Total length is {len(stored_sequences)}")
-    if CLIPBOARD:
-        pyperclip.copy(code)
-        print("Code is pasted into your clipboard. Paste it into StoredSequences.h")
-    else:
-        print(code)
-        print("Paste the above code into StoredSequences.h")
+    
+    with open(stored_sequences_file_path, 'w') as file:
+        file.write(code)
 
 main()

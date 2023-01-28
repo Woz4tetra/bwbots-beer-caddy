@@ -35,11 +35,11 @@ function App() {
   return <Router>
     <NavBar />
     <Routes>
-      <Route path={constructPath("connect")} element={<ConnectPage {...defaultProps} />}/>
-      <Route path={constructPath("deliver")} element={<DeliverPage {...defaultProps} />}/>
-      <Route path={constructPath("waypoints")} element={<WaypointsPage {...defaultProps} />}/>
-      <Route path={constructPath("state")} element={<StatePage {...defaultProps} />}/>
-      <Route path={constructPath("*")} element={<Navigate to={constructPath("connect")} />}/>
+      <Route path={constructPath("connect")} element={<ConnectPage {...defaultProps} />} />
+      <Route path={constructPath("deliver")} element={<DeliverPage {...defaultProps} />} />
+      <Route path={constructPath("waypoints")} element={<WaypointsPage {...defaultProps} />} />
+      <Route path={constructPath("state")} element={<StatePage {...defaultProps} />} />
+      <Route path={constructPath("*")} element={<Navigate to={constructPath("connect")} />} />
     </Routes>
   </Router>;
 }

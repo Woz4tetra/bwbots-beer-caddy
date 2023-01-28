@@ -1,0 +1,27 @@
+version: "3"
+
+services:
+  bwbots_webapp_devcontainer:
+    image: bwbots_webapp:latest
+    container_name: bwbots_webapp_devcontainer
+    restart: "no"
+    network_mode: "host"
+    privileged: true
+    stop_signal: SIGINT
+    ports: [ "3000:3000", "9090:9090" ]
+    environment:
+      - DISPLAY=${DISPLAY}
+      - XAUTHORITY=${XAUTHORITY}
+    # Share IPC with the host: enables us to request X to draw things, see
+    # https://askubuntu.com/questions/1237400/how-to-fix-x-error-badaccess-baddrawable-badshmseg-while-running-graphical-ap
+    ipc: host
+    volumes:
+      - /home/${USER}/bwbots-beer-caddy/webapp:/opt/webapp:rw
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /home/${USER}/.Xauthority:/home/${USER}/.Xauthority:rw
+      # Allow container to control docker
+      - /home/${USER}/.docker:/root/.docker:rw # docker looks here inside a container
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    # Overrides default command so things don't shut down after the process ends.
+    command: /bin/sh -c "sleep infinity"
