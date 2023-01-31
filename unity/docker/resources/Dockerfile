@@ -12,7 +12,8 @@ RUN python3 -m pip install scipy==1.5.4 \
     mido \
     pyperclip \
     dataclasses \
-    tqdm
+    tqdm \
+    requests
 
 RUN apt-get update && apt-get install -y llvm-7*
 RUN ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin
