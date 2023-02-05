@@ -26,6 +26,7 @@ def main():
     action = actionlib.SimpleActionClient("/bw/go_to_pose", GoToPoseAction)
     rospy.loginfo("Connecting to action server...")
     action.wait_for_server()
+    rospy.loginfo("connected!")
 
     parser = argparse.ArgumentParser(description="action_script")
 
@@ -69,7 +70,7 @@ def main():
     pose2d = Pose2d.from_xyt(**pose_dict)
 
     goal = GoToPoseGoal()
-    goal.controller_type = "strafe2"
+    goal.controller_type = "strafe1"
     goal.xy_tolerance = args.xy_tolerance
     goal.yaw_tolerance = args.theta_tolerance
     goal.timeout = rospy.Duration(args.timeout)
@@ -92,7 +93,9 @@ def main():
 
     action.send_goal(goal, done_cb=action_done)
     try:
+        rospy.loginfo("Waiting for go to pose routine to finish")
         action.wait_for_result()
+        rospy.loginfo("done!")
     except KeyboardInterrupt:
         rospy.loginfo("Cancelling goal")
         action.cancel_goal()

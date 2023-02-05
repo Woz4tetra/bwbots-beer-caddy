@@ -26,7 +26,7 @@ class TagMarkerPublisher:
         self.tag_pose_marker_size = rospy.get_param("~tag_pose_marker_size", 0.25)
         self.marker_publish_rate = rospy.get_param("~marker_publish_rate", 5.0)
         self.debug = rospy.get_param("~debug", False)
-        self.robot_frame = rospy.get_param("~robot_frame", "base_link")
+        self.base_frame = rospy.get_param("~base_frame", "base_link")
         self.stale_detection_seconds = rospy.Duration(rospy.get_param("~stale_detection_seconds", 1.0))
         self.tag_sub = rospy.Subscriber("tag_detections", AprilTagDetectionArray, self.tag_callback, queue_size=10)
         self.marker_pub = rospy.Publisher("tag_markers", MarkerArray, queue_size=10)
@@ -75,17 +75,17 @@ class TagMarkerPublisher:
         tag_pose_stamped.header = detection.pose.header
         tag_pose_stamped.pose = detection.pose.pose.pose
         
-        if self.robot_frame == tag_pose_stamped.header.frame_id:
+        if self.base_frame == tag_pose_stamped.header.frame_id:
             return tag_pose_stamped
         try:
             transform = self.tf_buffer.lookup_transform(
-                self.robot_frame,
+                self.base_frame,
                 tag_pose_stamped.header.frame_id,
                 rospy.Time(0),
                 self.stale_detection_seconds
             )
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-            rospy.logwarn("Failed to look up %s to %s. %s" % (self.robot_frame, tag_pose_stamped.header.frame_id, e))
+            rospy.logwarn("Failed to look up %s to %s. %s" % (self.base_frame, tag_pose_stamped.header.frame_id, e))
             return None
         base_pose_stamped = tf2_geometry_msgs.do_transform_pose(tag_pose_stamped, transform)
         

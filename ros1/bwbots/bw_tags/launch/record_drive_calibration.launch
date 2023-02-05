@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-    <node pkg="rosbag" type="record" name="rosbag_record_laser"
-       args="record -o /root/bags/laser
+    <node pkg="rosbag" type="record" name="rosbag_record_drive_calibration" output="screen" 
+       args="record -o /root/bags/drive_calibration
             /bw/odom
             /bw/odom/filtered
             /laser/scan
@@ -17,5 +17,8 @@
             /bw/module/3
             /bw/module
             /zed/imu/data
-            " />
+            /tf
+            /apriltag/rotated_detections
+            /apriltag/tag_detections
+        " />
 </launch>
