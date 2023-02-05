@@ -1,0 +1,26 @@
+<launch>
+    <arg name="launch_prefix" default="" /> <!-- set to value="gdbserver localhost:10000" for remote debugging -->
+    <arg name="node_namespace" default="apriltag" />
+
+    <arg name="image_topic" default="image_raw" />
+    <arg name="info_topic" default="camera_info" />
+
+    <!-- Set parameters -->
+    <group ns="$(arg node_namespace)">
+        <rosparam command="load" file="$(find bw_tags)/config/drive_calibration/settings.yaml" ns="apriltag" />
+        <rosparam command="load" file="$(find bw_tags)/config/drive_calibration/tags.yaml" ns="apriltag" />
+
+        <node pkg="apriltag_ros" type="apriltag_ros_continuous_node" name="apriltag" clear_params="true" required="false" output="screen" launch-prefix="$(arg launch_prefix)" >
+            <!-- Remap topics from those used in code to those on the ROS network -->
+            <remap from="camera_info" to="$(arg info_topic)" />
+            <remap from="image_rect" to="$(arg image_topic)" />
+
+            <param name="remove_duplicates" type="bool" value="true" />
+            <param name="publish_tag_detections_image" type="bool" value="true" />
+        </node>
+
+
+        <node pkg="bw_tags" type="tag_marker_publisher.py" name="tag_marker_publisher" required="false" output="screen"/>
+    </group>
+    <node pkg="tf" type="static_transform_publisher" name="floor_to_map_tf" args="0 0 0  0 0 0 1 floor map 20" />
+</launch>

@@ -1,0 +1,21 @@
+#!/bin/bash
+BASE_DIR=$(realpath "$(dirname $0)")
+echo "Starting drive_calibration"
+
+SESSION=drive_calibration
+
+HOST_MACHINE=$1
+
+tmux has-session -t $SESSION > /dev/null
+
+if [ $? != 0 ]; then
+    tmux new -s $SESSION -d
+
+    tmux split-window -t $SESSION:0
+    tmux select-layout -t $SESSION:0 tiled
+fi
+
+tmux send -t $SESSION:0.0 "${BASE_DIR}/run_zed ${HOST_MACHINE}" ENTER
+tmux send -t $SESSION:0.1 "${BASE_DIR}/run_command 'roslaunch bw_bringup drive_calibration.launch' ${HOST_MACHINE}" ENTER
+
+tmux a -t $SESSION

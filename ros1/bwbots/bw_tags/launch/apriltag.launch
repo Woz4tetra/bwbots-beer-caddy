@@ -1,7 +1,6 @@
 <launch>
     <arg name="launch_prefix" default="" /> <!-- set to value="gdbserver localhost:10000" for remote debugging -->
-    <arg name="node_namespace" default="apriltag_ros_continuous_node" />
-    <arg name="camera_frame" default="camera_link" />
+    <arg name="node_namespace" default="apriltag" />
 
     <arg name="throttle_rate" default="10" />
 
@@ -27,12 +26,8 @@
             <remap from="camera_info" to="$(arg info_throttle_topic)" />
             <remap from="image_rect" to="$(arg image_throttle_topic)" />
 
-            <param name="camera_frame" type="str" value="$(arg camera_frame)" />
             <param name="remove_duplicates" type="bool" value="false" />
             <param name="publish_tag_detections_image" type="bool" value="true" />
         </node>
     </group>
-
-    <!-- <node pkg="tf" type="static_transform_publisher" name="tag_to_rotated_pos" args="0.0 0.0 0.0 -0.5 0.5 0.5 0.5 charge_dock_tag charge_dock_tag_rotated 30" /> -->
-    <!-- <node pkg="tf" type="static_transform_publisher" name="tag_to_start_pos" args="-0.1764 0.0 -0.2611 0 0 0 1 charge_dock_tag_rotated charge_dock_goal 30" /> -->
 </launch>
