@@ -1,36 +1,15 @@
-from ..robot_state import Pose2d, Velocity
-
+from typing import Tuple
+from bw_tools.robot_state import Pose2d, Velocity
+from bw_tools.controller.data import ControllerStateMachineConfig
 
 class Controller:
-    def __init__(self) -> None:
-        self.pose_error = Pose2d()
-        self.pose_tolerance = Pose2d()
-        self.enabled = True
-    
-    def at_reference(self) -> bool:
-        return abs(self.pose_error.x) < self.pose_tolerance.x and \
-            abs(self.pose_error.y) < self.pose_tolerance.y and \
-            abs(self.pose_error.theta) < self.pose_tolerance.theta
+    def __init__(self,
+                config: ControllerStateMachineConfig) -> None:
+        self.config = config
 
-    def reset(self):
-        pass
-
-    def set_tolerance(self, tolerance: Pose2d):
+    def compute(self, goal_pose: Pose2d, current_pose: Pose2d) -> Tuple[Velocity, bool]:
         """
-        * Sets the pose error which is considered tolerance for use with atReference().
-        *
-        * @param tolerance The pose error which is tolerable.
+        returns the best velocity to get to the goal pose from the current pose.
+        this method also returns whether it's done or not.
         """
-        self.pose_tolerance = tolerance
-
-    def calculate(self, **kwargs) -> Velocity:
-        return Velocity()
-
-    def set_enabled(self, enabled: bool) -> None:
-        """
-        * Enables and disables the controller for troubleshooting problems. When calculate() is called on
-        * a disabled controller, only feedforward values are returned.
-        *
-        * @param enabled If the controller is enabled or not.
-        """
-        self.enabled = enabled
+        return Velocity(), True
