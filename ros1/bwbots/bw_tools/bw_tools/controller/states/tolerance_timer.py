@@ -13,7 +13,7 @@ class ToleranceTimer:
         self.prev_reached_time = 0.0
     
     def is_done(self, is_in_tolerance: bool) -> bool:
-        if is_in_tolerance:
+        if not is_in_tolerance:
             self.prev_reached_time = 0.0
         else:
             if self.prev_reached_time == 0.0:

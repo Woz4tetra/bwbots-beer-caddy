@@ -101,6 +101,7 @@ void BwImuJoint::odom_callback(const nav_msgs::OdometryConstPtr& odom) {
 
     nav_msgs::Odometry combined;
     combined.header = odom->header;
+    combined.child_frame_id = odom->child_frame_id;
     combined.pose = odom->pose;
     combined.twist = odom->twist;
     combined.pose.pose.orientation = _imu_msg.orientation;

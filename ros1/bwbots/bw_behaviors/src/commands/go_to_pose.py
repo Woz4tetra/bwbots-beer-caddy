@@ -76,7 +76,7 @@ class GoToPoseCommand:
             return pose2d.transform_by(self.robot_state)
         else:
             rospy.logwarn(
-                "Moving goal frame id doesn't match odometry. Can't set goal."
+                "Moving goal frame id doesn't match odometry. Can't set goal. "
                 f"Received {msg.header.frame_id}."
             )
             return None
@@ -106,6 +106,9 @@ class GoToPoseCommand:
         goal_pose.header.frame_id = self.robot_parent_frame_id
         goal_pose.pose = goal_pose2d.to_ros_pose()
         self.goal_pose_pub.publish(goal_pose)
+
+    def get_error(self, goal_pose: Pose2d, robot_state: Pose2d) -> Pose2d:
+        return goal_pose.relative_to(robot_state)
 
     def action_callback(self, goal: GoToPoseGoal):
         rospy.loginfo(f"Going to pose: {goal}")
@@ -148,6 +151,9 @@ class GoToPoseCommand:
         )
 
         controller = BwbotsController(controller_config)
+        self.goal_pose = self.compute_goal(goal.goal)
+        rospy.logdebug(f"Set goal pose to {self.goal_pose}")
+        rospy.logdebug(f"Robot is at {self.robot_state}")
 
         rate = rospy.Rate(self.loop_rate)
         start_time = rospy.Time.now()
@@ -160,15 +166,13 @@ class GoToPoseCommand:
 
             if self.robot_state is None:
                 continue
-            self.goal_pose = self.compute_goal(goal.goal)
             if self.goal_pose is None:
                 continue
 
             velocity_command, is_done = controller.compute(self.goal_pose, self.robot_state)
 
-            rospy.logdebug(f"Robot pose: {self.robot_state}")
-            rospy.logdebug(f"Goal pose: {self.goal_pose}")
-            rospy.logdebug(f"Velocity command: {velocity_command}")
+            rospy.logdebug(f"Error: {self.get_error(self.goal_pose, self.robot_state)}. Velocity: {velocity_command}")
+            # rospy.logdebug(f"Goal: {self.goal_pose}, State: {self.robot_state}")
             self.publish_velocity(velocity_command)
             self.publish_state_feedback(
                 self.robot_state,
@@ -195,8 +199,9 @@ class GoToPoseCommand:
             angle_error = 0.0
             rospy.loginfo("Never received robot's position or goal")
         else:
-            distance = self.robot_state.distance(self.goal_pose)
-            angle_error = abs(self.robot_state.theta - self.goal_pose.theta)
+            error = self.get_error(self.goal_pose, self.robot_state)
+            distance = error.magnitude()
+            angle_error = abs(error.theta)
 
         if distance > xy_tolerance or angle_error > yaw_tolerance:
             success = False

@@ -12,19 +12,33 @@ class RotateInPlace(ControllerBehavior):
         self.trapezoid_config = trapezoid
         self.trapezoid: Optional[TrapezoidalProfile] = None
         self.timer = ToleranceTimer(settle_time)
+        self.is_already_at_goal = False
     
     def initialize(self, goal_pose: Pose2d, current_pose: Pose2d) -> None:
         self.trapezoid = TrapezoidalProfile(self.trapezoid_config)
         self.timer.reset()
+        self.is_already_at_goal = self.is_in_tolerance(goal_pose, current_pose)
+    
+    def get_error(self, goal_pose: Pose2d, current_pose: Pose2d) -> float:
+        return goal_pose.theta - current_pose.theta
+
+    def is_in_tolerance(self, goal_pose: Pose2d, current_pose: Pose2d) -> bool:
+        error = self.get_error(goal_pose, current_pose)
+        return abs(error) < self.angle_tolerance
 
     def compute(self, goal_pose: Pose2d, current_pose: Pose2d) -> Tuple[Velocity, bool]:
         assert self.trapezoid is not None, "Rotate in place not initialized!"
+        if self.is_already_at_goal:
+            return Velocity(), True
         goal = goal_pose.theta
         current = current_pose.theta
         angular_velocity = self.trapezoid.compute(goal, current)
-        error = goal - current
-        velocity = Velocity(0.0, 0.0, angular_velocity)
-        return velocity, self.timer.is_done(abs(error) < angular_velocity)
+        is_in_tolerance = self.is_in_tolerance(goal_pose, current_pose)
+        if is_in_tolerance:
+            velocity = Velocity()
+        else:
+            velocity = Velocity(0.0, 0.0, angular_velocity)
+        return velocity, self.timer.is_done(is_in_tolerance)
     
     def deinitialize(self, goal_pose: Pose2d, current_pose: Pose2d) -> None:
         pass

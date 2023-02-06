@@ -39,22 +39,26 @@ class DriveToPose(ControllerBehavior):
         heading = error.heading()
         distance = error.magnitude()
         
-        if self.rotate_while_driving:
-            angular_velocity = self.angular_trapezoid.compute(goal_pose.theta, current_pose.theta)
-        else:
-            angular_velocity = 0.0
-        
-        linear_velocity = self.linear_trapezoid.compute(distance, 0.0)
-        
-        vx = linear_velocity * math.cos(heading)
-        vy = linear_velocity * math.sin(heading)
-        
         xy_in_tolerance = distance < self.pose_tolerance.magnitude()
         if self.check_angle_tolerance:
             yaw_in_tolerance = abs(error.theta) < self.pose_tolerance.theta
         else:
             yaw_in_tolerance = True
         
+        if self.rotate_while_driving and not yaw_in_tolerance:
+            angular_velocity = self.angular_trapezoid.compute(goal_pose.theta, current_pose.theta)
+        else:
+            angular_velocity = 0.0
+        
+        linear_velocity = self.linear_trapezoid.compute(error.x, 0.0)
+        
+        if xy_in_tolerance:
+            vx = 0.0
+            vy = 0.0
+        else:
+            vx = linear_velocity * math.cos(heading)
+            vy = linear_velocity * math.sin(heading)
+
         return Velocity(vx, vy, angular_velocity), self.timer.is_done(xy_in_tolerance and yaw_in_tolerance)
 
     def deinitialize(self, goal_pose: Pose2d, current_pose: Pose2d) -> None:
