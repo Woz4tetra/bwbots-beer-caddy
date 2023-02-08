@@ -17,6 +17,7 @@ class ImuSensor : MonoBehaviour
     private uint messageCount;
 
     private ROSConnection _ros;
+    private Quaternion startOrientation;
 
     void Start() {
         imuMsg = new ImuMsg();
@@ -43,6 +44,8 @@ class ImuSensor : MonoBehaviour
             0.0, 1e-2, 0.0,
             0.0, 0.0, 1e-2
         };
+
+        startOrientation = Quaternion.Inverse(bodyMain.transform.rotation);
     }
 
     void FixedUpdate() {
@@ -68,7 +71,7 @@ class ImuSensor : MonoBehaviour
 
         imuMsg.angular_velocity = -bodyMain.angularVelocity.To<FLU>();
 
-        imuMsg.orientation = bodyMain.transform.rotation.To<FLU>();
+        imuMsg.orientation = (bodyMain.transform.rotation * startOrientation).To<FLU>();
         messageCount++;
     }
 }

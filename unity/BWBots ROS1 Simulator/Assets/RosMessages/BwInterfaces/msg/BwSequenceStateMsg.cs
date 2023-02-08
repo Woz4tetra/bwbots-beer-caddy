@@ -17,6 +17,7 @@ namespace RosMessageTypes.BwInterfaces
         public bool is_from_flash;
         public bool is_running;
         public ushort index;
+        public ulong length;
 
         public BwSequenceStateMsg()
         {
@@ -24,14 +25,16 @@ namespace RosMessageTypes.BwInterfaces
             this.is_from_flash = false;
             this.is_running = false;
             this.index = 0;
+            this.length = 0;
         }
 
-        public BwSequenceStateMsg(byte serial, bool is_from_flash, bool is_running, ushort index)
+        public BwSequenceStateMsg(byte serial, bool is_from_flash, bool is_running, ushort index, ulong length)
         {
             this.serial = serial;
             this.is_from_flash = is_from_flash;
             this.is_running = is_running;
             this.index = index;
+            this.length = length;
         }
 
         public static BwSequenceStateMsg Deserialize(MessageDeserializer deserializer) => new BwSequenceStateMsg(deserializer);
@@ -42,6 +45,7 @@ namespace RosMessageTypes.BwInterfaces
             deserializer.Read(out this.is_from_flash);
             deserializer.Read(out this.is_running);
             deserializer.Read(out this.index);
+            deserializer.Read(out this.length);
         }
 
         public override void SerializeTo(MessageSerializer serializer)
@@ -50,6 +54,7 @@ namespace RosMessageTypes.BwInterfaces
             serializer.Write(this.is_from_flash);
             serializer.Write(this.is_running);
             serializer.Write(this.index);
+            serializer.Write(this.length);
         }
 
         public override string ToString()
@@ -58,7 +63,8 @@ namespace RosMessageTypes.BwInterfaces
             "\nserial: " + serial.ToString() +
             "\nis_from_flash: " + is_from_flash.ToString() +
             "\nis_running: " + is_running.ToString() +
-            "\nindex: " + index.ToString();
+            "\nindex: " + index.ToString() +
+            "\nlength: " + length.ToString();
         }
 
 #if UNITY_EDITOR

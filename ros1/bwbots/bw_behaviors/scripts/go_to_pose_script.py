@@ -79,8 +79,8 @@ def main():
     goal.rotate_in_place_start = True
     goal.rotate_while_driving = True
     goal.rotate_in_place_end = True
-    goal.linear_max_accel = 2.0
-    goal.linear_min_vel = 0.05
+    goal.linear_max_accel = 0.5
+    goal.linear_min_vel = 0.01
     goal.theta_max_accel = 1.0
     goal.theta_min_vel = 0.15
     goal.goal.pose = pose2d.to_ros_pose()

@@ -13,14 +13,14 @@ namespace RosMessageTypes.BwInterfaces
         public const string k_RosMessageName = "bw_interfaces/DrinkMissionArray";
         public override string RosMessageName => k_RosMessageName;
 
-        public DrinkMissionMsg missions;
+        public DrinkMissionMsg[] missions;
 
         public DrinkMissionArrayMsg()
         {
-            this.missions = new DrinkMissionMsg();
+            this.missions = new DrinkMissionMsg[0];
         }
 
-        public DrinkMissionArrayMsg(DrinkMissionMsg missions)
+        public DrinkMissionArrayMsg(DrinkMissionMsg[] missions)
         {
             this.missions = missions;
         }
@@ -29,18 +29,19 @@ namespace RosMessageTypes.BwInterfaces
 
         private DrinkMissionArrayMsg(MessageDeserializer deserializer)
         {
-            this.missions = DrinkMissionMsg.Deserialize(deserializer);
+            deserializer.Read(out this.missions, DrinkMissionMsg.Deserialize, deserializer.ReadLength());
         }
 
         public override void SerializeTo(MessageSerializer serializer)
         {
+            serializer.WriteLength(this.missions);
             serializer.Write(this.missions);
         }
 
         public override string ToString()
         {
             return "DrinkMissionArrayMsg: " +
-            "\nmissions: " + missions.ToString();
+            "\nmissions: " + System.String.Join(", ", missions.ToList());
         }
 
 #if UNITY_EDITOR

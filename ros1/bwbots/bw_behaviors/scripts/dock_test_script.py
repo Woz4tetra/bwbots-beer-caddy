@@ -49,7 +49,6 @@ def main():
         pose2d = offset.transform_by(tag_pose)
 
         pose_goal = GoToPoseGoal()
-        pose_goal.controller_type = kwargs.get("controller_type", "strafe1")
         pose_goal.goal.pose = pose2d.to_ros_pose()
         pose_goal.goal.header.frame_id = tag_goal.reference_frame_id
         pose_goal.xy_tolerance = kwargs.get("xy_tolerance", 0.05)
@@ -61,14 +60,10 @@ def main():
         pose_goal.rotate_in_place_start = kwargs.get("rotate_in_place_start", True)
         pose_goal.rotate_while_driving = kwargs.get("rotate_while_driving", True)
         pose_goal.rotate_in_place_end = kwargs.get("rotate_in_place_end", True)
-        pose_goal.linear_max_vel = kwargs.get("linear_max_vel", 1.0)
         pose_goal.linear_max_accel = kwargs.get("linear_max_accel", 2.0)
         pose_goal.linear_min_vel = kwargs.get("linear_min_vel", 0.015)
-        pose_goal.linear_zero_vel = kwargs.get("linear_zero_vel", 0.014)
-        pose_goal.theta_max_vel = kwargs.get("theta_max_vel", 3.0)
         pose_goal.theta_max_accel = kwargs.get("theta_max_accel", 1.0)
         pose_goal.theta_min_vel = kwargs.get("theta_min_vel", 0.015)
-        pose_goal.theta_zero_vel = kwargs.get("theta_zero_vel", 0.0001)
         go_to_pose_action.send_goal(pose_goal, done_cb=pose_action_done)
         go_to_pose_action.wait_for_result()
         return pose_result.success
@@ -151,7 +146,6 @@ def main():
 
         if not go_to_tag(
                 -0.5,
-                controller_type="strafe1",
                 linear_min_vel=0.1,
                 xy_tolerance=0.025,
                 yaw_tolerance=0.025,

@@ -34,7 +34,7 @@ class BwbotsController(Controller):
         }
         
         self.active_state = ControllerState.IDLE
-        
+
     def get_behavior(self) -> ControllerBehavior:
         return self.states[self.active_state]
     

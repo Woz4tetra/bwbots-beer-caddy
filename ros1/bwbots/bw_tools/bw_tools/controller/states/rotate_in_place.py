@@ -1,3 +1,4 @@
+import rospy
 from typing import Optional, Tuple
 from bw_tools.robot_state import Pose2d, Velocity
 from bw_tools.controller.data import TrapezoidalProfileConfig
@@ -13,11 +14,14 @@ class RotateInPlace(ControllerBehavior):
         self.trapezoid: Optional[TrapezoidalProfile] = None
         self.timer = ToleranceTimer(settle_time)
         self.is_already_at_goal = False
+        self.start_pose = Pose2d()
     
     def initialize(self, goal_pose: Pose2d, current_pose: Pose2d) -> None:
         self.trapezoid = TrapezoidalProfile(self.trapezoid_config)
         self.timer.reset()
         self.is_already_at_goal = self.is_in_tolerance(goal_pose, current_pose)
+        self.start_pose = current_pose
+        rospy.logdebug(f"Rotate in place initialized. Start: {self.start_pose}. Goal: {goal_pose}")
     
     def get_error(self, goal_pose: Pose2d, current_pose: Pose2d) -> float:
         return goal_pose.theta - current_pose.theta
@@ -30,9 +34,9 @@ class RotateInPlace(ControllerBehavior):
         assert self.trapezoid is not None, "Rotate in place not initialized!"
         if self.is_already_at_goal:
             return Velocity(), True
-        goal = goal_pose.theta
-        current = current_pose.theta
-        angular_velocity = self.trapezoid.compute(goal, current)
+        relative_goal = goal_pose.relative_to(self.start_pose)
+        traveled = current_pose.relative_to(self.start_pose)
+        angular_velocity = self.trapezoid.compute(relative_goal.theta, traveled.theta)
         is_in_tolerance = self.is_in_tolerance(goal_pose, current_pose)
         if is_in_tolerance:
             velocity = Velocity()
