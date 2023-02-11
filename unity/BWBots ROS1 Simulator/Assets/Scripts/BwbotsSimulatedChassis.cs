@@ -230,10 +230,37 @@ public class BwbotsSimulatedChassis : MonoBehaviour
         setUseGroundTruth(useGroundTruth);
     }
 
+    public Pose GetGlobalPose() {
+        return new Pose(GetGlobalPosition(), GetGlobalRotation());
+    }
+
+    public Vector3 GetGlobalPosition() {
+        return bodyMain.transform.position;
+    }
+
+    public Pose GetRelativePose(Pose poseReference) {
+        Matrix4x4 matReference = Matrix4x4.TRS(
+            poseReference.position,
+            poseReference.rotation,
+            new Vector3(1.0f, 1.0f, 1.0f)
+        );
+        Matrix4x4 matGlobal = Matrix4x4.TRS(
+            GetGlobalPosition(),
+            GetGlobalRotation(),
+            new Vector3(1.0f, 1.0f, 1.0f)
+        );
+        Matrix4x4 matRelative = Matrix4x4.Inverse(matReference) * matGlobal;
+        return new Pose(matRelative.GetPosition(), matRelative.rotation);
+    }
+
+    public Quaternion GetGlobalRotation() {
+        return bodyMain.transform.rotation;
+    }
+
     public PoseMsg GetGroundTruthPose() {
         return new PoseMsg {
-            position = bodyMain.transform.position.To<FLU>(),
-            orientation = bodyMain.transform.rotation.To<FLU>()
+            position = GetGlobalPosition().To<FLU>(),
+            orientation = GetGlobalRotation().To<FLU>()
         };
     }
 
@@ -244,7 +271,7 @@ public class BwbotsSimulatedChassis : MonoBehaviour
         if (useGroundTruth) {
             x = bodyMain.transform.position.z;
             y = -bodyMain.transform.position.x;
-            theta = ModuleKinematics.WrapAngle(-bodyMain.transform.rotation.eulerAngles.y * Mathf.Deg2Rad);
+            theta = ModuleKinematics.WrapAngle(-GetGlobalRotation().eulerAngles.y * Mathf.Deg2Rad);
 
             double dt = Time.fixedDeltaTime;
 

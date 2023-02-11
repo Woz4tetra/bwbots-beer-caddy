@@ -88,17 +88,19 @@ public class FpvCamera : MonoBehaviour
     private int mouseWasLockedCounter = 0;
 
     private GUIStyle robotStatusLabelStyle = new GUIStyle();
-    private GUIStyle groundStatusLabelStyle = new GUIStyle();
     private int labelBorderSize;
     private float prevNonZeroRobotCommand = 0.0f;
     private float robotCommandTimeout = 0.5f;
+
+
+    private Pose initialRobotPose = Pose.identity;
+
 
     void Start()
     {
         this.robotStatusLabelStyle.fontSize = 20;
         this.robotStatusLabelStyle.fontStyle = FontStyle.Bold;
         this.robotStatusLabelStyle.normal.textColor = Color.white;
-        this.groundStatusLabelStyle = new GUIStyle(this.robotStatusLabelStyle);
 
         labelBorderSize = 5;
         movementLimiter = new SlewLimiter(movementDeceleration, movementAcceleration, 0.0f);
@@ -166,25 +168,32 @@ public class FpvCamera : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.B)) {
             wheelController.setUseGroundTruth(!wheelController.getUseGroundTruth());
         }
+        if (Input.GetKeyDown(KeyCode.R)) {
+            initialRobotPose = wheelController.GetGlobalPose();
+        }
     }
 
     void OnGUI()
     {
-        string robotStatusText = "Robot is " + (wheelController.getMotorEnable() ? "enabled" : "disabled");
-        Vector2 robotStatusSize = this.robotStatusLabelStyle.CalcSize(new GUIContent(robotStatusText));
-        string groundTruthText = "Ground truth is " + (wheelController.getUseGroundTruth() ? "enabled" : "disabled");
-        Vector2 groundTruthSize = this.groundStatusLabelStyle.CalcSize(new GUIContent(groundTruthText));
-        Vector2 size = new Vector2(
-            Math.Max(robotStatusSize.x, groundTruthSize.x),
-            robotStatusSize.y + groundTruthSize.y
-        );
+        Pose pose = wheelController.GetRelativePose(initialRobotPose);
+        Vector3 position = pose.position;
+        Quaternion rotation = pose.rotation;
+        float angle = 360.0f - rotation.eulerAngles.y;
+        if (angle > 180.0f) {
+            angle -= 360.0f;
+        }
+        float angleRad = Mathf.Deg2Rad * angle;
+        string text = $"X = {position.z:n4}\n" + 
+            $"Y = {-position.x:n4}\n" + 
+            $"Angle = {angleRad:n4}\n" +
+            "Robot is " + (wheelController.getMotorEnable() ? "enabled" : "disabled") +
+            "\nGround truth is " + (wheelController.getUseGroundTruth() ? "enabled" : "disabled");
+        Vector2 size = this.robotStatusLabelStyle.CalcSize(new GUIContent(text));
         
         Rect boxRect = new Rect(Screen.width - size.x - 2 * labelBorderSize, 0, size.x + 2 * labelBorderSize, size.y + 2 * labelBorderSize);
-        Rect robotStatusLabelRect = new Rect(boxRect.x + labelBorderSize, boxRect.y + labelBorderSize, size.x, size.y);
-        Rect groundTruthLabelRect = new Rect(boxRect.x + labelBorderSize, boxRect.y + robotStatusSize.y + labelBorderSize, size.x, size.y);
+        Rect labelRect = new Rect(boxRect.x + labelBorderSize, boxRect.y + labelBorderSize, size.x, size.y);
         GUI.Box(boxRect, GUIContent.none);
-        GUI.Label(robotStatusLabelRect, robotStatusText, this.robotStatusLabelStyle);
-        GUI.Label(groundTruthLabelRect, groundTruthText, this.groundStatusLabelStyle);
+        GUI.Label(labelRect, text, this.robotStatusLabelStyle);
     }
 
     void FollowRobotUpdate() {
