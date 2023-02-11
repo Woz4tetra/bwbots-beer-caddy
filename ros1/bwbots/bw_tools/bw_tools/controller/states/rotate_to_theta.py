@@ -7,7 +7,7 @@ from bw_tools.controller.states.controller_behavior import ControllerBehavior
 from bw_tools.controller.states.tolerance_timer import ToleranceTimer
 
 
-class RotateInPlace(ControllerBehavior):
+class RotateToTheta(ControllerBehavior):
     def __init__(self, settle_time: float, angle_tolerance: float, trapezoid: TrapezoidalProfileConfig) -> None:
         self.angle_tolerance = angle_tolerance
         self.trapezoid_config = trapezoid
@@ -21,7 +21,7 @@ class RotateInPlace(ControllerBehavior):
         self.timer.reset()
         self.is_already_at_goal = self.is_in_tolerance(goal_pose, current_pose)
         self.start_pose = current_pose
-        rospy.logdebug(f"Rotate in place initialized. Start: {self.start_pose}. Goal: {goal_pose}")
+        rospy.logdebug(f"Rotate in theta initialized. Start: {self.start_pose}. Goal: {goal_pose}")
     
     def get_error(self, goal_pose: Pose2d, current_pose: Pose2d) -> float:
         return goal_pose.theta - current_pose.theta
@@ -31,11 +31,12 @@ class RotateInPlace(ControllerBehavior):
         return abs(error) < self.angle_tolerance
 
     def compute(self, goal_pose: Pose2d, current_pose: Pose2d) -> Tuple[Velocity, bool]:
-        assert self.trapezoid is not None, "Rotate in place not initialized!"
+        assert self.trapezoid is not None, "Rotate in theta not initialized!"
         if self.is_already_at_goal:
             return Velocity(), True
         relative_goal = goal_pose.relative_to(self.start_pose)
         traveled = current_pose.relative_to(self.start_pose)
+        print(f"relative_goal: {relative_goal}, traveled: {traveled}")
         angular_velocity = self.trapezoid.compute(relative_goal.theta, traveled.theta)
         is_in_tolerance = self.is_in_tolerance(goal_pose, current_pose)
         if is_in_tolerance:
@@ -43,6 +44,3 @@ class RotateInPlace(ControllerBehavior):
         else:
             velocity = Velocity(0.0, 0.0, angular_velocity)
         return velocity, self.timer.is_done(is_in_tolerance)
-    
-    def deinitialize(self, goal_pose: Pose2d, current_pose: Pose2d) -> None:
-        pass

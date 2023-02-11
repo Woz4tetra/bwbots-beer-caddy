@@ -4,7 +4,7 @@ from bw_tools.robot_state import Pose2d, Velocity
 
 from bw_tools.controller.data import ControllerStateMachineConfig, ControllerState
 from bw_tools.controller.controller import Controller
-from bw_tools.controller.states import RotateInPlace, DriveToPose, ControllerBehavior
+from bw_tools.controller.states import RotateToTheta, RotateToHeading, DriveToPose, ControllerBehavior
 
 
 class BwbotsController(Controller):
@@ -12,7 +12,7 @@ class BwbotsController(Controller):
                 config: ControllerStateMachineConfig) -> None:
         super().__init__(config)
         self.states = {
-            ControllerState.ROTATE_IN_PLACE_START: RotateInPlace(
+            ControllerState.ROTATE_IN_PLACE_START: RotateToHeading(
                 config.settle_time,
                 config.pose_tolerance.theta,
                 config.rotate_trapezoid
@@ -25,7 +25,7 @@ class BwbotsController(Controller):
                 config.drive_to_pose_trapezoid,
                 config.rotate_trapezoid
             ),
-            ControllerState.ROTATE_IN_PLACE_END: RotateInPlace(
+            ControllerState.ROTATE_IN_PLACE_END: RotateToTheta(
                 config.settle_time,
                 config.pose_tolerance.theta,
                 config.rotate_trapezoid
@@ -71,17 +71,17 @@ class BwbotsController(Controller):
                 rospy.logdebug("Rotate in place complete. Controller is finished.")
                 is_state_machine_done = True
                 velocity = Velocity()
-        else:
-            error = goal_pose.relative_to(current_pose)
-            if (self.active_state == ControllerState.DRIVE_TO_POSE and
-                (self.config.rotate_in_place_start or self.config.rotate_in_place_end) and
-                abs(error.theta) > self.config.rotate_angle_threshold):
-                rospy.logdebug("Rotated too far while driving to pose. Rotating in place.")
-                self.set_state(ControllerState.ROTATE_IN_PLACE_START, goal_pose, current_pose)
-            elif (self.active_state == ControllerState.ROTATE_IN_PLACE_END and 
-                self.config.rotate_while_driving and
-                error.magnitude() > self.config.pose_tolerance.magnitude()):
-                rospy.logdebug("Drifted too far from the goal while rotating. Driving to pose.")
-                self.set_state(ControllerState.DRIVE_TO_POSE, goal_pose, current_pose)
+        # else:
+        #     error = goal_pose.relative_to(current_pose)
+        #     if (self.active_state == ControllerState.DRIVE_TO_POSE and
+        #         (self.config.rotate_in_place_start or self.config.rotate_in_place_end) and
+        #         abs(error.theta) > self.config.rotate_angle_threshold):
+        #         rospy.logdebug("Rotated too far while driving to pose. Rotating in place.")
+        #         self.set_state(ControllerState.ROTATE_IN_PLACE_START, goal_pose, current_pose)
+        #     elif (self.active_state == ControllerState.ROTATE_IN_PLACE_END and 
+        #         self.config.rotate_while_driving and
+        #         error.magnitude() > self.config.pose_tolerance.magnitude()):
+        #         rospy.logdebug("Drifted too far from the goal while rotating. Driving to pose.")
+        #         self.set_state(ControllerState.DRIVE_TO_POSE, goal_pose, current_pose)
 
         return velocity, is_state_machine_done

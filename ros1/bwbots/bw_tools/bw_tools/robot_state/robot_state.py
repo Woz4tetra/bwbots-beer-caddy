@@ -78,6 +78,8 @@ class State:
         state = state.rotate_by(other.theta)
         state.x += other.x
         state.y += other.y
+        state.theta = other.theta + self.theta
+        
         state.theta = self.normalize_theta(state.theta)
         return state
 

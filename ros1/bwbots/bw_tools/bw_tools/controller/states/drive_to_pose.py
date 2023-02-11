@@ -21,7 +21,7 @@ class DriveToPose(ControllerBehavior):
         self.pose_tolerance = pose_tolerance
         self.linear_trapezoid_config = linear_trapezoid
         self.angular_trapezoid_config = angular_trapezoid
-        self.angle_correction_kP = 1.5
+        self.angle_correction_kP = 0.1
 
         self.linear_trapezoid: Optional[TrapezoidalProfile] = None
         self.angular_trapezoid: Optional[TrapezoidalProfile] = None
@@ -42,25 +42,23 @@ class DriveToPose(ControllerBehavior):
         relative_goal = goal_pose.relative_to(self.start_pose)
         traveled = current_pose.relative_to(self.start_pose)
 
-        error = relative_goal - traveled
+        error = goal_pose.relative_to(current_pose)
         heading = error.heading()
-        distance = error.magnitude()
-        print(error, heading, distance)
         
-        xy_in_tolerance = distance < self.pose_tolerance.magnitude()
+        distance_in_tolerance = abs(error.x) < self.pose_tolerance.x
         if self.check_angle_tolerance:
-            yaw_in_tolerance = abs(error.theta) < self.pose_tolerance.theta
+            yaw_in_tolerance = abs(heading) < self.pose_tolerance.theta
         else:
             yaw_in_tolerance = True
         
         if self.rotate_while_driving:
-            angular_velocity = self.angle_correction_kP * error.theta
+            angular_velocity = self.angle_correction_kP * heading
         else:
             angular_velocity = 0.0
         
         linear_velocity = self.linear_trapezoid.compute(relative_goal.x, traveled.x)
         
-        if xy_in_tolerance:
+        if distance_in_tolerance:
             vx = 0.0
             vy = 0.0
         else:
@@ -69,7 +67,7 @@ class DriveToPose(ControllerBehavior):
             vx = linear_velocity
             vy = 0.0
 
-        return Velocity(vx, vy, angular_velocity), self.timer.is_done(xy_in_tolerance and yaw_in_tolerance)
+        return Velocity(vx, vy, angular_velocity), self.timer.is_done(distance_in_tolerance and yaw_in_tolerance)
 
     def deinitialize(self, goal_pose: Pose2d, current_pose: Pose2d) -> None:
         pass
