@@ -22,6 +22,7 @@ class ControllerStateMachineConfig:
     rotate_in_place_start: bool = True
     rotate_in_place_end: bool = True
     rotate_angle_threshold: float = math.pi / 4.0
+    strafe_angle_threshold: float = math.pi / 4.0
 
 
 class ControllerState(Enum):

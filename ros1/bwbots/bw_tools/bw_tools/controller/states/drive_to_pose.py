@@ -1,3 +1,4 @@
+import math
 import rospy
 from typing import Optional, Tuple
 from bw_tools.controller.data import TrapezoidalProfileConfig
@@ -14,7 +15,8 @@ class DriveToPose(ControllerBehavior):
                 settle_time: float,
                 pose_tolerance: Pose2d,
                 linear_trapezoid: TrapezoidalProfileConfig,
-                angular_trapezoid: TrapezoidalProfileConfig) -> None:
+                angular_trapezoid: TrapezoidalProfileConfig,
+                strafe_angle_threshold: float) -> None:
         self.rotate_while_driving = rotate_while_driving
         self.check_angle_tolerance = check_angle_tolerance
         self.settle_time = settle_time
@@ -22,6 +24,7 @@ class DriveToPose(ControllerBehavior):
         self.linear_trapezoid_config = linear_trapezoid
         self.angular_trapezoid_config = angular_trapezoid
         self.angle_correction_kP = 0.1
+        self.strafe_angle_threshold = strafe_angle_threshold
 
         self.linear_trapezoid: Optional[TrapezoidalProfile] = None
         self.angular_trapezoid: Optional[TrapezoidalProfile] = None
@@ -45,7 +48,9 @@ class DriveToPose(ControllerBehavior):
         error = goal_pose.relative_to(current_pose)
         heading = error.heading()
         
-        distance_in_tolerance = abs(error.x) < self.pose_tolerance.x
+        distance_error = traveled.x - relative_goal.x
+        
+        distance_in_tolerance = abs(distance_error) < self.pose_tolerance.x
         if self.check_angle_tolerance:
             yaw_in_tolerance = abs(heading) < self.pose_tolerance.theta
         else:

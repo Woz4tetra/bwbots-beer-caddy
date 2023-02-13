@@ -33,6 +33,7 @@ class GoToPoseCommand:
 
         self.settling_time = rospy.get_param("~go_to_pose/settling_time", 3.0)
         self.rotate_angle_threshold = rospy.get_param("~go_to_pose/rotate_angle_threshold", 0.785)  # ~45 degrees
+        self.strafe_angle_threshold = rospy.get_param("~go_to_pose/strafe_angle_threshold", 0.5)  # ~30 degrees
 
         self.goal_pose: Optional[Pose2d] = None
         self.robot_state: Optional[Pose2d] = None
@@ -147,7 +148,8 @@ class GoToPoseCommand:
             settle_time=self.settling_time,
             rotate_in_place_start=rotate_in_place_start,
             rotate_in_place_end=rotate_in_place_end,
-            rotate_angle_threshold=self.rotate_angle_threshold
+            rotate_angle_threshold=self.rotate_angle_threshold,
+            strafe_angle_threshold=self.strafe_angle_threshold
         )
 
         controller = BwbotsController(controller_config)

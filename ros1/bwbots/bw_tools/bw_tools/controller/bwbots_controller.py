@@ -23,7 +23,8 @@ class BwbotsController(Controller):
                 config.settle_time,
                 config.pose_tolerance,
                 config.drive_to_pose_trapezoid,
-                config.rotate_trapezoid
+                config.rotate_trapezoid,
+                config.strafe_angle_threshold
             ),
             ControllerState.ROTATE_IN_PLACE_END: RotateToTheta(
                 config.settle_time,
