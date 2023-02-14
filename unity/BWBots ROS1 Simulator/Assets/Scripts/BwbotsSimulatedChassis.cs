@@ -69,6 +69,7 @@ public class BwbotsSimulatedChassis : MonoBehaviour
     private double angularVelocityLimit = 1000.0;
     private double positionLimit = 10000.0;
     private bool motorsEnabled = false;
+    private Pose initialRobotPose = Pose.identity;
 
 
     public BwbotsSimulatedChassis() {
@@ -228,6 +229,7 @@ public class BwbotsSimulatedChassis : MonoBehaviour
         last_odom_msg = MakeOdometryMessage(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
         setUseGroundTruth(useGroundTruth);
+        initialRobotPose = GetGlobalPose();
     }
 
     public Pose GetGlobalPose() {
@@ -269,9 +271,10 @@ public class BwbotsSimulatedChassis : MonoBehaviour
         double vx, vy, vt;
         double x, y, theta;
         if (useGroundTruth) {
-            x = bodyMain.transform.position.z;
-            y = -bodyMain.transform.position.x;
-            theta = ModuleKinematics.WrapAngle(-GetGlobalRotation().eulerAngles.y * Mathf.Deg2Rad);
+            Pose pose = GetRelativePose(initialRobotPose);
+            x = pose.position.z;
+            y = -pose.position.x;
+            theta = ModuleKinematics.WrapAngle(-pose.rotation.eulerAngles.y * Mathf.Deg2Rad);
 
             double dt = Time.fixedDeltaTime;
 

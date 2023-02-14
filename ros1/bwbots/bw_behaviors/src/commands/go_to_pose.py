@@ -208,12 +208,22 @@ class GoToPoseCommand:
             success = False
             
         result = GoToPoseResult(success)
-        rospy.loginfo(
-            f"Distance tolerance{' not' if distance > xy_tolerance else ''} met: {distance} > {xy_tolerance}"
-        )
-        rospy.loginfo(
-            f"Angle tolerance{' not' if angle_error > yaw_tolerance else ''} met: {angle_error} > {yaw_tolerance}"
-        )
+        if distance > xy_tolerance:
+            rospy.loginfo(
+                f"Distance tolerance not met: {distance} > {xy_tolerance}"
+            )
+        else:
+            rospy.loginfo(
+                f"Distance tolerance met: {distance} <= {xy_tolerance}"
+            )
+        if angle_error > yaw_tolerance:
+            rospy.loginfo(
+                f"Angle tolerance not met: {angle_error} > {yaw_tolerance}"
+            )
+        else:
+            rospy.loginfo(
+                f"Angle tolerance met: {angle_error} <= {yaw_tolerance}"
+            )
 
         if aborted:
             self.action_server.set_aborted(result, "Interrupted while going to a pose")

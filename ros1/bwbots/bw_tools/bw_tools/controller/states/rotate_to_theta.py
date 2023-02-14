@@ -36,7 +36,6 @@ class RotateToTheta(ControllerBehavior):
             return Velocity(), True
         relative_goal = goal_pose.relative_to(self.start_pose)
         traveled = current_pose.relative_to(self.start_pose)
-        print(f"relative_goal: {relative_goal}, traveled: {traveled}")
         angular_velocity = -self.trapezoid.compute(relative_goal.theta, traveled.theta)
         is_in_tolerance = self.is_in_tolerance(goal_pose, current_pose)
         if is_in_tolerance:

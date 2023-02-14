@@ -19,6 +19,7 @@ BwImuJoint::BwImuJoint(ros::NodeHandle* nodehandle) :
     }
     _base_quat_msg.w = 1.0;
     _imu_msg.orientation.w = 1.0;
+    prev_yaw = 0.0;
     x = 0.0;
     y = 0.0;
     theta = 0.0;
@@ -36,6 +37,7 @@ void BwImuJoint::reset_odom() {
     x = 0.0;
     y = 0.0;
     theta = 0.0;
+    prev_yaw = 0.0;
 }
 
 void BwImuJoint::odom_callback(const nav_msgs::OdometryConstPtr& odom) {
@@ -47,13 +49,20 @@ void BwImuJoint::odom_callback(const nav_msgs::OdometryConstPtr& odom) {
         return;
     }
 
+    tf2::Quaternion quat_tf;
+    tf2::fromMsg(_imu_msg.orientation, quat_tf);
+    tf2::Matrix3x3 m1(quat_tf);
+    double roll, pitch, yaw;
+    m1.getRPY(roll, pitch, yaw);
+
     double vx = odom->twist.twist.linear.x;
     double vy = odom->twist.twist.linear.y;
-    double vt = _imu_msg.angular_velocity.z;
 
     double dx = vx * delta_time;
     double dy = vy * delta_time;
-    double dtheta = vt * delta_time;
+    double dtheta = yaw - prev_yaw;
+    prev_yaw = yaw;
+    theta += dtheta;
     double sin_theta = sin(dtheta);
     double cos_theta = cos(dtheta);
 
@@ -70,13 +79,6 @@ void BwImuJoint::odom_callback(const nav_msgs::OdometryConstPtr& odom) {
     double tx = dx * s - dy * c;
     double ty = dx * c + dy * s;
 
-    tf2::Quaternion quat_tf;
-    tf2::fromMsg(_imu_msg.orientation, quat_tf);
-    tf2::Matrix3x3 m1(quat_tf);
-    double roll, pitch, yaw;
-    m1.getRPY(roll, pitch, yaw);
-    theta = yaw;
-
     double rotated_tx = tx * cos(theta) - ty * sin(theta);
     double rotated_ty = tx * sin(theta) + ty * cos(theta);
 
@@ -90,21 +92,31 @@ void BwImuJoint::odom_callback(const nav_msgs::OdometryConstPtr& odom) {
         ROS_WARN("Resetting odometry position! NaN or Inf encountered");
     }
 
+    tf2::Quaternion combined_orientation;
+    combined_orientation.setRPY(0.0, 0.0, theta);
+    geometry_msgs::Quaternion combined_orientation_msg;
+    tf2::convert(combined_orientation, combined_orientation_msg);
+
     geometry_msgs::TransformStamped tf_stamped;
     tf_stamped.header = odom->header;
     tf_stamped.child_frame_id = odom->child_frame_id;
     tf_stamped.transform.translation.x = x;
     tf_stamped.transform.translation.y = y;
     tf_stamped.transform.translation.z = 0.0;
-    tf_stamped.transform.rotation = _imu_msg.orientation;
+    tf_stamped.transform.rotation = combined_orientation_msg;
     _tf_broadcaster.sendTransform(tf_stamped);
 
     nav_msgs::Odometry combined;
     combined.header = odom->header;
     combined.child_frame_id = odom->child_frame_id;
-    combined.pose = odom->pose;
-    combined.twist = odom->twist;
-    combined.pose.pose.orientation = _imu_msg.orientation;
+    combined.pose.pose.position.x = x;
+    combined.pose.pose.position.y = y;
+    combined.pose.pose.orientation = combined_orientation_msg;
+    combined.pose.covariance = odom->pose.covariance;
+    combined.twist.twist.linear.x = vx;
+    combined.twist.twist.linear.y = vy;
+    combined.twist.twist.angular.z = _imu_msg.angular_velocity.z;
+    combined.twist.covariance = odom->twist.covariance;
     _combined_odom_pub.publish(combined);
 }
 

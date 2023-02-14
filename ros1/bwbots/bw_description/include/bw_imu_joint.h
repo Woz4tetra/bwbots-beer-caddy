@@ -37,6 +37,7 @@ private:
     tf2::Quaternion _static_imu_to_base_quat, _base_to_base_tilt_quat;
     tf2::Matrix3x3 _static_imu_to_base_mat;
     geometry_msgs::TransformStamped _static_imu_to_base_tf;
+    double prev_yaw;
     bool _static_imu_tf_set;
     ros::Time _prev_odom_time;
     double x, y, theta;

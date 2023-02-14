@@ -144,6 +144,9 @@ public class FpvCamera : MonoBehaviour
 
     void Update()
     {
+        if (initialRobotPose.Equals(Pose.identity) && Time.realtimeSinceStartup < 30.0) {
+            initialRobotPose = wheelController.GetGlobalPose();
+        }
         if (Input.GetKeyDown(KeyCode.V)) {
             ViewMode mode;
             if (viewMode == ViewMode.FREE_CAM) {
