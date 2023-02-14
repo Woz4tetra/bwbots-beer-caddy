@@ -23,8 +23,8 @@ class DriveToPose(ControllerBehavior):
         self.pose_tolerance = pose_tolerance
         self.linear_trapezoid_config = linear_trapezoid
         self.angular_trapezoid_config = angular_trapezoid
-        self.angle_correction_kP = 0.2
-        self.lateral_correction_kP = 0.2
+        self.angle_correction_kP = 1.0
+        self.lateral_correction_kP = 1.0
         self.strafe_angle_threshold = strafe_angle_threshold
 
         self.linear_trapezoid: Optional[TrapezoidalProfile] = None

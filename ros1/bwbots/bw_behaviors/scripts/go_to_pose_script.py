@@ -34,11 +34,11 @@ def main():
                         type=str,
                         help="Goal pose. Yaml format (ex. \"{x: 0.1}\". Equivalent to \"{x: 0.1, y: 0.0, theta: 0.0}\")")
     parser.add_argument("-xy", "--xy-tolerance",
-                        default=0.03,
+                        default=0.01,
                         type=float,
                         help="Distance tolerance")
     parser.add_argument("-th", "--theta-tolerance",
-                        default=0.15,
+                        default=0.05,
                         type=float,
                         help="Angular tolerance")
     parser.add_argument("-t", "--timeout",
@@ -79,7 +79,7 @@ def main():
     goal.rotate_in_place_start = True
     goal.rotate_while_driving = True
     goal.rotate_in_place_end = True
-    goal.linear_max_accel = 0.5
+    goal.linear_max_accel = 0.1
     goal.linear_min_vel = 0.01
     goal.theta_max_accel = 1.0
     goal.theta_min_vel = 0.15

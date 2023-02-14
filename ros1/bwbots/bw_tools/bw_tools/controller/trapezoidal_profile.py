@@ -30,6 +30,6 @@ class TrapezoidalProfile:
         
         trapezoid_velocity = trapezoid_speed
         trapezoid_velocity = trapezoid_velocity if goal > 0.0 else -trapezoid_velocity
-        trapezoid_velocity = trapezoid_velocity if goal - traveled > 0.0 else -trapezoid_velocity
+        trapezoid_velocity = trapezoid_velocity if distance_total - distance_traveled > 0.0 else -trapezoid_velocity
 
         return trapezoid_velocity

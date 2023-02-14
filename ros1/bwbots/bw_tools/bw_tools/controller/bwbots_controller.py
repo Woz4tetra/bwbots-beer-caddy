@@ -1,10 +1,11 @@
+import math
 import rospy
 from typing import Tuple
 from bw_tools.robot_state import Pose2d, Velocity
 
 from bw_tools.controller.data import ControllerStateMachineConfig, ControllerState
 from bw_tools.controller.controller import Controller
-from bw_tools.controller.states import RotateToTheta, RotateToHeading, DriveToPose, ControllerBehavior
+from bw_tools.controller.states import RotateToAngle, DriveToPose, ControllerBehavior
 
 
 class BwbotsController(Controller):
@@ -12,10 +13,11 @@ class BwbotsController(Controller):
                 config: ControllerStateMachineConfig) -> None:
         super().__init__(config)
         self.states = {
-            ControllerState.ROTATE_IN_PLACE_START: RotateToHeading(
+            ControllerState.ROTATE_IN_PLACE_START: RotateToAngle(
                 config.settle_time,
                 config.pose_tolerance.theta,
-                config.rotate_trapezoid
+                config.rotate_trapezoid,
+                self.compute_heading,
             ),
             ControllerState.DRIVE_TO_POSE: DriveToPose(
                 config.rotate_while_driving,
@@ -26,15 +28,26 @@ class BwbotsController(Controller):
                 config.rotate_trapezoid,
                 config.strafe_angle_threshold
             ),
-            ControllerState.ROTATE_IN_PLACE_END: RotateToTheta(
+            ControllerState.ROTATE_IN_PLACE_END: RotateToAngle(
                 config.settle_time,
                 config.pose_tolerance.theta,
-                config.rotate_trapezoid
+                config.rotate_trapezoid,
+                self.compute_theta,
             ),
             ControllerState.IDLE: ControllerBehavior()
         }
         
         self.active_state = ControllerState.IDLE
+        self.is_reversed = False
+
+    def compute_heading(self, goal_pose: Pose2d, current_pose: Pose2d) -> float:
+        heading = goal_pose.relative_to(current_pose).heading()
+        if self.is_reversed:
+            heading = Pose2d.normalize_theta(heading + math.pi)
+        return heading
+
+    def compute_theta(self, goal_pose: Pose2d, current_pose: Pose2d) -> float:
+        return goal_pose.relative_to(current_pose).theta
 
     def get_behavior(self) -> ControllerBehavior:
         return self.states[self.active_state]
@@ -46,11 +59,16 @@ class BwbotsController(Controller):
         rospy.logdebug(f"Setting controller state to {state}. goal={goal_pose}, current={current_pose}")
 
     def compute(self, goal_pose: Pose2d, current_pose: Pose2d) -> Tuple[Velocity, bool]:
+
         behavior = self.get_behavior()
         velocity, is_done = behavior.compute(goal_pose, current_pose)
         is_state_machine_done = False
         if is_done:
             if self.active_state == ControllerState.IDLE:
+                self.is_reversed = (
+                    self.config.allow_reverse and 
+                    abs(self.compute_heading(goal_pose, current_pose)) > math.pi / 2.0
+                )
                 velocity = Velocity()
                 if self.config.rotate_in_place_start:
                     rospy.logdebug("Starting controller by rotating in place.")
@@ -58,6 +76,7 @@ class BwbotsController(Controller):
                 else:
                     rospy.logdebug("Starting controller by driving to pose.")
                     self.set_state(ControllerState.DRIVE_TO_POSE, goal_pose, current_pose)
+                rospy.logdebug(f"Controller is{'' if self.is_reversed else ' not'} reversed")
             elif self.active_state == ControllerState.ROTATE_IN_PLACE_START:
                 rospy.logdebug("Rotate in place complete. Driving to pose.")
                 self.set_state(ControllerState.DRIVE_TO_POSE, goal_pose, current_pose)

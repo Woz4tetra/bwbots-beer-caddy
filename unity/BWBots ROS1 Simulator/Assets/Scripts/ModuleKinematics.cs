@@ -56,9 +56,9 @@ class ModuleKinematics
         prev_azimuth = 0.0;
 
         ArticulationDrive wheelDrive = this.wheelBody.xDrive;
-        wheelDrive.stiffness = 500.0f;
-        wheelDrive.damping = 100.0f;
-        wheelDrive.forceLimit = 10000.0f;
+        wheelDrive.stiffness = 10000.0f;
+        wheelDrive.damping = 0.0f;
+        wheelDrive.forceLimit = 1000000.0f;
         this.wheelBody.xDrive = wheelDrive;
 
         this.wheelBody.linearDamping = 1.0f;
@@ -68,8 +68,8 @@ class ModuleKinematics
         this.wheelBody.mass = 0.048f;
 
         ArticulationDrive moduleDrive = this.moduleBody.xDrive;
-        moduleDrive.stiffness = 10000.0f;
-        moduleDrive.damping = 1000.0f;
+        moduleDrive.stiffness = 500.0f;
+        moduleDrive.damping = 10.0f;
         moduleDrive.forceLimit = 10000.0f;
         this.moduleBody.xDrive = moduleDrive;
 
