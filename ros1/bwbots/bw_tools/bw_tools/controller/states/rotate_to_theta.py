@@ -5,6 +5,7 @@ from bw_tools.controller.data import TrapezoidalProfileConfig
 from bw_tools.controller.trapezoidal_profile import TrapezoidalProfile
 from bw_tools.controller.states.controller_behavior import ControllerBehavior
 from bw_tools.controller.states.tolerance_timer import ToleranceTimer
+from bw_tools.controller.states.angle_wrap_manager import AngleWrapManager
 
 
 class RotateToTheta(ControllerBehavior):
@@ -15,16 +16,19 @@ class RotateToTheta(ControllerBehavior):
         self.timer = ToleranceTimer(settle_time)
         self.is_already_at_goal = False
         self.start_pose = Pose2d()
+        self.wrap_manager = AngleWrapManager()
     
     def initialize(self, goal_pose: Pose2d, current_pose: Pose2d) -> None:
         self.trapezoid = TrapezoidalProfile(self.trapezoid_config)
         self.timer.reset()
         self.is_already_at_goal = self.is_in_tolerance(goal_pose, current_pose)
+        self.wrap_manager.reset()
         self.start_pose = current_pose
         rospy.logdebug(f"Rotate in theta initialized. Start: {self.start_pose}. Goal: {goal_pose}")
     
     def get_error(self, goal_pose: Pose2d, current_pose: Pose2d) -> float:
-        return goal_pose.theta - current_pose.theta
+        angle = goal_pose.theta - current_pose.theta
+        return self.wrap_manager.unwrap(angle)
 
     def is_in_tolerance(self, goal_pose: Pose2d, current_pose: Pose2d) -> bool:
         error = self.get_error(goal_pose, current_pose)

@@ -165,10 +165,16 @@ class GoToPoseCommand:
         while current_time - start_time < timeout:
             rate.sleep()
             current_time = rospy.Time.now()
+            
+            if self.action_server.is_preempt_requested():
+                rospy.loginfo(f"Cancelling go to pose")
+                aborted = True
+                break
 
             if self.robot_state is None:
                 continue
             if self.goal_pose is None:
+                self.goal_pose = self.compute_goal(goal.goal)
                 continue
 
             velocity_command, is_done = controller.compute(self.goal_pose, self.robot_state)
@@ -181,10 +187,7 @@ class GoToPoseCommand:
                 self.robot_parent_frame_id,
                 self.robot_child_frame_id,
             )
-            if self.action_server.is_preempt_requested():
-                rospy.loginfo(f"Cancelling go to pose")
-                aborted = True
-                break
+            
             if is_done:
                 rospy.loginfo(
                     f"Controller finished. Pose error: {self.goal_pose - self.robot_state}"
