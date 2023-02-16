@@ -2,8 +2,7 @@ import math
 from typing import List
 import numpy as np
 import tf_conversions
-from geometry_msgs.msg import Quaternion
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Quaternion, Pose, Twist
 
 
 class State:
@@ -30,8 +29,6 @@ class State:
 
     @classmethod
     def from_state(cls, state):
-        if not isinstance(state, cls):
-            raise ValueError("%s is not of type %s" % (repr(state), cls))
         self = cls()
         self.x = state.x
         self.y = state.y
@@ -339,8 +336,29 @@ class Pose2d(State):
 
 class Velocity(State):
     @classmethod
-    def from_global_relative_speeds(cls, vx: float, vy: float, vt: float, angle_ref: float):
+    def from_poses(cls, old_pose: Pose2d, new_pose: Pose2d, dt: float) -> 'Velocity':
+        relative_pose = new_pose.relative_to(old_pose)
+        velocity_pose = relative_pose / dt
+        return cls.from_state(velocity_pose)
+
+    @classmethod
+    def from_global_relative_speeds(cls, vx: float, vy: float, vt: float, angle_ref: float) -> 'Velocity':
         self = cls(vx, vy, 0.0)
         self.rotate_by(-angle_ref)
         self.theta = vt
         return self
+
+    @classmethod
+    def from_ros_twist(cls, twist: Twist):
+        self = cls()
+        self.x = twist.linear.x
+        self.y = twist.linear.y
+        self.theta = twist.angular.z
+        return self
+
+    def to_ros_twist(self) -> Twist:
+        ros_twist = Twist()
+        ros_twist.linear.x = self.x
+        ros_twist.linear.y = self.y
+        ros_twist.angular.z = self.theta
+        return ros_twist

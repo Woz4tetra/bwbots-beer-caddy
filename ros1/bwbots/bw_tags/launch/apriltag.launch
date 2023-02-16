@@ -16,13 +16,11 @@
     <node type="throttle" name="$(arg node_namespace)_camera_info_topic_throttle" pkg="topic_tools" required="false" output="screen"
         args="messages $(arg info_topic) $(arg throttle_rate) $(arg info_throttle_topic)"/>
 
-    <!-- Set parameters -->
     <group ns="$(arg node_namespace)">
         <rosparam command="load" file="$(find bw_tags)/config/apriltag/settings.yaml" ns="apriltag" />
         <rosparam command="load" file="$(find bw_tags)/config/apriltag/tags.yaml" ns="apriltag" />
 
         <node pkg="apriltag_ros" type="apriltag_ros_continuous_node" name="apriltag" clear_params="true" required="false" output="screen" launch-prefix="$(arg launch_prefix)" >
-            <!-- Remap topics from those used in code to those on the ROS network -->
             <remap from="camera_info" to="$(arg info_throttle_topic)" />
             <remap from="image_rect" to="$(arg image_throttle_topic)" />
 

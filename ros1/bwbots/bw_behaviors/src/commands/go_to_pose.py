@@ -3,7 +3,6 @@ from bw_tools.controller.bwbots_controller import BwbotsController
 
 import rospy
 import actionlib
-from threading import Lock
 
 from geometry_msgs.msg import PoseStamped, Twist
 from nav_msgs.msg import Odometry
@@ -40,7 +39,6 @@ class GoToPoseCommand:
         self.robot_state: Optional[Pose2d] = None
         self.robot_parent_frame_id = ""
         self.robot_child_frame_id = ""
-        self.lock = Lock()
 
         self.odom_sub = rospy.Subscriber(
             "odom", Odometry, self.odom_callback, queue_size=10

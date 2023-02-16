@@ -18,7 +18,10 @@ SHELL ["/bin/bash", "-c"]
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends apt-utils
-RUN apt-get install -y nano tmux curl htop net-tools iproute2 iputils-ping gdb
+RUN apt-get update && \
+    apt-get install -y \
+        nano tmux curl htop net-tools iproute2 iputils-ping gdb dumb-init \
+        build-essential libtool autoconf zip unzip wget
 
 # ---
 # CMake
@@ -26,7 +29,6 @@ RUN apt-get install -y nano tmux curl htop net-tools iproute2 iputils-ping gdb
 
 WORKDIR /tmp
 
-RUN apt-get install -y build-essential libtool autoconf zip unzip wget
 RUN wget -O cmake.sh https://cmake.org/files/v3.23/cmake-3.23.1-linux-aarch64.sh
 RUN mkdir /opt/cmake
 RUN sh cmake.sh --prefix=/opt/cmake --exclude-subdir --skip-license
@@ -99,13 +101,16 @@ RUN apt-get update && sudo apt-get install -y \
     libsuitesparse-dev \
     python3-termcolor \
     i2c-tools \
-    python3-smbus
+    python3-smbus \
+    libceres-dev
 
 RUN python3 -m pip install scipy==1.5.4 \
     shapely==1.6.4 \
     mido \
     pyperclip \
-    dataclasses
+    dataclasses \
+    py-trees==0.7.6 \
+    tqdm
 
 RUN apt-get install -y llvm-7*
 RUN ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin
@@ -153,12 +158,6 @@ RUN mkdir build
 WORKDIR /tmp/g2o/build
 RUN cmake ..
 RUN make -j4 && make install
-
-
-RUN apt-get install -y libceres-dev
-RUN python3 -m pip install py-trees==0.7.6 tqdm
-
-RUN apt-get install -y dumb-init
 
 WORKDIR /
 RUN ldconfig
