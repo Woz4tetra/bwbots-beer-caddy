@@ -54,6 +54,7 @@ packages=(
     https://github.com/splintered-reality/py_trees_msgs.git
     https://github.com/rst-tu-dortmund/teb_local_planner
     https://github.com/ros-visualization/interactive_markers.git
+    https://github.com/Woz4tetra/als_ros.git
 )
 
 branches=(
@@ -109,6 +110,7 @@ branches=(
     release/0.3.x  # https://github.com/splintered-reality/py_trees_msgs.git
     noetic-devel    # https://github.com/rst-tu-dortmund/teb_local_planner
     noetic-devel    # https://github.com/ros-visualization/interactive_markers.git
+    main  # https://github.com/Woz4tetra/als_ros.git
 )
 
 len=${#packages[@]}

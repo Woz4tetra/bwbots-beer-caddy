@@ -55,19 +55,21 @@ class BwLaserSlam:
         if not os.path.isdir(self.map_dir):
             os.makedirs(self.map_dir)
 
-        self.gmapping_launch_path = rospy.get_param("~gmapping_launch", self.default_launches_dir + "/gmapping.launch")
-        self.amcl_launch_path = rospy.get_param("~amcl_launch", self.default_launches_dir + "/amcl.launch")
+        # self.slam_launch_path = rospy.get_param("~slam_launch", self.default_launches_dir + "/gmapping.launch")
+        self.slam_launch_path = rospy.get_param("~slam_launch", self.default_launches_dir + "/als_slam.launch")
+        # self.localize_launch_path = rospy.get_param("~localize_launch", self.default_launches_dir + "/amcl.launch")
+        self.localize_launch_path = rospy.get_param("~localize_launch", self.default_launches_dir + "/als_localize.launch")
         self.map_saver_launch_path = rospy.get_param("~map_saver_launch", self.default_launches_dir + "/map_saver.launch")
         self.fake_map_launch_path = rospy.get_param("~fake_map_launch", self.default_launches_dir + "/fake_map.launch")
 
-        self.gmapping_launcher = LaunchManager(self.gmapping_launch_path)
-        self.amcl_launcher = LaunchManager(self.amcl_launch_path, map_path=self.map_path + ".yaml")
+        self.slam_launcher = LaunchManager(self.slam_launch_path, map_path=self.map_path + ".yaml")
+        self.localize_launcher = LaunchManager(self.localize_launch_path, map_path=self.map_path + ".yaml")
         self.map_saver_launcher = LaunchManager(self.map_saver_launch_path, map_path=self.map_path)
         self.fake_map_launcher = LaunchManager(self.fake_map_launch_path)
 
         self.launchers = [
-            self.gmapping_launcher,
-            self.amcl_launcher,
+            self.slam_launcher,
+            self.localize_launcher,
             self.map_saver_launcher,
             self.fake_map_launcher,
         ]
@@ -140,18 +142,18 @@ class BwLaserSlam:
             self.map_name = map_name
             self.set_map_paths()
             rospy.loginfo("Setting map path to %s" % self.map_path)
-            self.amcl_launcher.set_args(map_path=self.map_path + ".yaml")
+            self.localize_launcher.set_args(map_path=self.map_path + ".yaml")
             self.map_saver_launcher.set_args(map_path=self.map_path)
 
         if mode == self.LOCALIZE:
-            self.gmapping_launcher.stop()
-            self.amcl_launcher.start()
+            self.slam_launcher.stop()
+            self.localize_launcher.start()
         elif mode == self.MAPPING:
-            self.gmapping_launcher.start()
-            self.amcl_launcher.stop()
+            self.slam_launcher.start()
+            self.localize_launcher.stop()
         else:
-            self.gmapping_launcher.stop()
-            self.amcl_launcher.stop()
+            self.slam_launcher.stop()
+            self.localize_launcher.stop()
         
         self.mode = mode
         rospy.loginfo("Mode switched to %s" % self.mode)

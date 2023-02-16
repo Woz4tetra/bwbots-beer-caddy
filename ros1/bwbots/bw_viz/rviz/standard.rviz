@@ -6,8 +6,9 @@ Panels:
       Expanded:
         - /Global Options1
         - /TF1/Frames1
-        - /Camera1
         - /Camera1/Visibility1
+        - /gl_sampled_poses PoseArray1
+        - /mcl_particles1
       Splitter Ratio: 0.3412107527256012
     Tree Height: 585
   - Class: rviz/Selection
@@ -105,30 +106,6 @@ Visualization Manager:
           Value: true
         camera_link:
           Value: true
-        charge_dock_tag:
-          Value: true
-        dispenser1:
-          Value: true
-        drive_calibration:
-          Value: true
-        drive_calibration_base_link:
-          Value: true
-        drive_calibration_camera_link:
-          Value: true
-        drive_calibration_zed_base_link:
-          Value: true
-        drive_calibration_zed_camera_center:
-          Value: true
-        drive_calibration_zed_left_camera_frame:
-          Value: true
-        drive_calibration_zed_left_camera_optical_frame:
-          Value: true
-        drive_calibration_zed_right_camera_frame:
-          Value: true
-        drive_calibration_zed_right_camera_optical_frame:
-          Value: true
-        floor:
-          Value: true
         laser:
           Value: true
         map:
@@ -185,16 +162,14 @@ Visualization Manager:
                         zed2_imu_link:
                           {}
                         zed2_left_camera_optical_frame:
-                          dispenser1:
-                            {}
+                          {}
                         zed2_temp_left_link:
                           {}
                       zed2_mag_link:
                         {}
                       zed2_right_camera_frame:
                         zed2_right_camera_optical_frame:
-                          charge_dock_tag:
-                            {}
+                          {}
                         zed2_temp_right_link:
                           {}
                 laser:
@@ -325,6 +300,7 @@ Visualization Manager:
         LaserScan Filtered: true
         Local Path: true
         Map: true
+        Marker: true
         MarkerArray: true
         PointCloud2: true
         PointStamped: true
@@ -337,6 +313,8 @@ Visualization Manager:
         TF: false
         Value: true
         ZedOdDisplay: true
+        gl_sampled_poses PoseArray: true
+        mcl_particles: true
       Zoom Factor: 1
     - Alpha: 1
       Axes Length: 1
@@ -546,6 +524,90 @@ Visualization Manager:
       Topic: /bw/ground_truth
       Unreliable: false
       Value: true
+    - Alpha: 1
+      Arrow Length: 0.30000001192092896
+      Axes Length: 0.30000001192092896
+      Axes Radius: 0.009999999776482582
+      Class: rviz/PoseArray
+      Color: 0; 170; 255
+      Enabled: true
+      Head Length: 0.07000000029802322
+      Head Radius: 0.029999999329447746
+      Name: gl_sampled_poses PoseArray
+      Queue Size: 10
+      Shaft Length: 0.23000000417232513
+      Shaft Radius: 0.009999999776482582
+      Shape: Arrow (Flat)
+      Topic: /gl_sampled_poses
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Arrow Length: 0.30000001192092896
+      Axes Length: 0.30000001192092896
+      Axes Radius: 0.009999999776482582
+      Class: rviz/PoseArray
+      Color: 255; 170; 0
+      Enabled: true
+      Head Length: 0.07000000029802322
+      Head Radius: 0.029999999329447746
+      Name: mcl_particles
+      Queue Size: 10
+      Shaft Length: 0.23000000417232513
+      Shaft Radius: 0.009999999776482582
+      Shape: Arrow (Flat)
+      Topic: /mcl_particles
+      Unreliable: false
+      Value: true
+    - Alpha: 0.699999988079071
+      Class: rviz/Map
+      Color Scheme: map
+      Draw Behind: false
+      Enabled: true
+      Name: Map
+      Topic: /gl_local_map
+      Unreliable: false
+      Use Timestamp: false
+      Value: true
+    - Class: rviz/Marker
+      Enabled: false
+      Marker Topic: /gl_local_sdf_keypoints
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: false
+    - Class: rviz/Marker
+      Enabled: false
+      Marker Topic: /gl_sdf_keypoints
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: false
+    - Alpha: 1
+      Axes Length: 1
+      Axes Radius: 0.10000000149011612
+      Class: rviz/Pose
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.30000001192092896
+      Head Radius: 0.10000000149011612
+      Name: Pose
+      Queue Size: 10
+      Shaft Length: 1
+      Shaft Radius: 0.05000000074505806
+      Shape: Arrow
+      Topic: /mcl_pose
+      Unreliable: false
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /reliability_marker_name
+      Name: Marker
+      Namespaces:
+        reliability_marker_namespace: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -574,7 +636,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 0.9895676970481873
+      Distance: 11.110113143920898
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -582,17 +644,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.5091333389282227
-        Y: 0.4813501536846161
-        Z: 3.117056849077926e-06
+        X: -4.828180313110352
+        Y: 4.003437042236328
+        Z: 1.7678605672699632e-06
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3097965121269226
+      Pitch: 1.0797961950302124
       Target Frame: <Fixed Frame>
-      Yaw: 2.716749906539917
+      Yaw: 2.6167492866516113
     Saved: ~
 Window Geometry:
   Camera:
