@@ -1,13 +1,19 @@
+import sys
 import time
 import torch
 import numpy as np
 from torch.backends import cudnn
+
+module_path = "/opt/yolov5/yolov5"
+if module_path not in sys.path:
+    sys.path.insert(0, "/opt/yolov5/yolov5")  # :/ yolov5 organizes its files badly
+
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.torch_utils import select_device
 from yolov5.utils.general import non_max_suppression, scale_boxes, check_img_size
 from yolov5.utils.plots import Annotator, colors
 from yolov5.utils.augmentations import letterbox
-from .utils import get_label, get_obj_id
+from .util import get_label, get_obj_id
 
 
 class YoloDetector:
@@ -30,17 +36,29 @@ class YoloDetector:
         self.overlay_line_thickness = 3  # bounding box thickness (pixels)
 
         self.selected_model_device = select_device(self.model_device)
-        self.model = DetectMultiBackend(self.model_path, device=self.selected_model_device, dnn=False, fp16=self.half)
+        self.model = DetectMultiBackend(self.model_path, device=self.selected_model_device, dnn=False)
 
         self.stride = self.model.stride
-        self.class_names = self.model.names
+        self.class_names = [None for _ in range(len(self.model.names))]
+        for index, name in self.model.names.items():
+            self.class_names[index] = name
+        pt = self.model.pt
+        jit = self.model.jit
+        onnx = self.model.onnx
+        engine = self.model.engine
+
+        # FP16 supported on limited backends with CUDA
+        self.half &= (pt or jit or onnx or engine) and self.selected_model_device.type != 'cpu'
+        if pt or jit:
+            self.model.model.half() if self.half else self.model.model.float()
+
         cudnn.benchmark = True  # set True to speed up constant image size inference
 
         self.timing_report = ""
 
-        stride = self.model.stride
+        # Run inference
         self.image_size = (self.image_width, self.image_height)
-        self.image_size = check_img_size(self.image_size, s=stride)  # check image size
+        self.image_size = check_img_size(self.image_size, self.stride)
         self.model.warmup(imgsz=(1, 3, *self.image_size))  # warmup
 
     def detect(self, image):
@@ -99,7 +117,8 @@ class YoloDetector:
         t4 = time.time()
 
         class_count = {}
-        for *xyxy, confidence, class_index in reversed(detection):
+        for *xyxy, confidence, class_tensor in reversed(detection):
+            class_index = int(class_tensor.item())
             if class_index not in class_count:
                 class_count[class_index] = 0
             else:
@@ -113,12 +132,17 @@ class YoloDetector:
 
         if self.report_loop_times:
             self.timing_report = ""
-            self.timing_report += "\ttensor prep: %0.4f\n" % (t0 - t_start)
-            self.timing_report += "\tpredict: %0.4f\n" % (t1 - t0)
-            self.timing_report += "\tnms: %0.4f\n" % (t2 - t1)
-            self.timing_report += "\tscale: %0.4f\n" % (t3 - t2)
-            self.timing_report += "\toverlay: %0.4f\n" % (t4 - t3)
-            self.timing_report += "\tmsg: %0.4f\n" % (t5 - t4)
+            self.timing_report += "\tDetections:\n"
+            for c in detection[:, 5].unique():
+                n = (detection[:, 5] == c).sum()  # detections per class
+                self.timing_report += f"\t\t{n} {self.class_names[int(c)]}{'s' * (n > 1)}\n"  # add to string
+            self.timing_report += "\ttensor prep: %0.4fs\n" % (t0 - t_start)
+            self.timing_report += "\tpredict: %0.4fs\n" % (t1 - t0)
+            self.timing_report += "\tnms: %0.4fs\n" % (t2 - t1)
+            self.timing_report += "\tscale: %0.4fs\n" % (t3 - t2)
+            self.timing_report += "\toverlay: %0.4fs\n" % (t4 - t3)
+            self.timing_report += "\tmsg: %0.4fs\n" % (t5 - t4)
+            self.timing_report += "\ttotal: %0.4fs (%0.2f fps)\n" % (t5 - t_start, 1.0 / (t5 - t_start))
 
         return detections, overlay_image
 

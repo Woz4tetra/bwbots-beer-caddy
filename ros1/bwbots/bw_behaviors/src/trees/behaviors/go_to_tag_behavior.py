@@ -32,7 +32,7 @@ class GoToTagBehavior(py_trees_ros.actions.ActionClient):
         self.action_goal = GoToPoseGoal()
         self.action_goal.xy_tolerance = kwargs.get("xy_tolerance", 0.05)
         self.action_goal.yaw_tolerance = kwargs.get("yaw_tolerance", 0.15)
-        self.action_goal.timeout = rospy.Duration(kwargs.get("timeout", 2.0))
+        self.action_goal.timeout = rospy.Duration(kwargs.get("timeout", 30.0))
         self.action_goal.reference_linear_speed = kwargs.get("reference_linear_speed", 0.5)
         self.action_goal.reference_angular_speed = kwargs.get("reference_angular_speed", 3.0)
         self.action_goal.allow_reverse = kwargs.get("allow_reverse", True)

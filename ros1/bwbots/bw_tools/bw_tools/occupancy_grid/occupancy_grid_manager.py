@@ -1,29 +1,54 @@
 #!/usr/bin/env python
-
-import os
-import cv2
-import yaml
-from nav_msgs.msg import OccupancyGrid
-import numpy as np
-from itertools import product
-
-from bw_tools.robot_state import Pose2d
-
 """
 Adapted from https://github.com/awesomebytes/occupancy_grid_python
 Class to deal with OccupancyGrid in Python
 as in local / global costmaps.
 
 Author: Sammy Pfeiffer <Sammy.Pfeiffer at student.uts.edu.au>
+        Ben Warwick
 """
 
+import os
+import cv2
+import copy
+import yaml
+from nav_msgs.msg import OccupancyGrid
+import numpy as np
+from itertools import product
+
+from bw_tools.robot_state.robot_state import State, Pose2d
 
 class OccupancyGridManager:
     def __init__(self):
-        # OccupancyGrid starts on lower left corner
-        self.map_config = {}
+        # grid meta data
+        self.map_config = {
+            "resolution": 0.0,
+            "width": 0,
+            "height": 0,
+            "origin": (0, 0),
+        }
+
+        # frame id of map
         self._reference_frame = ""
+
+        # map data as array.
+        # for maps, (defined by gmapping)
+        #   0 = free
+        #   100 = occupied
+        #   -1 = unknown
+        # for costmaps, (not defined by ROS. Convention defined here)
+        #   0 = no cost
+        #   100 = maximum cost
+        #   -1 = unknown cost
         self.grid_data = np.array([], dtype=np.int8)
+
+    @classmethod
+    def from_ogm(cls, other: "OccupancyGridManager"):
+        self = cls()
+        self.map_config = copy.copy(other.map_config)
+        self._reference_frame = other._reference_frame
+        self.grid_data = np.copy(other.grid_data)
+        return self
 
     @classmethod
     def from_msg(cls, msg: OccupancyGrid):
@@ -40,44 +65,92 @@ class OccupancyGridManager:
         self.map_config["height"] = msg.info.height
         self.map_config["origin"] = Pose2d.from_ros_pose(msg.info.origin)
         self._reference_frame = msg.header.frame_id
+        return self
 
     @classmethod
     def from_map_file(cls, config_path, reference_frame="map", image_path=None):
+        """
+        This method creates an OccupancyGridManager using map file data.
+        
+        map files encode free, occupied, or unknown areas. When opening the image
+        in a normal image viewer, the +Y axis is down and +X axis is to the right.
+        To view map files, the image needs to be flipped along the X axis. This method
+        does not flip the image.
+        
+        grid_data schema:
+            free = 0
+            occupied = 100
+            unknown = -1
+        map file schema (default gmapping output):
+            free = 254 (occupied if negate is True)
+            occupied = 0 (free if negate is True)
+            unknown = 205
+        map -> grid_data transform:
+            convert BGR to gray
+            bitwise not
+            scale from 0..255 to 0..1
+            label pixels < free_thresh as 0 (free)
+            label pixels > occupied_thresh as 100 (occupied)
+            label other pixels as -1 (unknown)
+        """
+        
         self = cls()
         with open(config_path) as file:
             map_file_config = yaml.safe_load(file)
         
         image = self._load_from_dict(map_file_config, reference_frame, config_path, image_path)
 
-        max_value = np.iinfo(image.dtype).max
-        occupied_thresh = int(map_file_config["occupied_thresh"] * max_value)
-        free_thresh = int(map_file_config["free_thresh"] * max_value)
+        occupied_thresh = map_file_config["occupied_thresh"]
+        free_thresh = map_file_config["free_thresh"]
         negate = map_file_config["negate"] != 0
         if negate:
-            image = cv2.bitwise_not(image)
+            swap = occupied_thresh
+            occupied_thresh = free_thresh
+            free_thresh = swap
 
-        self.grid_data = np.zeros_like(image)
-        self.grid_data = self.grid_data.astype(np.int8)
-        self.grid_data[np.where(image < free_thresh)] = 100
-        self.grid_data[np.where(image > occupied_thresh)] = 0
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        image = np.bitwise_not(image)
+        image = image.astype(np.float32)
+        max_value = np.iinfo(np.uint8).max
+        image /= max_value
+        self.grid_data = np.zeros(image.shape, dtype=np.int8)
+        self.grid_data[np.where(image < free_thresh)] = 0
+        self.grid_data[np.where(image > occupied_thresh)] = 100
         self.grid_data[np.where((image > free_thresh) & (image < occupied_thresh))] = -1
 
         return self
     
     @classmethod
-    def from_cost_file(cls, config_path, reference_frame="map", image_path=None):
+    def from_costmap_file(cls, config_path, reference_frame="map", image_path=None):
+        """
+        This method creates an OccupancyGridManager using map file data interpreted as a cost map.
+        
+        cost map files encode cost from 0..100. When opening the image
+        in a normal image viewer, the +Y axis is down and +X axis is to the right.
+        To view map files, the image needs to be flipped along the X axis. This method
+        does not flip the image.
+        
+        grid_data schema:
+            no cost = 0
+            maximum cost = 100
+            unknown cost = -1
+        map file schema (convension defined here):
+            no cost = 0
+            maximum cost = 100
+            unknown = 101 (or higher)
+        map -> grid_data transform:
+            convert BGR to gray (uint8)
+            label all pixels greater than 100 as -1 (unknown)
+        """
         self = cls()
         with open(config_path) as file:
             map_file_config = yaml.safe_load(file)
         
         image = self._load_from_dict(map_file_config, reference_frame, config_path, image_path)
-
-        max_value = np.iinfo(image.dtype).max
-
-        data = np.bitwise_not(image)
-        data = data.astype(np.float32)
-        data = 100 * data / max_value
-        self.grid_data = data.astype(np.int8)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        image = np.bitwise_not(image)
+        self.grid_data = image.astype(np.int8)
+        self.grid_data[np.where(image > 100)] = -1
         return self
     
     def _load_from_dict(self, map_file_config, reference_frame, config_path, image_path):
@@ -91,11 +164,7 @@ class OccupancyGridManager:
             image_path = os.path.join(os.path.dirname(config_path), os.path.basename(image_path))
         if not os.path.isfile(image_path):
             raise FileNotFoundError("Map image file not found: %s" % str(image_path))
-        image = cv2.imread(image_path)
-        image = image.astype(np.uint8)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        image = np.flipud(image)
-        
+        image = cv2.imread(image_path)        
         self.map_config["width"] = image.shape[1]
         self.map_config["height"] = image.shape[0]
         return image
@@ -107,53 +176,90 @@ class OccupancyGridManager:
         msg.info.width = self.width
         msg.info.height = self.height
         msg.info.origin = self.origin.to_ros_pose()
-        msg.data = self.grid_data.tobytes()
+        msg.data = self.grid_data.astype(np.int8).flatten().tolist()
         return msg
-    
-    def to_file(self, path, occupied_thresh=0.9, free_thresh=0.1, negate=False):
+
+    def _write_files(self, path, map_file_config, image):
+        image_path = os.path.join(os.path.splitext(path)[0] + ".pgm")
+        map_file_config["image"] = os.path.basename(image_path)
+
+        with open(path, 'w') as file:
+            yaml.dump(map_file_config, file)
+        cv2.imwrite(image_path, image)
+
+    def write_map(self, path, occupied_thresh=0.65, free_thresh=0.196, unknown=0.2, negate=False):
+        """
+        grid data -> map file friendly image
+            scale from 0..100 to 0..255
+            convert to uint8
+            bitwise not
+            any values in grid_data <= -1 set to 255 * (1 - unknown)
+            any values in grid_data > 100 set to 255 * (1 - unknown)
+        """
+        
         map_file_config = {}
         map_file_config["resolution"] = self.resolution
         map_file_config["origin"] = self.origin.to_list()
         map_file_config["occupied_thresh"] = occupied_thresh
         map_file_config["free_thresh"] = free_thresh
         map_file_config["negate"] = int(negate)
-
-        image_path = os.path.join(os.path.splitext(path)[0] + ".pgm")
-        map_file_config["image"] = os.path.basename(image_path)
-
-        with open(path, 'w') as file:
-            yaml.dump(map_file_config, file)
+        max_value = np.iinfo(np.uint8).max
+        unknown_value = int(max_value * (1.0 - unknown))
         
         max_value = np.iinfo(np.uint8).max
-        unknown_value = int(max_value * (occupied_thresh + free_thresh) / 2.0)
-        image = self.grid_data.astype(np.float32)
-        image = image / 100.0 * max_value
+        image = self.grid_data
+        image = image.astype(np.float32)
+        image = image * max_value / 100.0
         image = image.astype(np.uint8)
-        image = cv2.bitwise_not(image)
-        image[np.where(self.grid_data < 0)] = unknown_value
-        image = np.flipud(image)
-        cv2.imwrite(image_path, image)
+        image = np.bitwise_not(image)
+        image[self.grid_data <= -1] = unknown_value
+        image[self.grid_data > 100] = unknown_value
+
+        self._write_files(path, map_file_config, image)
+
+    def write_costmap(self, path):
+        map_file_config = {}
+        map_file_config["resolution"] = self.resolution
+        map_file_config["origin"] = self.origin.to_list()
+        map_file_config["occupied_thresh"] = 0.65  # unused by costmap
+        map_file_config["free_thresh"] = 0.196  # unused by costmap
+        map_file_config["negate"] = 0  # unused by costmap
+
+        unknown_value = 0
+
+        image = self.grid_data
+
+        image = image.astype(np.uint8)
+        image = np.bitwise_not(image)
+        image[self.grid_data <= -1] = unknown_value
+        image[self.grid_data > 100] = unknown_value
+
+        self._write_files(path, map_file_config, image)
+
 
     @property
     def resolution(self):
-        return self.map_config["resolution"]
+        return self.map_config.get("resolution", 0.0)
 
     @property
     def width(self):
-        return self.map_config["width"]
+        return self.map_config.get("width", 0)
 
     @property
     def height(self):
-        return self.map_config["height"]
+        return self.map_config.get("height", 0)
 
     @property
     def origin(self):
-        return self.map_config["origin"]
+        return self.map_config.get("origin", (0, 0))
 
     @property
     def reference_frame(self):
         return self._reference_frame
     
+    def is_set(self):
+        return len(self.map_config) != 0 and len(self._reference_frame) != 0 and len(self.grid_data) != 0
+
     def set_resolution(self, value):
         assert isinstance(value, float) or isinstance(value, int)
         self.map_config["resolution"] = value
@@ -174,7 +280,7 @@ class OccupancyGridManager:
             assert "x" in value
             assert "y" in value
             self.map_config["origin"] = Pose2d(value["x"], value["y"])
-        elif isinstance(value, Pose2d):
+        elif isinstance(value, State):
             self.map_config["origin"] = value
         else:
             raise ValueError("Invalid type for origin: %s" % repr(value))
@@ -182,30 +288,37 @@ class OccupancyGridManager:
     def set_reference_frame(self, value):
         self._reference_frame = value
     
-    def set_image(self, grid_data):
+    def set_grid_data(self, grid_data):
+        grid_data = grid_data.astype(np.int8)
         self.grid_data = grid_data
-    
-    def get_image(self):
+
+    def to_debug_image(self, unknown_color=(128, 128, 0)):
         max_value = np.iinfo(np.uint8).max
         image = self.grid_data.astype(np.float32)
         image = image / 100.0 * max_value
         image = image.astype(np.uint8)
-        image = cv2.bitwise_not(image)
-        image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-        image[np.where(self.grid_data < 0)] = np.array([128, 128, 0])
-        image = image.astype(np.uint8)
+        image = np.bitwise_not(image)
+        if image is None:
+            return np.array([], dtype=np.uint8)
+        if image.size > 0:
+            image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+            image[np.where(self.grid_data < 0)] = np.array(unknown_color, dtype=np.uint8)
+        else:
+            return np.array([], dtype=np.uint8)
+        image = np.flipud(image)
+        image = np.ascontiguousarray(image, dtype=np.uint8)
         return image
 
     def get_world_x_y(self, costmap_x, costmap_y):
         world_x = costmap_x * self.resolution + self.origin.x
-        world_y = costmap_y * self.resolution + self.origin.y
+        world_y = (self.height - costmap_y) * self.resolution + self.origin.y
         return world_x, world_y
 
     def get_costmap_x_y(self, world_x, world_y):
         costmap_x = int(
             round((world_x - self.origin.x) / self.resolution))
         costmap_y = int(
-            round((world_y - self.origin.y) / self.resolution))
+            self.height - round((world_y - self.origin.y) / self.resolution))
 
         return costmap_x, costmap_y
 
@@ -217,9 +330,9 @@ class OccupancyGridManager:
             raise IndexError("Coordinates out of grid (in frame: {}) x: {}, y: {} must be in between: [{}, {}], [{}, {}]. Internal error: {}".format(
                 self._reference_frame, x, y,
                 self.origin.x,
-                self.origin.x + self.height * self.resolution,
+                self.origin.x + self.width * self.resolution,
                 self.origin.y,
-                self.origin.y + self.width * self.resolution,
+                self.origin.y + self.height * self.resolution,
                 e))
 
     def get_cost_from_costmap_x_y(self, x, y):
@@ -237,6 +350,14 @@ class OccupancyGridManager:
             return True
         else:
             return False
+
+    def set_scale(self, scale):
+        if scale == 1.0:
+            return
+        self.map_config["resolution"] /= scale
+        self.map_config["width"] = int(self.map_config["width"] * scale)
+        self.map_config["height"] = int(self.map_config["height"] * scale)
+        self.grid_data = cv2.resize(self.grid_data, dsize=(self.map_config["width"], self.map_config["height"]), interpolation=cv2.INTER_NEAREST)
 
     def get_closest_cell_under_cost(self, x, y, cost_threshold, max_radius):
         """

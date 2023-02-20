@@ -1,11 +1,11 @@
-import math
 import rospy
-from typing import Optional, Tuple
+from typing import Callable, Optional, Tuple
 from bw_tools.controller.data import TrapezoidalProfileConfig
 from bw_tools.controller.trapezoidal_profile import TrapezoidalProfile
 from bw_tools.robot_state import Pose2d, Velocity
 from bw_tools.controller.states.controller_behavior import ControllerBehavior
 from bw_tools.controller.states.tolerance_timer import ToleranceTimer
+from bw_tools.controller.states.angle_wrap_manager import AngleWrapManager
 
 
 class DriveToPose(ControllerBehavior):
@@ -16,7 +16,8 @@ class DriveToPose(ControllerBehavior):
                 pose_tolerance: Pose2d,
                 linear_trapezoid: TrapezoidalProfileConfig,
                 angular_trapezoid: TrapezoidalProfileConfig,
-                strafe_angle_threshold: float) -> None:
+                strafe_angle_threshold: float,
+                angle_supplier: Callable) -> None:
         self.rotate_while_driving = rotate_while_driving
         self.check_angle_tolerance = check_angle_tolerance
         self.settle_time = settle_time
@@ -26,6 +27,8 @@ class DriveToPose(ControllerBehavior):
         self.angle_correction_kP = 1.0
         self.lateral_correction_kP = 1.0
         self.strafe_angle_threshold = strafe_angle_threshold
+        self.wrap_manager = AngleWrapManager()
+        self.heading_supplier = angle_supplier
 
         self.linear_trapezoid: Optional[TrapezoidalProfile] = None
         self.angular_trapezoid: Optional[TrapezoidalProfile] = None
@@ -37,6 +40,7 @@ class DriveToPose(ControllerBehavior):
         self.linear_trapezoid = TrapezoidalProfile(self.linear_trapezoid_config)
         self.angular_trapezoid = TrapezoidalProfile(self.angular_trapezoid_config)
         self.timer.reset()
+        self.wrap_manager.reset()
         self.start_pose = current_pose
         rospy.logdebug(f"Drive to pose initialized. Start: {self.start_pose}. Goal: {goal_pose}")
 
@@ -46,8 +50,8 @@ class DriveToPose(ControllerBehavior):
         relative_goal = goal_pose.relative_to(self.start_pose)
         traveled = current_pose.relative_to(self.start_pose)
 
-        error = goal_pose.relative_to(current_pose)
-        heading = error.heading()
+        heading = self.heading_supplier(goal_pose, current_pose)
+        heading = self.wrap_manager.unwrap(heading)
         
         distance_error = relative_goal.x - traveled.x
         lateral_error = relative_goal.y - traveled.y

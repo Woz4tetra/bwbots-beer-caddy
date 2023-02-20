@@ -26,7 +26,8 @@ class BwbotsController(Controller):
                 config.pose_tolerance,
                 config.drive_to_pose_trapezoid,
                 config.rotate_trapezoid,
-                config.strafe_angle_threshold
+                config.strafe_angle_threshold,
+                self.compute_heading,
             ),
             ControllerState.ROTATE_IN_PLACE_END: RotateToAngle(
                 config.settle_time,
@@ -59,10 +60,10 @@ class BwbotsController(Controller):
         rospy.logdebug(f"Setting controller state to {state}. goal={goal_pose}, current={current_pose}")
 
     def compute(self, goal_pose: Pose2d, current_pose: Pose2d) -> Tuple[Velocity, bool]:
-
         behavior = self.get_behavior()
         velocity, is_done = behavior.compute(goal_pose, current_pose)
         is_state_machine_done = False
+        rospy.logdebug(f"State: {self.active_state}. Velocity: {velocity}. Is done: {is_done}.")
         if is_done:
             if self.active_state == ControllerState.IDLE:
                 self.is_reversed = (

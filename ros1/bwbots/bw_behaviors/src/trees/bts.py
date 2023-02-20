@@ -97,8 +97,8 @@ class BehaviorTrees:
 
     def go_to_dock_stage1(self):
         return GoToTagBehavior(
-            -0.5,
-            0.0,
+            -0.42,
+            -0.04,
             0.0,
             self.dock_tag_supplier,
             self.tag_manager,
@@ -106,13 +106,12 @@ class BehaviorTrees:
             linear_min_vel=0.15,
             theta_min_vel=0.015,
             xy_tolerance=0.025,
-            yaw_tolerance=0.025,
-            timeout=10.0,
+            yaw_tolerance=0.015,
+            timeout=30.0,
             reference_linear_speed=0.5,
             linear_max_accel=0.25,
             rotate_in_place_start=True,
             rotate_while_driving=False,
-            rotate_in_place_end=True,
             reference_angular_speed=2.0,
             allow_reverse=False,
             failure_on_pose_failure=False,
@@ -121,23 +120,23 @@ class BehaviorTrees:
     def go_to_dock_stage2(self):
         return GoToTagBehavior(
             -0.05,
-            0.0,
+            -0.04,
             0.0,
             self.dock_tag_supplier,
             self.tag_manager,
             frame_id=self.go_to_tag_reference_frame,
-            xy_tolerance=0.1,
+            xy_tolerance=0.05,
             yaw_tolerance=0.5,
-            linear_min_vel=0.3,
+            linear_min_vel=0.2,
             theta_min_vel=0.0,
             reference_linear_speed=10.0,
             reference_angular_speed=3.0,
-            linear_max_accel=1.0,
+            linear_max_accel=0.5,
             allow_reverse=False,
             rotate_in_place_start=True,
             rotate_while_driving=False,
-            rotate_in_place_end=False,
             failure_on_pose_failure=True,
+            timeout=60.0,
         )
 
     def find_tag(self, tag_name_supplier):
@@ -189,17 +188,16 @@ class BehaviorTrees:
             lambda: GoToPoseBehavior(
                 Pose2d(self.tag_prep_offset, 0.0, 0.0),
                 self.robot_frame,
-                controller_type="strafe2",
                 xy_tolerance=0.3,
                 yaw_tolerance=0.3,
-                linear_min_vel=0.15,
+                linear_min_vel=0.3,
                 reference_linear_speed=1.0,
                 reference_angular_speed=3.0,
                 linear_max_accel=5.0,
+                timeout=30.0,
                 allow_reverse=True,
                 rotate_in_place_start=False,
                 rotate_while_driving=False,
-                rotate_in_place_end=False,
             ),
         )
 
@@ -307,7 +305,6 @@ class BehaviorTrees:
             linear_max_accel=0.25,
             rotate_in_place_start=True,
             rotate_while_driving=False,
-            rotate_in_place_end=True,
             reference_angular_speed=2.0,
             allow_reverse=False,
             failure_on_pose_failure=False,
@@ -333,7 +330,6 @@ class BehaviorTrees:
                     linear_max_accel=0.5,
                     rotate_in_place_start=True,
                     rotate_while_driving=False,
-                    rotate_in_place_end=True,
                     reference_angular_speed=1.5,
                     allow_reverse=False,
                     failure_on_pose_failure=False,
@@ -355,7 +351,6 @@ class BehaviorTrees:
                     linear_max_accel=0.5,
                     rotate_in_place_start=True,
                     rotate_while_driving=False,
-                    rotate_in_place_end=True,
                     reference_angular_speed=1.5,
                     allow_reverse=False,
                     failure_on_pose_failure=False,
@@ -381,7 +376,6 @@ class BehaviorTrees:
             linear_max_accel=0.5,
             rotate_in_place_start=True,
             rotate_while_driving=False,
-            rotate_in_place_end=True,
             reference_angular_speed=1.5,
             allow_reverse=False,
             failure_on_pose_failure=False,
@@ -423,6 +417,12 @@ class BehaviorTrees:
                     ),
                     attempts=2,
                 ),
+                self.save_tag_and_prep_waypoints(
+                    self.tag_prep_offset,
+                    0.0,
+                    self.dock_tag_supplier,
+                    self.dock_prep_supplier,
+                ),
                 self.go_to_dock_stage2(),
                 self.shuffle_until_charging(),
                 self.disable_motors(),
@@ -437,24 +437,7 @@ class BehaviorTrees:
                 self.enable_motors(),
                 self.set_robot_to_waypoint(self.dock_tag_supplier),
                 self.drive_off_dock(),
-                py_trees.decorators.Inverter(self.is_charging()),
-                self.find_tag(self.dock_tag_supplier),
-                self.is_tag_near(self.dock_tag_supplier),
-                # TODO: figure out this recovery sequence
-                # py_trees.composites.Selector("Verify tag precense", [
-                #     RepeatNTimesDecorator(py_trees.composites.Selector("Search for tag", [
-                #         py_trees.decorators.SuccessIsFailure(PauseBehavior(self.tag_settle_time)),
-                #         self.find_tag(self.dock_tag_supplier),
-                #         self.search_for_tag(self.dock_tag_supplier)
-                #     ]), attempts=2),
-                #     self.is_tag_near(self.dock_tag_supplier),
-                # ]),
-                self.save_tag_and_prep_waypoints(
-                    self.tag_prep_offset,
-                    0.0,
-                    self.dock_tag_supplier,
-                    self.dock_prep_supplier,
-                ),
+                py_trees.decorators.Inverter(self.is_charging())
             ],
         )
 

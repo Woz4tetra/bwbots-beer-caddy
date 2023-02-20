@@ -10,12 +10,14 @@ from typing import List
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import PoseArray
 
+from nav_msgs.msg import Odometry
+
 from apriltag_ros.msg import AprilTagDetectionArray
 from apriltag_ros.msg import AprilTagDetection
 
 from bw_interfaces.msg import FindTagAction, FindTagGoal, FindTagFeedback, FindTagResult
 
-from bw_tools.robot_state import Pose2d
+from bw_tools.robot_state import Pose2d, Velocity
 
 
 class FindTagCommand:
@@ -27,27 +29,31 @@ class FindTagCommand:
         self.stored_frame = rospy.get_param("~find_tag/stored_frame", "map")
         self.stddev_limit = rospy.get_param("~find_tag/stddev_limit", 3.0)
         self.min_samples = rospy.get_param("~find_tag/min_samples", 3)
+        self.speed_threshold = rospy.get_param("~find_tag/speed_threshold", 0.2)
+        self.angular_speed_threshold = rospy.get_param("~find_tag/angular_speed_threshold", 0.2)
 
         self.detections = {}
         self.computed_poses = {}
+        
+        self.robot_state = Pose2d()
+        self.robot_velocity = Velocity()
 
         self.detections_lock = threading.Lock()
 
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
-        self.left_tag_sub = rospy.Subscriber(
-            "/apriltag_left/tag_detections",
+        self.tag_sub = rospy.Subscriber(
+            "/apriltag/rotated_detections",
             AprilTagDetectionArray,
             self.tag_callback,
             queue_size=10,
         )
-        self.right_tag_sub = rospy.Subscriber(
-            "/apriltag_right/tag_detections",
-            AprilTagDetectionArray,
-            self.tag_callback,
-            queue_size=10,
+        
+        self.odom_sub = rospy.Subscriber(
+            "odom", Odometry, self.odom_callback, queue_size=10
         )
+
         self.filtered_tag_pub = rospy.Publisher(
             "/apriltag/filtered_tag_detections", AprilTagDetectionArray, queue_size=10
         )
@@ -64,7 +70,18 @@ class FindTagCommand:
         self.action_server.start()
         rospy.loginfo("find_tag is ready")
 
+    def odom_callback(self, msg: Odometry):
+        self.robot_state = Pose2d.from_ros_pose(msg.pose.pose)
+        self.robot_velocity = Velocity.from_ros_twist(msg.twist.twist)
+
     def tag_callback(self, msg: AprilTagDetectionArray):
+        if self.robot_velocity.magnitude() > self.speed_threshold:
+            rospy.logdebug(f"Robot speed is too fast to take a tag measurement. {self.robot_velocity}")
+            return
+        if abs(self.robot_velocity.theta) > self.angular_speed_threshold:
+            rospy.logdebug(f"Robot rotational speed is too fast to take a tag measurement. {self.robot_velocity}")
+            return
+        
         with self.detections_lock:
             for tag in msg.detections:
                 tag_id: List[int] = list(tag.id)

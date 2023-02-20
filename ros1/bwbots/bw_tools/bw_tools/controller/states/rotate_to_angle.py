@@ -1,4 +1,3 @@
-import math
 import rospy
 from typing import Callable, Optional, Tuple
 from bw_tools.robot_state import Pose2d, Velocity

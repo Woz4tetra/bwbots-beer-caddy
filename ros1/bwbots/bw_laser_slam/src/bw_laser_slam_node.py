@@ -55,10 +55,10 @@ class BwLaserSlam:
         if not os.path.isdir(self.map_dir):
             os.makedirs(self.map_dir)
 
-        # self.slam_launch_path = rospy.get_param("~slam_launch", self.default_launches_dir + "/gmapping.launch")
-        self.slam_launch_path = rospy.get_param("~slam_launch", self.default_launches_dir + "/als_slam.launch")
-        # self.localize_launch_path = rospy.get_param("~localize_launch", self.default_launches_dir + "/amcl.launch")
-        self.localize_launch_path = rospy.get_param("~localize_launch", self.default_launches_dir + "/als_localize.launch")
+        self.slam_launch_path = rospy.get_param("~slam_launch", self.default_launches_dir + "/gmapping.launch")
+        # self.slam_launch_path = rospy.get_param("~slam_launch", self.default_launches_dir + "/als_slam.launch")
+        self.localize_launch_path = rospy.get_param("~localize_launch", self.default_launches_dir + "/amcl.launch")
+        # self.localize_launch_path = rospy.get_param("~localize_launch", self.default_launches_dir + "/als_localize.launch")
         self.map_saver_launch_path = rospy.get_param("~map_saver_launch", self.default_launches_dir + "/map_saver.launch")
         self.fake_map_launch_path = rospy.get_param("~fake_map_launch", self.default_launches_dir + "/fake_map.launch")
 

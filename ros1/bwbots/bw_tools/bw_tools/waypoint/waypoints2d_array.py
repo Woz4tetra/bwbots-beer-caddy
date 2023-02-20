@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 from .waypoint2d import Waypoint2d
 from bw_interfaces.msg import Waypoint, WaypointArray
@@ -13,6 +13,9 @@ class Waypoints2dArray:
     
     def __setitem__(self, key: str, value: Waypoint2d):
         self.waypoints2d[key] = value
+
+    def get_names(self) -> Tuple[str]:
+        return tuple(self.waypoints2d.keys())
 
     def get(self, key: str, default=None):
         return self.waypoints2d.get(key, default)

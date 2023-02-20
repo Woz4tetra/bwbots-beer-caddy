@@ -71,7 +71,7 @@ class TagManager:
             return None
         tag = self.get_tag(name)
         tag_pose2d = Pose2d.from_ros_pose(tag.pose)
-        offset = Pose2d(y_offset, x_offset, math.pi / 2.0 + theta_offset)
+        offset = Pose2d(x_offset, y_offset, theta_offset)
         rotate_tag_pose2d = offset.transform_by(tag_pose2d)
         rotate_tag_pose_stamped = PoseStamped()
         rotate_tag_pose_stamped.header.frame_id = tag.reference_frame
