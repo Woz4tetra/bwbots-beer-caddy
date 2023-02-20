@@ -74,7 +74,7 @@ class DriveToPose(ControllerBehavior):
         if yaw_in_tolerance:
             angular_velocity = 0.0
 
-        return Velocity(forward_velocity, 0.0, angular_velocity), self.timer.is_done(distance_in_tolerance and yaw_in_tolerance)
+        return Velocity(forward_velocity, 0.0, angular_velocity), self.timer.is_done(distance_in_tolerance)
 
     def deinitialize(self, goal_pose: Pose2d, current_pose: Pose2d) -> None:
         pass
