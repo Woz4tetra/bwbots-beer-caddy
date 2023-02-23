@@ -272,6 +272,7 @@ class FindTagCommand:
             break
 
         if aborted:
+            rospy.loginfo(f"Interrupted while finding tag: {goal}")
             self.action_server.set_aborted(result, "Interrupted while finding tag")
         else:
             if result.success:

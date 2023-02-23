@@ -162,7 +162,7 @@ class BehaviorTrees:
 
     def rotate_in_place(self):
         return self.check_cache(
-            "rotate_in_place", lambda: RotateInPlaceBehavior(1.5, 10.0)
+            "rotate_in_place", lambda: RotateInPlaceBehavior(0.15, 30.0)
         )
 
     def search_for_tag(self, tag_name_supplier):
@@ -170,7 +170,7 @@ class BehaviorTrees:
             "Search for tag",
             policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE,
             children=[
-                py_trees.decorators.FailureIsSuccess(self.rotate_in_place()),
+                self.rotate_in_place(),
                 StopDrivingDecorator(
                     py_trees.decorators.FailureIsRunning(
                         self.find_tag(tag_name_supplier)
@@ -290,7 +290,7 @@ class BehaviorTrees:
 
     def go_to_dispenser_type_A0_stage1(self):
         return GoToTagBehavior(
-            -0.5,
+            -0.4,
             0.0,
             0.0,
             self.dispenser_tag_supplier,
@@ -298,8 +298,8 @@ class BehaviorTrees:
             frame_id=self.go_to_tag_reference_frame,
             linear_min_vel=0.15,
             theta_min_vel=0.015,
-            xy_tolerance=0.05,
-            yaw_tolerance=0.025,
+            xy_tolerance=0.1,
+            yaw_tolerance=0.1,
             timeout=10.0,
             reference_linear_speed=0.5,
             linear_max_accel=0.25,
@@ -315,8 +315,8 @@ class BehaviorTrees:
             "Park under A0 stage2",
             [
                 GoToTagBehavior(
-                    -0.17,
-                    -0.25,
+                    -0.11,
+                    0.25,
                     -math.pi / 2.0,
                     self.dispenser_tag_supplier,
                     self.tag_manager,
@@ -336,8 +336,8 @@ class BehaviorTrees:
                     valid_tag_window=rospy.Duration(60.0),  # type: ignore
                 ),
                 GoToTagBehavior(
-                    -0.075,
-                    -0.05,
+                    -0.11,
+                    0.0,
                     -math.pi / 2.0,
                     self.dispenser_tag_supplier,
                     self.tag_manager,
@@ -349,8 +349,8 @@ class BehaviorTrees:
                     timeout=20.0,
                     reference_linear_speed=0.25,
                     linear_max_accel=0.5,
-                    rotate_in_place_start=True,
-                    rotate_while_driving=False,
+                    rotate_in_place_start=False,
+                    rotate_while_driving=True,
                     reference_angular_speed=1.5,
                     allow_reverse=False,
                     failure_on_pose_failure=False,
@@ -382,6 +382,10 @@ class BehaviorTrees:
             valid_tag_window=rospy.Duration(100.0),  # type: ignore
         )
 
+    def selector(self, name, children):
+        inverted = [py_trees.decorators.Inverter(child) for child in children]
+        return py_trees.decorators.Inverter(py_trees.composites.Sequence(name, inverted))
+
     def dock(self):
         return py_trees.composites.Sequence(
             "Dock",
@@ -389,19 +393,17 @@ class BehaviorTrees:
                 py_trees.decorators.Inverter(self.is_charging()),
                 self.enable_motors(),
                 self.follow_waypoint(self.dock_prep_supplier),
-                PauseBehavior(self.tag_settle_time),
-                self.find_tag(self.dock_tag_supplier),
                 # TODO: figure out this recovery sequence
-                # RepeatNTimesDecorator(py_trees.composites.Selector("Search tag stage 0", [
-                #     # py_trees.decorators.SuccessIsFailure(PauseBehavior(self.tag_settle_time)),
-                #     # PauseBehavior(self.tag_settle_time),
-                #     self.find_tag(self.dock_tag_supplier),
-                #     self.search_for_tag(self.dock_tag_supplier),
-                #     self.rotate_in_place(),
-                #     self.follow_tag(self.dock_tag_supplier, self.tag_prep_offset, 0.0, 0.0)
-                # ]), attempts=2),
+                PauseBehavior(self.tag_settle_time),
+                py_trees.decorators.FailureIsSuccess(self.find_tag(self.dock_tag_supplier)),
+                RepeatNTimesDecorator(py_trees.composites.Sequence("Follow tag stage 0", [
+                    self.search_for_tag(self.dock_tag_supplier),
+                    self.follow_tag(self.dock_tag_supplier, self.tag_prep_offset, 0.0, 0.0),
+                    PauseBehavior(self.tag_settle_time),
+                    self.find_tag(self.dock_tag_supplier),
+                ]), attempts=2),
                 RepeatNTimesDecorator(
-                    py_trees.composites.Selector(
+                    self.selector(
                         "Search tag stage 1",
                         [
                             py_trees.composites.Sequence(

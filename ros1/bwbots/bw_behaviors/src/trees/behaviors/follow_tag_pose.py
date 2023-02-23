@@ -1,3 +1,4 @@
+import rospy
 from typing import Callable
 import py_trees
 import py_trees_ros
@@ -22,14 +23,16 @@ class FollowTagBehavior(py_trees_ros.actions.ActionClient):
             action_namespace="/bw/follow_waypoints")
 
     def update(self):
-        action_result = super().update()
         if not self.sent_goal:
             tag_name = self.tag_name_supplier()
+            rospy.loginfo(f"Following tag {tag_name}")
             if type(tag_name) != str:
+                rospy.logwarn(f"Invalid tag name supplied: {tag_name}")
                 return py_trees.Status.FAILURE
             
             tag_pose_stamped = self.tag_manager.get_offset_tag(tag_name, self.x_offset, self.y_offset, self.theta_offset)
             if tag_pose_stamped is None:
+                rospy.logwarn(f"Tag name {tag_name} doesn't evaluate to a position")
                 return py_trees.Status.FAILURE
 
             waypoint_array = WaypointArray()
@@ -42,4 +45,5 @@ class FollowTagBehavior(py_trees_ros.actions.ActionClient):
 
             self.action_goal = FollowWaypointsGoal()
             self.action_goal.waypoints = waypoint_array
+        action_result = super().update()
         return action_result

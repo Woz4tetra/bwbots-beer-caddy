@@ -1,5 +1,5 @@
 find_tag:
-  timeout: 5.0
+  timeout: 3.0
   stale_tag_time: 1.0
 
 go_to_pose:

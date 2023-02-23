@@ -8,7 +8,6 @@ Panels:
         - /TF1/Frames1
         - /Camera1/Visibility1
         - /mcl_particles1
-        - /Filtered tags1
       Splitter Ratio: 0.3412107527256012
     Tree Height: 565
   - Class: rviz/Selection
@@ -120,27 +119,7 @@ Visualization Manager:
           Value: true
         odom:
           Value: true
-        zed2_baro_link:
-          Value: true
-        zed2_base_link:
-          Value: true
-        zed2_camera_center:
-          Value: true
         zed2_imu_link:
-          Value: true
-        zed2_left_camera_frame:
-          Value: true
-        zed2_left_camera_optical_frame:
-          Value: true
-        zed2_mag_link:
-          Value: true
-        zed2_right_camera_frame:
-          Value: true
-        zed2_right_camera_optical_frame:
-          Value: true
-        zed2_temp_left_link:
-          Value: true
-        zed2_temp_right_link:
           Value: true
       Marker Alpha: 1
       Marker Scale: 0.5
@@ -154,24 +133,8 @@ Visualization Manager:
             base_link:
               base_tilt_link:
                 camera_link:
-                  zed2_base_link:
-                    zed2_camera_center:
-                      zed2_baro_link:
-                        {}
-                      zed2_left_camera_frame:
-                        zed2_imu_link:
-                          {}
-                        zed2_left_camera_optical_frame:
-                          {}
-                        zed2_temp_left_link:
-                          {}
-                      zed2_mag_link:
-                        {}
-                      zed2_right_camera_frame:
-                        zed2_right_camera_optical_frame:
-                          {}
-                        zed2_temp_right_link:
-                          {}
+                  zed2_imu_link:
+                    {}
                 laser:
                   {}
                 module_1:
@@ -303,9 +266,7 @@ Visualization Manager:
         Local Path: true
         Map: true
         Marker: true
-        MarkerArray: true
         PointCloud2: true
-        PointStamped: true
         Polygon: true
         Pose: true
         PoseArray: true
@@ -314,6 +275,7 @@ Visualization Manager:
         TEB Obstacles: true
         TF: false
         Value: true
+        Waypoints: true
         ZedOdDisplay: true
         gl_sampled_poses PoseArray: true
         mcl_particles: true
@@ -419,34 +381,23 @@ Visualization Manager:
       Unreliable: false
       Use Timestamp: false
       Value: true
-    - Alpha: 1
-      Class: rviz/PointStamped
-      Color: 204; 41; 204
-      Enabled: true
-      History Length: 1
-      Name: PointStamped
-      Queue Size: 10
-      Radius: 0.009999999776482582
-      Topic: /clicked_point
-      Unreliable: false
-      Value: true
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /bw/waypoint_markers
-      Name: MarkerArray
+      Name: Waypoints
       Namespaces:
-        posdesk: true
         posdispenser1: true
         posdispenser1_prep: true
         posdock_prep: true
         posdock_tag: true
-        poskitchen: true
-        textdesk: true
+        posroom1: true
+        posroom2: true
         textdispenser1: true
         textdispenser1_prep: true
         textdock_prep: true
         textdock_tag: true
-        textkitchen: true
+        textroom1: true
+        textroom2: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -532,7 +483,7 @@ Visualization Manager:
       Axes Radius: 0.009999999776482582
       Class: rviz/PoseArray
       Color: 0; 170; 255
-      Enabled: true
+      Enabled: false
       Head Length: 0.07000000029802322
       Head Radius: 0.029999999329447746
       Name: gl_sampled_poses PoseArray
@@ -542,7 +493,7 @@ Visualization Manager:
       Shape: Arrow (Flat)
       Topic: /gl_sampled_poses
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Arrow Length: 0.30000001192092896
       Axes Length: 0.30000001192092896
@@ -672,7 +623,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 7.238542079925537
+      Distance: 6.330880641937256
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -680,17 +631,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -1.2777915000915527
-        Y: 2.401665210723877
-        Z: 6.94976961312932e-07
+        X: -2.3453259468078613
+        Y: -0.6883829832077026
+        Z: -7.35534513296443e-07
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.2797962427139282
+      Pitch: 1.4097964763641357
       Target Frame: <Fixed Frame>
-      Yaw: 1.4317479133605957
+      Yaw: 3.3517515659332275
     Saved: ~
 Window Geometry:
   Camera:

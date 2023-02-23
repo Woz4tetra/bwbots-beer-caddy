@@ -31,6 +31,12 @@
     <node pkg="tf" type="static_transform_publisher" name="imu_tf"
         args="0.0 0.0 0.0  0 0 0 1 camera_link zed2_imu_link 20" />
 
+    <group ns="apriltag">
+        <node pkg="bw_tags" type="tag_marker_publisher.py" name="tag_marker_publisher" required="false" output="screen">
+            <param name="base_frame" value="base_link"/>
+        </node>
+    </group>
+
     <include file="$(find bw_laser_slam)/launch/bw_laser_slam.launch">
         <arg name="mode" value="localize" />
         <!-- <arg name="mode" value="mapping"/> -->

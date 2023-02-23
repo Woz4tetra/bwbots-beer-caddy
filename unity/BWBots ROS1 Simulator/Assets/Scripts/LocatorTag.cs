@@ -8,7 +8,7 @@ class LocatorTag : MonoBehaviour {
     public PoseMsg GetTagPose(Transform cameraTransform) {
         Vector3 relativePoint = cameraTransform.InverseTransformPoint(transform.position);
         Quaternion LocalRotation = Quaternion.Inverse(cameraTransform.rotation) * transform.rotation;
-        LocalRotation = LocalRotation * Quaternion.AngleAxis(-90.0f, Vector3.up);
+        LocalRotation = LocalRotation * Quaternion.Euler(0.0f, -90.0f, -90.0f);
         PoseMsg pose = new PoseMsg();
         pose.position = relativePoint.To<FLU>();
         pose.orientation = LocalRotation.To<FLU>();
