@@ -324,7 +324,7 @@ class BehaviorTrees:
                     linear_min_vel=0.015,
                     theta_min_vel=0.015,
                     xy_tolerance=0.1,
-                    yaw_tolerance=0.05,
+                    yaw_tolerance=0.1,
                     timeout=30.0,
                     reference_linear_speed=0.25,
                     linear_max_accel=0.5,
