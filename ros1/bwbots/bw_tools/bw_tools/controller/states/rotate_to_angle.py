@@ -45,6 +45,12 @@ class RotateToAngle(ControllerBehavior):
         traveled = self.goal_angle - error
         angular_velocity = self.trapezoid.compute(self.goal_angle, traveled)
         is_in_tolerance = abs(error) < self.angle_tolerance
+        rospy.logdebug(
+            f"Rotate to angle. Error: {error}. "
+            f"Traveled: {traveled}. "
+            f"Is in tolerance: {is_in_tolerance}. "
+            f"Angular velocity: {angular_velocity}"
+        )
         if is_in_tolerance:
             velocity = Velocity()
         else:

@@ -99,7 +99,7 @@ class BehaviorTrees:
     def go_to_dock_stage1(self):
         return GoToTagBehavior(
             -0.42,
-            -0.04,
+            0.0,
             0.0,
             self.dock_tag_supplier,
             self.tag_manager,
@@ -121,7 +121,7 @@ class BehaviorTrees:
     def go_to_dock_stage2(self):
         return GoToTagBehavior(
             -0.05,
-            -0.04,
+            0.0,
             0.0,
             self.dock_tag_supplier,
             self.tag_manager,

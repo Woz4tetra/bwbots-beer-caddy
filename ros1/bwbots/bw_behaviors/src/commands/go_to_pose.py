@@ -179,7 +179,13 @@ class GoToPoseCommand:
 
             velocity_command, is_done = controller.compute(self.goal_pose, self.robot_state)
 
-            rospy.logdebug(f"Error: {self.get_error(self.goal_pose, self.robot_state)}. Velocity: {velocity_command}. Goal: {self.goal_pose}. State: {self.robot_state}")
+            heading = self.get_error(self.goal_pose, self.robot_state).heading()
+            rospy.logdebug(
+                f"Error: {self.get_error(self.goal_pose, self.robot_state)}. "
+                f"Heading: {heading} Velocity: {velocity_command}. "
+                f"Goal: {self.goal_pose}. "
+                f"State: {self.robot_state}"
+            )
             self.publish_velocity(velocity_command)
             self.publish_state_feedback(
                 self.robot_state,

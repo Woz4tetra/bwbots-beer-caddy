@@ -19,6 +19,6 @@
         </node>
     </group>
 
-    <node pkg="tf" type="static_transform_publisher" name="base_link_to_camera_tilt" args="0.1511 0.0 0.187  0 0 0 1 base_tilt_link camera_link 20" />
+    <node pkg="tf" type="static_transform_publisher" name="base_link_to_camera_tilt" args="0.1511 -0.04 0.187  0 0 0 1 base_tilt_link camera_link 20" />
     <node pkg="tf" type="static_transform_publisher" name="base_tilt_link_to_laser" args="0.0775 0.0 0.230  0 0 1 0 base_tilt_link laser 20" />
 </launch>
