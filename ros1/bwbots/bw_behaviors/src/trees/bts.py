@@ -24,6 +24,7 @@ from trees.behaviors.pause import PauseBehavior
 from trees.behaviors.send_dispense_command_behavior import SendDispenseCommandBehavior
 from trees.behaviors.wait_for_drink_behavior import WaitForDrinkBehavior
 from trees.behaviors.follow_detection_behavior import FollowDetectionBehavior
+from trees.behaviors.wait_for_missions_behavior import WaitForMissionsBehavior
 
 from trees.decorators.stop_driving_decorator import StopDrivingDecorator
 from trees.decorators.repeat_n_times_decorator import RepeatNTimesDecorator
@@ -315,15 +316,15 @@ class BehaviorTrees:
             "Park under A0 stage2",
             [
                 GoToTagBehavior(
-                    -0.11,
-                    0.25,
-                    -math.pi / 2.0,
+                    -0.25,
+                    0.0,
+                    math.pi,
                     self.dispenser_tag_supplier,
                     self.tag_manager,
                     frame_id=self.go_to_tag_reference_frame,
                     linear_min_vel=0.015,
                     theta_min_vel=0.015,
-                    xy_tolerance=0.1,
+                    xy_tolerance=0.03,
                     yaw_tolerance=0.1,
                     timeout=30.0,
                     reference_linear_speed=0.25,
@@ -336,23 +337,24 @@ class BehaviorTrees:
                     valid_tag_window=rospy.Duration(60.0),  # type: ignore
                 ),
                 GoToTagBehavior(
-                    -0.11,
+                    -0.1,
                     0.0,
-                    -math.pi / 2.0,
+                    math.pi,
                     self.dispenser_tag_supplier,
                     self.tag_manager,
                     frame_id=self.go_to_tag_reference_frame,
                     linear_min_vel=0.01,
                     theta_min_vel=0.015,
-                    xy_tolerance=0.025,
-                    yaw_tolerance=0.03,
+                    xy_tolerance=0.03,
+                    yaw_tolerance=0.15,
                     timeout=20.0,
                     reference_linear_speed=0.25,
                     linear_max_accel=0.5,
                     rotate_in_place_start=False,
                     rotate_while_driving=True,
+                    rotate_in_place_end=False,
                     reference_angular_speed=1.5,
-                    allow_reverse=False,
+                    allow_reverse=True,
                     failure_on_pose_failure=False,
                     valid_tag_window=rospy.Duration(80.0),  # type: ignore
                 ),
@@ -380,6 +382,12 @@ class BehaviorTrees:
             allow_reverse=False,
             failure_on_pose_failure=False,
             valid_tag_window=rospy.Duration(100.0),  # type: ignore
+        )
+
+    def wait_for_missions(self):
+        return self.check_cache(
+            "wait_for_missions",
+            lambda: WaitForMissionsBehavior(self.drink_mission_manager, 3.0)
         )
 
     def selector(self, name, children):
@@ -563,13 +571,18 @@ class BehaviorTrees:
         )
 
     def deliver_drink(self):
-        return py_trees.composites.Sequence(
-            "Deliver drink",
+        return py_trees.composites.Sequence("Approach target",
             [
                 self.follow_waypoint(self.delivery_supplier),
-                py_trees.decorators.FailureIsSuccess(self.follow_person()),
-                self.wait_for_no_drink(60.0),
-            ],
+                py_trees.composites.Parallel("Deliver drink",
+                    policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE,
+                    children=
+                        [
+                            py_trees.decorators.FailureIsSuccess(self.follow_person()),
+                            self.wait_for_no_drink(60.0),
+                        ]
+                ),
+            ]
         )
 
     def drink_mission(self):
@@ -577,6 +590,7 @@ class BehaviorTrees:
             "Drink mission",
             [
                 self.has_no_drink(),
+                self.wait_for_missions(),
                 self.enable_motors(),
                 py_trees.decorators.FailureIsSuccess(self.undock()),
                 RepeatUntilNoDrinkMissionsDecorator(

@@ -218,7 +218,7 @@ ArticulationBody:
   m_Enabled: 1
   serializedVersion: 3
   m_Mass: 1
-  m_ParentAnchorPosition: {x: -0.057500005, y: 0, z: 0.08}
+  m_ParentAnchorPosition: {x: -0.057500005, y: 0, z: 0.08000006}
   m_ParentAnchorRotation: {x: -0.000000030908623, y: -0.000000030908623, z: -0.7071068, w: -0.7071068}
   m_AnchorPosition: {x: 0, y: 0, z: 0}
   m_AnchorRotation: {x: 0.70710677, y: 0.70710677, z: -0.00000003090862, w: -0.00000003090862}
@@ -355,7 +355,7 @@ ArticulationBody:
   m_Enabled: 1
   serializedVersion: 3
   m_Mass: 1
-  m_ParentAnchorPosition: {x: 0.05750002, y: 0, z: 0.079999976}
+  m_ParentAnchorPosition: {x: 0.05750002, y: 0, z: 0.080000035}
   m_ParentAnchorRotation: {x: 0, y: 0, z: 0.7071069, w: 0.7071069}
   m_AnchorPosition: {x: 0, y: 0, z: 0}
   m_AnchorRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
@@ -658,7 +658,7 @@ ArticulationBody:
   m_Enabled: 1
   serializedVersion: 3
   m_Mass: 1
-  m_ParentAnchorPosition: {x: -0.05750002, y: 0, z: -0.079999976}
+  m_ParentAnchorPosition: {x: -0.05750002, y: 0, z: -0.080000035}
   m_ParentAnchorRotation: {x: -0.000000030908623, y: -0.000000030908623, z: -0.7071068, w: -0.7071068}
   m_AnchorPosition: {x: 0, y: 0, z: 0}
   m_AnchorRotation: {x: 0.70710677, y: 0.70710677, z: -0.00000003090862, w: -0.00000003090862}
@@ -850,7 +850,7 @@ MeshCollider:
   m_Enabled: 0
   serializedVersion: 4
   m_Convex: 1
-  m_CookingOptions: 30
+  m_CookingOptions: -1
   m_Mesh: {fileID: -8498245220137350075, guid: dc8cd159364b31b30bb85256bb085e62, type: 3}
 --- !u!135 &201100069
 SphereCollider:
@@ -1105,7 +1105,7 @@ ArticulationBody:
   m_Enabled: 1
   serializedVersion: 3
   m_Mass: 1
-  m_ParentAnchorPosition: {x: 0.057500005, y: 0, z: -0.08}
+  m_ParentAnchorPosition: {x: 0.057500005, y: 0, z: -0.08000006}
   m_ParentAnchorRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
   m_AnchorPosition: {x: 0, y: 0, z: 0}
   m_AnchorRotation: {x: 0, y: 0, z: 0.70710677, w: 0.70710677}
@@ -2105,7 +2105,7 @@ ArticulationBody:
   m_Enabled: 1
   serializedVersion: 3
   m_Mass: 0.05
-  m_ParentAnchorPosition: {x: 0.03700004, y: 0.057500005, z: -0.000000007450581}
+  m_ParentAnchorPosition: {x: 0.03700004, y: 0.057500005, z: -0.000000067055225}
   m_ParentAnchorRotation: {x: 0, y: 0, z: 1.0000001, w: 0}
   m_AnchorPosition: {x: 0, y: 0, z: 0}
   m_AnchorRotation: {x: 0, y: 0, z: 0.70710677, w: 0.70710677}
@@ -2159,7 +2159,7 @@ MeshCollider:
   m_Enabled: 0
   serializedVersion: 4
   m_Convex: 1
-  m_CookingOptions: 30
+  m_CookingOptions: -1
   m_Mesh: {fileID: -8498245220137350075, guid: dc8cd159364b31b30bb85256bb085e62, type: 3}
 --- !u!135 &914812198
 SphereCollider:
@@ -2933,7 +2933,7 @@ ArticulationBody:
   m_Enabled: 1
   serializedVersion: 3
   m_Mass: 0.05
-  m_ParentAnchorPosition: {x: 0.037000056, y: 0.057500005, z: 0.000000029802322}
+  m_ParentAnchorPosition: {x: 0.037000027, y: 0.057500005, z: 0.000000029802322}
   m_ParentAnchorRotation: {x: 1.0000001, y: 0, z: -0.000000043711395, w: -0.000000017453296}
   m_AnchorPosition: {x: 0, y: 0, z: 0}
   m_AnchorRotation: {x: 0.70710677, y: -0.70710677, z: -0.000000018567277, w: -0.000000043249962}
@@ -2987,7 +2987,7 @@ MeshCollider:
   m_Enabled: 0
   serializedVersion: 4
   m_Convex: 1
-  m_CookingOptions: 30
+  m_CookingOptions: -1
   m_Mesh: {fileID: -8498245220137350075, guid: dc8cd159364b31b30bb85256bb085e62, type: 3}
 --- !u!135 &1372091411
 SphereCollider:
@@ -3098,7 +3098,7 @@ ArticulationBody:
   m_Enabled: 1
   serializedVersion: 3
   m_Mass: 0.05
-  m_ParentAnchorPosition: {x: 0.03700004, y: 0.057500005, z: -0.000000007450581}
+  m_ParentAnchorPosition: {x: 0.03700001, y: 0.057500005, z: -0.000000067055225}
   m_ParentAnchorRotation: {x: 1.0000001, y: 0, z: -0.000000043711395, w: 0}
   m_AnchorPosition: {x: 0, y: 0, z: 0}
   m_AnchorRotation: {x: 0.70710677, y: -0.70710677, z: -0.00000003090862, w: -0.00000003090862}
@@ -3152,7 +3152,7 @@ MeshCollider:
   m_Enabled: 0
   serializedVersion: 4
   m_Convex: 1
-  m_CookingOptions: 30
+  m_CookingOptions: -1
   m_Mesh: {fileID: -8498245220137350075, guid: dc8cd159364b31b30bb85256bb085e62, type: 3}
 --- !u!135 &1430557366
 SphereCollider:
@@ -3332,8 +3332,8 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 0.14522588, y: 0.2346, z: 0.5449093}
-  m_Center: {x: 0.20301752, y: 0.000000002923948, z: 0.2724547}
+  m_Size: {x: 0.15493213, y: 0.2346, z: 0.52564114}
+  m_Center: {x: 0.19816439, y: 0.0000000023540145, z: 0.2820888}
 --- !u!4 &1600725873 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 5f7b5de1624d45a779813834c8bdc293, type: 3}

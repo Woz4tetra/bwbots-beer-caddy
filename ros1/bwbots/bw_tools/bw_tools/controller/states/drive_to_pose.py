@@ -64,6 +64,7 @@ class DriveToPose(ControllerBehavior):
         
         if self.rotate_while_driving:
             angular_velocity = self.angle_correction_kP * heading + self.lateral_correction_kP * -lateral_error
+            angular_velocity *= abs(distance_error) / abs(relative_goal.x)
         else:
             angular_velocity = 0.0
         

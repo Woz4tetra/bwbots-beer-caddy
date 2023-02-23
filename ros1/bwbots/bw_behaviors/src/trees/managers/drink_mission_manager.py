@@ -17,6 +17,9 @@ class DrinkMissionManager:
         self.mission_queue_pub_thread = threading.Thread(target=self.publish_queue)
         self.mission_queue_pub_thread.start()
 
+    def __len__(self) -> int:
+        return len(self.missions.missions)
+
     def callback(self, msg):
         with self.mission_lock:
             self.missions.missions.append(msg)
