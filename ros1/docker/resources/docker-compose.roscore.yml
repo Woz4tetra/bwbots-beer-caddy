@@ -6,6 +6,8 @@ services:
     container_name: roscore
     restart: "no"
     network_mode: "host"
+    volumes:
+      - /home/${USER}/bwbots-beer-caddy/ros1/docker/resources/scripts:/root/scripts:rw
     environment:
       - ROS_MASTER_INTERFACE=wlan0
     privileged: true

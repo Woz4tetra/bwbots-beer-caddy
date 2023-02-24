@@ -26,10 +26,10 @@ class RotateToAngle(ControllerBehavior):
     def initialize(self, goal_pose: Pose2d, current_pose: Pose2d) -> None:
         self.trapezoid = TrapezoidalProfile(self.trapezoid_config)
         self.timer.reset()
+        self.wrap_manager.reset()
         error = self.get_error(goal_pose, current_pose)
         self.is_already_at_goal = abs(error) < self.angle_tolerance
         self.goal_angle = error
-        self.wrap_manager.reset()
         rospy.logdebug(f"Rotate to angle initialized. Goal angle: {self.goal_angle}")
     
     def get_error(self, goal_pose: Pose2d, current_pose: Pose2d) -> float:
@@ -46,7 +46,8 @@ class RotateToAngle(ControllerBehavior):
         angular_velocity = self.trapezoid.compute(self.goal_angle, traveled)
         is_in_tolerance = abs(error) < self.angle_tolerance
         rospy.logdebug(
-            f"Rotate to angle. Error: {error}. "
+            f"Rotate to angle. Goal: {self.goal_angle}. "
+            f"Error: {error}. "
             f"Traveled: {traveled}. "
             f"Is in tolerance: {is_in_tolerance}. "
             f"Angular velocity: {angular_velocity}"

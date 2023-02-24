@@ -8,8 +8,8 @@ class TrapezoidalProfile:
 
     def compute(self, goal: float, traveled: float) -> float:
         distance_total = abs(goal)
-        distance_traveled = abs(traveled)
-        distance_remaining = abs(goal - traveled)
+        distance_traveled = traveled if goal > 0.0 else -traveled
+        distance_remaining = distance_total - distance_traveled
         ramp_distance = self.config.max_speed ** 2 / self.config.acceleration
         if distance_total < ramp_distance:
             acceleration_distance = 0.5 * distance_total
@@ -30,6 +30,6 @@ class TrapezoidalProfile:
         
         trapezoid_velocity = trapezoid_speed
         trapezoid_velocity = trapezoid_velocity if goal > 0.0 else -trapezoid_velocity
-        trapezoid_velocity = trapezoid_velocity if distance_total - distance_traveled > 0.0 else -trapezoid_velocity
+        trapezoid_velocity = trapezoid_velocity if distance_remaining > 0.0 else -trapezoid_velocity
 
         return trapezoid_velocity

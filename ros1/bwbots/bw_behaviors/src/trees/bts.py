@@ -107,7 +107,7 @@ class BehaviorTrees:
             linear_min_vel=0.15,
             theta_min_vel=0.015,
             xy_tolerance=0.025,
-            yaw_tolerance=0.015,
+            yaw_tolerance=0.02,
             timeout=30.0,
             reference_linear_speed=0.5,
             linear_max_accel=0.25,
@@ -191,8 +191,8 @@ class BehaviorTrees:
                 self.robot_frame,
                 xy_tolerance=0.3,
                 yaw_tolerance=0.3,
-                linear_min_vel=0.3,
-                reference_linear_speed=1.0,
+                linear_min_vel=0.4,
+                reference_linear_speed=1.5,
                 reference_angular_speed=3.0,
                 linear_max_accel=5.0,
                 timeout=30.0,
@@ -403,13 +403,15 @@ class BehaviorTrees:
                 self.follow_waypoint(self.dock_prep_supplier),
                 # TODO: figure out this recovery sequence
                 PauseBehavior(self.tag_settle_time),
-                py_trees.decorators.FailureIsSuccess(self.find_tag(self.dock_tag_supplier)),
-                RepeatNTimesDecorator(py_trees.composites.Sequence("Follow tag stage 0", [
-                    self.search_for_tag(self.dock_tag_supplier),
-                    self.follow_tag(self.dock_tag_supplier, self.tag_prep_offset, 0.0, 0.0),
-                    PauseBehavior(self.tag_settle_time),
+                self.selector("Find tag stage 0", [
                     self.find_tag(self.dock_tag_supplier),
-                ]), attempts=2),
+                    RepeatNTimesDecorator(py_trees.composites.Sequence("Follow tag stage 0", [
+                        self.search_for_tag(self.dock_tag_supplier),
+                        self.follow_tag(self.dock_tag_supplier, self.tag_prep_offset, 0.0, 0.0),
+                        PauseBehavior(self.tag_settle_time),
+                        self.find_tag(self.dock_tag_supplier),
+                    ]), attempts=2),
+                ]),
                 RepeatNTimesDecorator(
                     self.selector(
                         "Search tag stage 1",

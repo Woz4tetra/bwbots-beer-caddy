@@ -25,6 +25,6 @@ global_frame: map
 
 shuffle_until_charging:
   is_charging_cooldown: 5.0
-  speed: 0.15
+  speed: 0.25
   loop_rate: 10.0
   interval: 0.4
