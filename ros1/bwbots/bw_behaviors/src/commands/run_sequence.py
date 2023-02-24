@@ -19,6 +19,13 @@ class RunSequenceCommand:
         self.play_sequence = rospy.ServiceProxy("/bw/play_sequence", PlaySequence)
         self.stop_sequence = rospy.ServiceProxy("/bw/stop_sequence", StopSequence)
 
+        self.named_sequences = rospy.get_param("~run_sequence/named_sequences", None)
+        if self.named_sequences is None:
+            rospy.logwarn("No sequence names loaded! Run Sequence will do nothing.")
+            self.named_sequences = {}
+        assert type(self.named_sequences) == list
+        self.sequences_lookup = {key: index for index, key in enumerate(self.named_sequences)}
+
         self.action_server = actionlib.SimpleActionServer(
             "run_sequence",
             RunSequenceAction,
@@ -29,11 +36,18 @@ class RunSequenceCommand:
         rospy.loginfo("run_sequence is ready")
 
     def action_callback(self, goal: RunSequenceGoal):
+        if goal.name not in self.sequences_lookup:
+            rospy.logwarn(f"{goal.name} is not a valid sequence name. {self.named_sequences}")
+            self.action_server.set_succeeded(RunSequenceResult(False))
+            return
+        
+        serial = self.sequences_lookup[goal.name]
         self.is_active = True
+        from_flash = True
         self.play_sequence(
-            goal.serial,
+            serial,
             goal.loop,
-            goal.from_flash
+            True
         )
         
         result = RunSequenceResult(False)
@@ -47,11 +61,11 @@ class RunSequenceCommand:
                 continue
             with self.state_lock:
                 if not self.state.is_running:
-                    rospy.loginfo(f"Sequence {goal.serial}-{int(goal.from_flash)} finished")
+                    rospy.loginfo(f"Sequence {serial}-{int(from_flash)} finished")
                     result.success = True
                     break
-                if self.state.serial != goal.serial or self.state.is_from_flash != goal.from_flash:
-                    rospy.loginfo(f"Sequencer changed from {goal.serial}-{int(goal.from_flash)} to {self.state.serial}-{self.state.is_from_flash}. Exiting action.")
+                if self.state.serial != serial or self.state.is_from_flash != from_flash:
+                    rospy.loginfo(f"Sequencer changed from {serial}-{int(from_flash)} to {self.state.serial}-{self.state.is_from_flash}. Exiting action.")
                     break
 
             if self.action_server.is_preempt_requested():

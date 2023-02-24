@@ -25,6 +25,7 @@ from trees.behaviors.send_dispense_command_behavior import SendDispenseCommandBe
 from trees.behaviors.wait_for_drink_behavior import WaitForDrinkBehavior
 from trees.behaviors.follow_detection_behavior import FollowDetectionBehavior
 from trees.behaviors.wait_for_missions_behavior import WaitForMissionsBehavior
+from trees.behaviors.play_sequence_behavior import PlaySequenceBehavior
 
 from trees.decorators.stop_driving_decorator import StopDrivingDecorator
 from trees.decorators.repeat_n_times_decorator import RepeatNTimesDecorator
@@ -390,6 +391,12 @@ class BehaviorTrees:
             lambda: WaitForMissionsBehavior(self.drink_mission_manager, 3.0)
         )
 
+    def play_sequence(self, name):
+        return self.check_cache(
+            f"play_sequence_{name}",
+            lambda: PlaySequenceBehavior(name)
+        )
+
     def selector(self, name, children):
         inverted = [py_trees.decorators.Inverter(child) for child in children]
         return py_trees.decorators.Inverter(py_trees.composites.Sequence(name, inverted))
@@ -437,6 +444,7 @@ class BehaviorTrees:
                 ),
                 self.go_to_dock_stage2(),
                 self.shuffle_until_charging(),
+                self.play_sequence("bot99"),
                 self.disable_motors(),
             ],
         )

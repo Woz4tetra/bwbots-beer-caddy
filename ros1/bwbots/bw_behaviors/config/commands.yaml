@@ -28,3 +28,25 @@ shuffle_until_charging:
   speed: 0.25
   loop_rate: 10.0
   interval: 0.4
+
+run_sequence:
+  named_sequences: 
+  - startup
+  - charging
+  - driving
+  - hotspot
+  - hotspot_charging
+  - idle
+  - bot99
+  - fur_elise
+  - cs1_1pre
+  - cs6_1pre
+  - cs6_6gig
+  - brawl
+  - mii_channel
+  - megalovania
+  - ruins
+  - dedede
+  - pokemon_center
+  - scale3
+  - nokia

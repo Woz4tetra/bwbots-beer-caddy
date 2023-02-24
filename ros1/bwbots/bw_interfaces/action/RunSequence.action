@@ -1,6 +1,5 @@
-uint8 serial
+string name
 bool loop
-bool from_flash
 ---
 bool success
 ---
