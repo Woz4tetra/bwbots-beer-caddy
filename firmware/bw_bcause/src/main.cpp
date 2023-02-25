@@ -130,7 +130,7 @@ const double SPEED_TO_COMMAND = 255.0 / 0.843;  // calculated max speed: 0.843 m
 const double VOLTAGE_COMPENSATION_NUMERATOR = 12.0;  // voltage the feedforward constant is tuned to
 const double MAX_SERVO_SPEED = 6.5;  // calculated max speed: 5.950 rad/s @ 5V
 
-const int DEADZONE_COMMAND = 50;
+const int DEADZONE_COMMAND = 55;
 const int STANDSTILL_DEADZONE_COMMAND = 120;
 const int MAX_SPEED_COMMAND = 255;
 
@@ -194,7 +194,6 @@ float load_voltage = 0.0f;
 bool was_charging = false;
 
 const float DISABLE_THRESHOLD = 9.5;
-const float CHARGE_CURRENT_THRESHOLD = 0.1;  // amps
 Adafruit_INA219 charge_ina(0x40 + 0b01);
 
 // ---
@@ -487,7 +486,7 @@ bool is_moving(
 void set_voltage_compensation(double compensation)
 {
     for (unsigned int channel = 0; channel < drive->get_num_motors(); channel++) {
-        drive->get_motor_pid(channel)->K_ff = SPEED_TO_COMMAND * compensation;
+        drive->get_motor_pid(channel)->set_deadzones(SPEED_TO_COMMAND * compensation, (double)DEADZONE_COMMAND, (double)STANDSTILL_DEADZONE_COMMAND);
     }
 }
 
@@ -684,9 +683,7 @@ void setup()
     // vx_pid->Kp = 0.25;
     // vx_pid->Ki = 0.0;
     // vx_pid->Kd = 0.0;
-    // vx_pid->K_ff = 1.0;
-    // vx_pid->deadzone_command = 0.0;
-    // vx_pid->standstill_deadzone_command = 0.0;
+    // pid->set_deadzones(1.0, 0.0, 0.0);
     // vx_pid->error_sum_clamp = 100.0;
     // vx_pid->command_min = -10.0;
     // vx_pid->command_max = 10.0;
@@ -696,34 +693,28 @@ void setup()
     // vy_pid->Kp = 1.0;
     // vy_pid->Ki = 0.0;
     // vy_pid->Kd = 0.0;
-    // vy_pid->K_ff = 1.0;
-    // vy_pid->deadzone_command = 0.0;
-    // vy_pid->standstill_deadzone_command = 0.0;
+    // pid->set_deadzones(1.0, 0.0, 0.0);
     // vy_pid->error_sum_clamp = 100.0;
     // vy_pid->command_min = -10.0;
     // vy_pid->command_max = 10.0;
     drive->set_vy_pid(NULL);  // disable vy PID
 
-    SpeedPID* vt_pid = drive->get_vt_pid();
-    vt_pid->Kp = 1.5;
-    vt_pid->Ki = 0.1;
-    vt_pid->Kd = 0.0;
-    vt_pid->K_ff = 1.0;
-    vt_pid->deadzone_command = 0.0;
-    vt_pid->standstill_deadzone_command = 0.0;
-    vt_pid->error_sum_clamp = 5000.0;
-    vt_pid->command_min = -15.0;
-    vt_pid->command_max = 15.0;
-    // drive->set_vt_pid(NULL);  // disable vt PID
+    // SpeedPID* vt_pid = drive->get_vt_pid();
+    // vt_pid->Kp = 1.5;
+    // vt_pid->Ki = 0.1;
+    // vt_pid->Kd = 0.0;
+    // pid->set_deadzones(1.0, 0.0, 0.0);
+    // vt_pid->error_sum_clamp = 5000.0;
+    // vt_pid->command_min = -15.0;
+    // vt_pid->command_max = 15.0;
+    drive->set_vt_pid(NULL);  // disable vt PID
 
     for (unsigned int channel = 0; channel < drive->get_num_motors(); channel++) {
         SpeedPID* pid = drive->get_motor_pid(channel);
         pid->Kp = 100.0;
         pid->Ki = 0.001;
         pid->Kd = 0.01;
-        pid->K_ff = SPEED_TO_COMMAND;
-        pid->deadzone_command = (double)DEADZONE_COMMAND;
-        pid->standstill_deadzone_command = (double)STANDSTILL_DEADZONE_COMMAND;
+        pid->set_deadzones(SPEED_TO_COMMAND, (double)DEADZONE_COMMAND, (double)STANDSTILL_DEADZONE_COMMAND);
         pid->error_sum_clamp = 100.0;
         pid->command_min = (double)(-MAX_SPEED_COMMAND);
         pid->command_max = (double)(MAX_SPEED_COMMAND);
@@ -823,17 +814,6 @@ void loop()
     update_button_led(button_state, control_mode);
     update_ina();
 
-    bool is_charging = current_A > CHARGE_CURRENT_THRESHOLD;
-    if (was_charging != is_charging) {
-        was_charging = is_charging;
-        if (current_A > CHARGE_CURRENT_THRESHOLD) {
-            DEBUG_SERIAL.println("Charging");
-        }
-        else {
-            DEBUG_SERIAL.println("Unplugged");
-        }
-    }
-
     if (load_voltage < DISABLE_THRESHOLD) {
         drive->set_enable(false);
     }
@@ -905,11 +885,13 @@ void loop()
         for (unsigned int channel = 0; channel < drive->get_num_motors(); channel++) {
             tunnel->writePacket(
                 "mo",
-                "cfef",
+                "cffeff",
                 channel,
                 drive->get_azimuth(channel),
+                drive->get_azimuth_setpoint(channel),
                 drive->get_wheel_position(channel),
-                drive->get_wheel_velocity(channel)
+                drive->get_wheel_velocity(channel),
+                drive->get_wheel_velocity_setpoint(channel)
             );
         }
     }
@@ -918,10 +900,9 @@ void loop()
 
         write_button_state();
         write_enable_state();
-        tunnel->writePacket("power", "ffb",
+        tunnel->writePacket("power", "ff",
             load_voltage,
-            current_A,
-            is_charging
+            current_A
         );
     }
 }

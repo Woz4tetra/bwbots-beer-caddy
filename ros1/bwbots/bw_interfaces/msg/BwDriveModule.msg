@@ -2,3 +2,5 @@ string module_index
 float64 azimuth_position
 float64 wheel_position
 float64 wheel_velocity
+float64 azimuth_position_setpoint
+float64 wheel_velocity_setpoint

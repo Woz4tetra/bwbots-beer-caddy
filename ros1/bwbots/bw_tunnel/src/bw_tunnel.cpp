@@ -66,20 +66,19 @@ BwTunnel::BwTunnel(ros::NodeHandle* nodehandle) :
     _raw_joint_pubs = new vector<ros::Publisher>();
     _raw_joint_msgs = new vector<std_msgs::Float64*>();
 
-    _module_pubs = new vector<ros::Publisher>();
-    
     for (int index = 0; index < _joint_names.size(); index++) {
         addJointPub(_joint_names.at(index));
     }
+
+    _module_msg.modules.resize(_num_modules);
+    _module_msg.header.frame_id = _base_frame;
 
     _charge_pub = nh.advertise<bw_interfaces::ChargeState>("charger", 10);
     _button_pub = nh.advertise<std_msgs::Bool>("button_pressed", 10);
     _button_counter_pub = nh.advertise<std_msgs::Int32>("button_counter", 10);
     _button_counter_result_pub = nh.advertise<std_msgs::Int32>("button_counter_result", 10);
     _is_enabled_pub = nh.advertise<std_msgs::Bool>("are_motors_enabled", 10);
-    for (int index = 0; index < _num_modules; index++) {
-        _module_pubs->push_back(nh.advertise<bw_interfaces::BwDriveModule>("module/" + std::to_string(index + 1), 50));
-    }
+    _module_pub = nh.advertise<bw_interfaces::BwDriveState>("modules", 10);
 
     _twist_sub = nh.subscribe<geometry_msgs::Twist>("cmd_vel", 50, &BwTunnel::twistCallback, this);
     _module_sub = nh.subscribe<bw_interfaces::BwDriveModule>("module_command", 50, &BwTunnel::moduleCommandCallback, this);
@@ -133,18 +132,20 @@ void BwTunnel::packetCallback(PacketResult* result)
     }
     else if (category.compare("mo") == 0) {
         uint8_t channel;
-        float azimuth, wheel_velocity;
+        float azimuth, azimuth_setpoint, wheel_velocity, wheel_setpoint;
         double wheel_position;
         if (!result->getUInt8(channel))  { ROS_ERROR("Failed to get module channel"); return; }
         if (!result->getFloat(azimuth))  { ROS_ERROR("Failed to get module azimuth"); return; }
+        if (!result->getFloat(azimuth_setpoint))  { ROS_ERROR("Failed to get module azimuth setpoint"); return; }
         if (!result->getDouble(wheel_position))  { ROS_ERROR("Failed to get module wheel position"); return; }
         if (!result->getFloat(wheel_velocity))  { ROS_ERROR("Failed to get module wheel velocity"); return; }
+        if (!result->getFloat(wheel_setpoint))  { ROS_ERROR("Failed to get module wheel velocity setpoint"); return; }
         publishJoint(
             result->getRecvTime(),
             (int)channel, azimuth
         );
 
-        if (channel >= _module_pubs->size()) {
+        if (channel >= _num_modules) {
             ROS_WARN_THROTTLE(1.0, "Encountered invalid channel index: %d", (int)channel);
         }
 
@@ -153,19 +154,24 @@ void BwTunnel::packetCallback(PacketResult* result)
         msg.azimuth_position = (double)azimuth;
         msg.wheel_position = wheel_position;
         msg.wheel_velocity = (double)wheel_velocity;
-        _module_pubs->at(channel).publish(msg);
+        msg.azimuth_position_setpoint = (double)azimuth_setpoint;
+        msg.wheel_velocity_setpoint = (double)wheel_setpoint;
+
+        _module_msg.modules[channel] = msg;
+
+        if (channel == _num_modules - 1) {
+            _module_msg.header.stamp = result->getRecvTime();
+            _module_pub.publish(_module_msg);
+        }
     }
     else if (category.compare("power") == 0) {
         float voltage, current;
-        bool is_charging;
         if (!result->getFloat(voltage))  { ROS_ERROR("Failed to get voltage"); return; }
         if (!result->getFloat(current))  { ROS_ERROR("Failed to get current"); return; }
-        if (!result->getBool(is_charging))  { ROS_ERROR("Failed to get is_charging"); return; }
 
         bw_interfaces::ChargeState msg;
         msg.battery_voltage = voltage;
         msg.charge_current = current;
-        msg.is_charging = is_charging;
         _charge_pub.publish(msg);
 
         logCharger(voltage);

@@ -235,6 +235,9 @@ class BehaviorTrees:
     def is_charging(self):
         return self.check_cache("is_charging", lambda: IsChargingBehavior())
 
+    def is_not_charging(self):
+        return self.check_cache("is_not_charging", lambda: IsChargingBehavior(invert=True))
+
     def set_robot_to_waypoint(self, waypoint_name_supplier):
         return SetPoseToWaypointBehavior(waypoint_name_supplier, self.waypoint_manager)
 
@@ -405,7 +408,7 @@ class BehaviorTrees:
         return py_trees.composites.Sequence(
             "Dock",
             [
-                py_trees.decorators.Inverter(self.is_charging()),
+                self.is_not_charging(),
                 self.enable_motors(),
                 self.follow_waypoint(self.dock_prep_supplier),
                 # TODO: figure out this recovery sequence
@@ -457,7 +460,7 @@ class BehaviorTrees:
                 self.enable_motors(),
                 self.set_robot_to_waypoint(self.dock_tag_supplier),
                 self.drive_off_dock(),
-                py_trees.decorators.Inverter(self.is_charging())
+                self.is_not_charging()
             ],
         )
 

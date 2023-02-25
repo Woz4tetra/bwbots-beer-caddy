@@ -1,3 +1,2 @@
 float32 battery_voltage
 float32 charge_current
-bool is_charging

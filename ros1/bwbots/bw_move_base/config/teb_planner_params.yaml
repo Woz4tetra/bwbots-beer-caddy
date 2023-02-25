@@ -10,7 +10,7 @@
 acc_lim_x: 0.5 # 0.5
 
 # Maximum angular acceleration of the robot in radians/sec^2
-acc_lim_theta: 1.0 # 12.0
+acc_lim_theta: 1.5 # 12.0
 
 # Maximum translational velocity of the robot in meters/sec
 max_vel_x: 0.35 # max speed 1.0 m/s
@@ -28,7 +28,7 @@ max_vel_theta: 3.5  # 5.0
 
 # Minimum turning radius of a carlike robot (set to zero for a diff-
 # drive robot).
-min_turning_radius: 0.3 # 0.15
+min_turning_radius: 0.25 # 0.15
 
 # The distance between the rear axle and the front axle. The value might
 # be negative for back-wheeled robots (only required if cmd_angle_instead_rotvel is set to true).
@@ -49,10 +49,10 @@ cmd_angle_instead_rotvel: false # false
 
 # Maximum strafing velocity of the robot (should be zero for non-
 # holonomic robots!)
-max_vel_y: 0.0 # 0.0
+max_vel_y: 0.5 # 0.0
 
 # Maximum strafing acceleration of the robot
-acc_lim_y: 0.0 # 0.5
+acc_lim_y: 1.0 # 0.5
 
 
 ## The following parameters are relevant for the footprint model used for
@@ -273,17 +273,25 @@ penalty_epsilon: 0.1 # 0.1
 # velocity
 weight_max_vel_x: 1.0 # 2.0
 
+# Optimization weight for satisfying the maximum allowed strafing
+# velocity
+weight_max_vel_y: 2.0 # 2.0
+
 # Optimization weight for satisfying the maximum allowed angular
 # velocity
-weight_max_vel_theta: 1.0 # 1.0
+weight_max_vel_theta: 50.0 # 1.0
 
 # Optimization weight for satisfying the maximum allowed translational
 # acceleration
 weight_acc_lim_x: 1.0 # 1.0
 
+# Optimization weight for satisfying the maximum allowed strafing
+# acceleration
+weight_acc_lim_y: 1.0 # 1.0
+
 # Optimization weight for satisfying the maximum allowed angular
 # acceleration
-weight_acc_lim_theta: 20.0 # 1.0
+weight_acc_lim_theta: 50.0 # 1.0
 
 # Optimization weight for satisfying the non-holonomic kinematics (this
 # parameter must be high since the kinematics equation constitutes an

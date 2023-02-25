@@ -129,6 +129,14 @@ double BwDriveModule::get_wheel_velocity() {
     return speed_filter->get_velocity();
 }
 
+double BwDriveModule::get_wheel_velocity_setpoint() {
+    return speed_pid->get_target();
+}
+
+double BwDriveModule::get_azimuth_setpoint() {
+    return setpoint_angle;
+}
+
 void BwDriveModule::update_wheel_velocity() {
     speed_filter->compute(get_wheel_position());
 }

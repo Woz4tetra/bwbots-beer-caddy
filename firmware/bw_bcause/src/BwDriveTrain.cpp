@@ -432,6 +432,27 @@ double BwDriveTrain::get_azimuth(unsigned int channel)
     }
 }
 
+double BwDriveTrain::get_wheel_velocity_setpoint(unsigned int channel)
+{
+    if (channel > get_num_motors()) {
+        return 0.0;
+    }
+    else {
+        return drive_modules[channel]->get_wheel_velocity_setpoint();
+    }
+}
+
+double BwDriveTrain::get_azimuth_setpoint(unsigned int channel)
+{
+    if (channel > get_num_motors()) {
+        return 0.0;
+    }
+    else {
+        return drive_modules[channel]->get_azimuth_setpoint();
+    }
+}
+
+
 SpeedPID* BwDriveTrain::get_motor_pid(unsigned int channel)
 {
     if (channel > get_num_motors()) {

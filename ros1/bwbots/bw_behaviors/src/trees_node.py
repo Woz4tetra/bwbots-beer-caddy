@@ -30,7 +30,10 @@ from trees.bts import BehaviorTrees
 
 class TreesNode:
     def __init__(self) -> None:
-        rospy.init_node("bw_trees")
+        rospy.init_node(
+            "bw_trees",
+            log_level=rospy.DEBUG,
+        )
 
         self.tick_rate: float = rospy.get_param("~tick_rate", 0.0)
 

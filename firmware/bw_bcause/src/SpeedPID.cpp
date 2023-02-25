@@ -35,9 +35,22 @@ int SpeedPID::sign(int x) {
     return (x > 0) - (x < 0);
 }
 
+void SpeedPID::set_deadzones(double K_ff, double deadzone_command, double standstill_deadzone_command)
+{
+    this->K_ff = K_ff;
+    this->deadzone_command = deadzone_command;
+    this->standstill_deadzone_command = standstill_deadzone_command;
+}
 
 void SpeedPID::set_target(double target) {
-    feedforward = K_ff * target;
+    if (K_ff != 0.0) {
+        if (abs(target) < epsilon) {
+            feedforward = 0.0;
+        }
+        else {
+            feedforward = K_ff * target;
+        }
+    }
     if (sign(target) != this->target) {
         error_sum = 0.0;
     }

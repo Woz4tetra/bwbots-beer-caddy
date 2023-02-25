@@ -37,6 +37,7 @@
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
 
 #include "bw_interfaces/BwDriveModule.h"
+#include "bw_interfaces/BwDriveState.h"
 #include "bw_interfaces/OdomReset.h"
 #include "bw_interfaces/ChargeState.h"
 #include "bw_interfaces/PlaySequence.h"
@@ -93,6 +94,8 @@ private:
     ros::Time _prev_log_time;
     float _prev_log_voltage;
 
+    bw_interfaces::BwDriveState _module_msg;
+
     // Publishers
     tf2_ros::TransformBroadcaster _tf_broadcaster;
     ros::Publisher _odom_pub;
@@ -102,7 +105,7 @@ private:
     ros::Publisher _button_counter_pub;
     ros::Publisher _button_counter_result_pub;
     ros::Publisher _is_enabled_pub;
-    vector<ros::Publisher>* _module_pubs;
+    ros::Publisher _module_pub;
     ros::Publisher _sequence_state_pub;
 
     // Subscribers

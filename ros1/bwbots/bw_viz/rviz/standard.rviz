@@ -119,7 +119,27 @@ Visualization Manager:
           Value: true
         odom:
           Value: true
+        zed2_baro_link:
+          Value: true
+        zed2_base_link:
+          Value: true
+        zed2_camera_center:
+          Value: true
         zed2_imu_link:
+          Value: true
+        zed2_left_camera_frame:
+          Value: true
+        zed2_left_camera_optical_frame:
+          Value: true
+        zed2_mag_link:
+          Value: true
+        zed2_right_camera_frame:
+          Value: true
+        zed2_right_camera_optical_frame:
+          Value: true
+        zed2_temp_left_link:
+          Value: true
+        zed2_temp_right_link:
           Value: true
       Marker Alpha: 1
       Marker Scale: 0.5
@@ -133,8 +153,24 @@ Visualization Manager:
             base_link:
               base_tilt_link:
                 camera_link:
-                  zed2_imu_link:
-                    {}
+                  zed2_base_link:
+                    zed2_camera_center:
+                      zed2_baro_link:
+                        {}
+                      zed2_left_camera_frame:
+                        zed2_imu_link:
+                          {}
+                        zed2_left_camera_optical_frame:
+                          {}
+                        zed2_temp_left_link:
+                          {}
+                      zed2_mag_link:
+                        {}
+                      zed2_right_camera_frame:
+                        zed2_right_camera_optical_frame:
+                          {}
+                        zed2_temp_right_link:
+                          {}
                 laser:
                   {}
                 module_1:
@@ -386,18 +422,18 @@ Visualization Manager:
       Marker Topic: /bw/waypoint_markers
       Name: Waypoints
       Namespaces:
+        posdesk: true
         posdispenser1: true
         posdispenser1_prep: true
         posdock_prep: true
         posdock_tag: true
-        posroom1: true
-        posroom2: true
+        poskitchen: true
+        textdesk: true
         textdispenser1: true
         textdispenser1_prep: true
         textdock_prep: true
         textdock_tag: true
-        textroom1: true
-        textroom2: true
+        textkitchen: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -623,7 +659,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 3.619464874267578
+      Distance: 8.490608215332031
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -631,17 +667,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.8567166328430176
-        Y: 0.29119303822517395
-        Z: -7.35534513296443e-07
+        X: -5.306191444396973
+        Y: -1.0394296646118164
+        Z: 9.893051355902571e-08
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.9497969150543213
+      Pitch: 1.2597968578338623
       Target Frame: <Fixed Frame>
-      Yaw: 3.4867522716522217
+      Yaw: 3.7667527198791504
     Saved: ~
 Window Geometry:
   Camera:

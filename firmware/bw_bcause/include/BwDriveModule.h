@@ -64,8 +64,10 @@ public:
     );
     void set_strafe_limits(double min_strafe_angle, double max_strafe_angle);
     double get_azimuth();
+    double get_azimuth_setpoint();
     double get_wheel_position();
     double get_wheel_velocity();
+    double get_wheel_velocity_setpoint();
     double get_x_location()  { return x_location; }
     double get_y_location()  { return y_location; }
     void set(double vx, double vy, double vt, double dt);

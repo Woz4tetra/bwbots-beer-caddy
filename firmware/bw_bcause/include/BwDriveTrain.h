@@ -73,8 +73,10 @@ public:
     BwDriveModule* get_module(unsigned int channel);
     unsigned int get_num_motors();
     double get_wheel_velocity(unsigned int channel);
+    double get_wheel_velocity_setpoint(unsigned int channel);
     double get_wheel_position(unsigned int channel);
     double get_azimuth(unsigned int channel);
+    double get_azimuth_setpoint(unsigned int channel);
     void get_position(double& x, double& y, double& theta, double vx, double vy, double vt);
     void get_velocity(double& vx, double& vy, double& vt);
     static double wrap_angle(double angle);
