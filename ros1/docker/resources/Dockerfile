@@ -10,7 +10,7 @@ ENV L4T_MINOR_VERSION=6
 ENV L4T_PATCH_VERSION=1
 
 ENV ZED_SDK_MAJOR=3
-ENV ZED_SDK_MINOR=7
+ENV ZED_SDK_MINOR=8
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV SHELL /bin/bash
@@ -21,7 +21,7 @@ RUN apt-get update && \
 RUN apt-get update && \
     apt-get install -y \
         nano tmux curl htop net-tools iproute2 iputils-ping gdb dumb-init \
-        build-essential libtool autoconf zip unzip wget
+        build-essential libtool autoconf zip unzip wget zstd
 
 # ---
 # CMake

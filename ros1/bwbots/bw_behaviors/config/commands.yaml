@@ -28,6 +28,7 @@ shuffle_until_charging:
   speed: 0.25
   loop_rate: 10.0
   interval: 0.4
+  current_threshold: 0.03
 
 run_sequence:
   named_sequences: 

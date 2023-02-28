@@ -4,7 +4,7 @@ import py_trees
 from bw_interfaces.msg import ChargeState
 
 class IsChargingBehavior(py_trees.behaviour.Behaviour):
-    def __init__(self, topic="charger", sample_duration=1.0, current_threshold=0.05, invert=False):
+    def __init__(self, topic="charger", sample_duration=1.0, current_threshold=0.03, invert=False):
         super().__init__(f"Is {'not ' if invert else ''}charging")
         self.is_charging_topic = topic
         self.start_time = rospy.Time(0)
