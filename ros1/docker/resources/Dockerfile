@@ -102,7 +102,9 @@ RUN apt-get update && sudo apt-get install -y \
     python3-termcolor \
     i2c-tools \
     python3-smbus \
-    libceres-dev
+    libceres-dev \
+    mosquitto \
+    mosquitto-clients
 
 RUN python3 -m pip install scipy==1.5.4 \
     shapely==1.6.4 \
@@ -110,7 +112,8 @@ RUN python3 -m pip install scipy==1.5.4 \
     pyperclip \
     dataclasses \
     py-trees==0.7.6 \
-    tqdm
+    tqdm \
+    paho-mqtt
 
 RUN apt-get install -y llvm-7*
 RUN ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin

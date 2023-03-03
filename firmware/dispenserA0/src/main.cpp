@@ -45,6 +45,7 @@ const int RELAY_PIN = 12;
 bool is_dispensing = false;
 uint32_t dispense_start_time = 0;
 const uint32_t min_dispense_time = 100;
+const uint32_t max_dispense_time = 5000;
 
 
 void start_dispense() {
@@ -62,8 +63,14 @@ void check_dispense() {
     if (!is_dispensing) {
         return;
     }
-    if (millis() - dispense_start_time > min_dispense_time && digitalRead(LIMIT_SWITCH_PIN)) {
+    uint32_t current_time = millis();
+    if (current_time - dispense_start_time > min_dispense_time && digitalRead(LIMIT_SWITCH_PIN)) {
         stop_dispense();
+        publish_dispense_done(true);
+    }
+    if (current_time - dispense_start_time > max_dispense_time) {
+        stop_dispense();
+        publish_dispense_done(false);
     }
 }
 
@@ -146,6 +153,13 @@ void publish_dispense_status(bool is_dispensing) {
     Serial.print("Publish dispense status: ");
     Serial.println(msg);
     client.publish("is_dispensing", msg);
+}
+
+void publish_dispense_done(bool success) {
+    snprintf(msg, MSG_BUFFER_SIZE, "%s\t%d", device_name, success);
+    Serial.print("Publish dispense done: ");
+    Serial.println(msg);
+    client.publish("dispense_done", msg);
 }
 
 void publish_drink_status(bool has_drink) {
