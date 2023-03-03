@@ -42,6 +42,67 @@ const int BUTTON_PIN = 14;
 const int LIMIT_SWITCH_PIN = 21;
 const int RELAY_PIN = 12;
 
+
+void setup_wifi();
+void callback(char* topic, byte* payload, unsigned int length);
+void start_dispense();
+void stop_dispense();
+void check_dispense();
+bool has_drink();
+bool read_button();
+bool get_button_state();
+void publish_dispense_status(bool is_dispensing);
+void publish_dispense_done(bool success);
+void publish_drink_status(bool has_drink);
+void reconnect();
+
+
+void setup_wifi() {
+    
+    Serial.print("Connecting to ");
+    Serial.println(ssid);
+    WiFi.begin(ssid, password);
+
+    int blink = 0;
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        digitalWrite(LED_BUILTIN, blink % 2 == 0);
+        Serial.print(".");
+        blink++;
+    }
+    for (blink = 0; blink < 16; blink++) {
+        digitalWrite(LED_BUILTIN, blink % 2 == 0);
+        delay(50);
+    }
+    digitalWrite(LED_BUILTIN, LOW);
+
+    randomSeed(micros());
+
+    Serial.println("");
+    Serial.println("WiFi connected");  
+    Serial.println("IP address: ");
+    Serial.println(WiFi.localIP());
+}
+
+void callback(char* topic, byte* payload, unsigned int length) {
+    Serial.print("Message arrived [");
+    Serial.print(topic);
+    Serial.print("] ");
+    for (unsigned int i = 0; i < length; i++) {
+        Serial.print((char)payload[i]);
+    }
+    Serial.println();
+
+    if (strcmp(topic, "start_dispense") == 0) {
+        memcpy(msg, payload, length + 1);
+        msg[length] = 0;
+        if (strcmp(msg, device_name) == 0) {
+            Serial.println("Starting dispense");
+            start_dispense();
+        }
+    }
+}
+
 bool is_dispensing = false;
 uint32_t dispense_start_time = 0;
 const uint32_t min_dispense_time = 100;
@@ -101,52 +162,6 @@ bool get_button_state() {
     return button_state;
 }
 
-
-void setup_wifi() {
-    
-    Serial.print("Connecting to ");
-    Serial.println(ssid);
-    WiFi.begin(ssid, password);
-
-    int blink = 0;
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        digitalWrite(LED_BUILTIN, blink % 2 == 0);
-        Serial.print(".");
-        blink++;
-    }
-    for (blink = 0; blink < 16; blink++) {
-        digitalWrite(LED_BUILTIN, blink % 2 == 0);
-        delay(50);
-    }
-    digitalWrite(LED_BUILTIN, LOW);
-
-    randomSeed(micros());
-
-    Serial.println("");
-    Serial.println("WiFi connected");  
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
-}
-
-void callback(char* topic, byte* payload, unsigned int length) {
-    Serial.print("Message arrived [");
-    Serial.print(topic);
-    Serial.print("] ");
-    for (unsigned int i = 0; i < length; i++) {
-        Serial.print((char)payload[i]);
-    }
-    Serial.println();
-
-    if (strcmp(topic, "start_dispense") == 0) {
-        memcpy(msg, payload, length + 1);
-        msg[length] = 0;
-        if (strcmp(msg, device_name) == 0) {
-            Serial.println("Starting dispense");
-            start_dispense();
-        }
-    }
-}
 
 void publish_dispense_status(bool is_dispensing) {
     snprintf(msg, MSG_BUFFER_SIZE, "%s\t%d", device_name, is_dispensing);
