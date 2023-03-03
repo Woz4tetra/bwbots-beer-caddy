@@ -10,7 +10,7 @@
   // Pin  6: Teensy++ 2.0 has the LED on pin 6
   // Pin 13: Teensy 3.0 has the LED on pin 13
 
-#define SENSORPIN 4
+#define SENSORPIN 2
 
 // variables will change:
 int sensorState = 0, lastState=0;         // variable for reading the pushbutton status
@@ -19,8 +19,7 @@ void setup() {
   // initialize the LED pin as an output:
   pinMode(LEDPIN, OUTPUT);      
   // initialize the sensor pin as an input:
-  pinMode(SENSORPIN, INPUT);     
-  digitalWrite(SENSORPIN, HIGH); // turn on the pullup
+  pinMode(SENSORPIN, INPUT_PULLUP);
   
   Serial.begin(9600);
 }
