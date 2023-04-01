@@ -3,25 +3,29 @@ FROM osrf/ros:noetic-desktop-full
 RUN apt-get update && \
     apt-get install -y --no-install-recommends apt-utils
 RUN apt-get update && \
-    apt-get install -y git nano tmux curl htop net-tools iproute2 iputils-ping dumb-init gdb
-RUN apt-get update && \
-    apt-get install -y libsdl-image1.2-dev libsdl-dev python3-pip
+    apt-get install -y git nano tmux curl htop net-tools iproute2 iputils-ping dumb-init gdb \
+    libsdl-image1.2-dev libsdl-dev python3-pip wget python3-tk
 
-RUN python3 -m pip install scipy==1.5.4 \
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
+RUN python -m pip install -U setuptools
+RUN python -m pip install scipy==1.5.4 \
     shapely==1.6.4 \
     mido \
     pyperclip \
     dataclasses \
+    numpy==1.22.4 \
     tqdm \
-    requests
+    requests \
+    PyQt5==5.10.1
 
-RUN apt-get update && apt-get install -y llvm-7*
+RUN apt-get install -y llvm-7*
 RUN ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin
-RUN python3 -m pip install Cython
-RUN python3 -m pip install llvmlite==0.32.0
-RUN python3 -m pip install numba==0.49.0
+RUN python -m pip install Cython
+RUN python -m pip install llvmlite==0.32.0
+RUN python -m pip install numba==0.49.0
 
-RUN ln -s /usr/bin/python3 /usr/bin/python
+RUN python -m pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
 
 
 RUN python3 -c "$(curl -fsSL https://raw.githubusercontent.com/platformio/platformio/master/scripts/get-platformio.py)"
@@ -86,29 +90,68 @@ RUN apt-get update && apt-get install -y --ignore-missing ros-noetic-rospy \
     ros-noetic-py-trees-msgs \
     ros-noetic-py-trees \
     ros-noetic-rqt-py-trees \
-    ros-noetic-rosbridge-suite
+    ros-noetic-rosbridge-suite \
+    ros-noetic-marker-msgs \
+    ros-noetic-ros-numpy
 
+RUN sh -c 'echo "deb http://packages.ros.org/ros-testing/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+RUN apt-get update && apt-get install -y \
+    python3-catkin-tools \
+    python3-osrf-pycommon \
+    python3-wstool
+
+
+RUN python -m pip install wandb
+RUN mkdir -p /opt/yolov5
+WORKDIR /opt/yolov5
+RUN git clone https://github.com/ultralytics/yolov5.git
+RUN cd yolov5 && python -m pip install -r requirements.txt
+
+WORKDIR /
+RUN ldconfig
+
+RUN apt-get clean
 
 # ---
-# bwbots build environment
+# User setup
 # ---
 
 ENV USER=root
 ENV HOME=/${USER}
 WORKDIR ${HOME}
 
-ENV ROS_WS_ROOT=${HOME}/ros_ws
-ENV ROS_WS_SRC=${HOME}/ros_ws/src
+# ---
+# Build temporary workspace
+# ---
 
-ENV FLASK_ENV=development
-ENV PYTHONPATH="${PYTHONPATH}:${ROS_WS_SRC}/bwbots/bw_tools"
-ENV PYTHONIOENCODING=utf-8
+ENV DEP_ROS_WS_ROOT=${HOME}/dep_ws
+ENV DEP_ROS_WS_SRC=${HOME}/dep_ws/src
 
 COPY ./unity/docker/resources/install ${HOME}/install
 
-RUN apt-get install -y xclip xvfb
-RUN Xvfb :99 -screen 0 1280x720x16 &
-RUN export DISPLAY=:99
+WORKDIR ${DEP_ROS_WS_SRC}
+RUN wstool init .
+RUN wstool merge -t . ${HOME}/install/bwbots_workstation.rosinstall
+RUN wstool update -t .
+
+RUN rosdep install -y --from-paths . --ignore-src --rosdistro noetic
+
+RUN rm -r ${DEP_ROS_WS_SRC}/zed-ros-wrapper/zed_nodelets
+
+WORKDIR ${DEP_ROS_WS_ROOT}
+# https://github.com/ros/catkin/issues/863
+RUN catkin config --extend /opt/ros/${ROS_DISTRO} --cmake-args -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF 
+RUN catkin config --install
+RUN catkin build
+
+# ---
+# ROS build environment
+# ---
+
+ENV ROS_WS_ROOT=${HOME}/ros_ws
+ENV ROS_WS_SRC=${ROS_WS_ROOT}/src
+
+ENV PYTHONPATH=${ROS_WS_SRC}/bw_tools:/opt/yolov5${PYTHONPATH:+:${PYTHONPATH}}
 
 # ---
 # bwbots launch environment
@@ -117,8 +160,10 @@ RUN export DISPLAY=:99
 RUN cat ${HOME}/install/bashrc >> ${HOME}/.bashrc
 RUN rm ${HOME}/install/bashrc
 
-COPY ./unity/docker/resources/install/entrypoint.sh /entrypoint.sh
-COPY ./unity/docker/resources/install/launch.sh /launch.sh
-COPY ./unity/docker/resources/install/roscore.sh /roscore.sh
+COPY ./unity/docker/resources/launch/entrypoint.sh /entrypoint.sh
+COPY ./unity/docker/resources/launch/launch.sh /launch.sh
+COPY ./unity/docker/resources/launch/roscore.sh /roscore.sh
+
+WORKDIR ${HOME}
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]

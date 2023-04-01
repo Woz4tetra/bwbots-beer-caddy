@@ -20,7 +20,7 @@ ros.on('close', () => {
 
 var odomListener = new ROSLIB.Topic({
     ros: ros,
-    name: '/tj2/odom',
+    name: '/bw/odom',
     messageType: 'nav_msgs/msg/Odometry'
 });
 

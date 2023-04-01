@@ -10,4 +10,4 @@ if [[ $HAS_GPU -eq 1 ]]; then
     docker build -f ZED.Dockerfile -t bwbots_zed_workstation:latest .
 fi
 
-${BASE_DIR}/post_build
+${BASE_DIR}/build_bwbots

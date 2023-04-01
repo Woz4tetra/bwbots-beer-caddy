@@ -14,10 +14,11 @@ services:
     environment:
       - ROS_MASTER_INTERFACE=wlan0
     volumes:
-      - /home/${USER}/docker_ros_ws:/root/ros_ws:rw
-      - /home/${USER}/bwbots-beer-caddy/ros1/bwbots:/root/ros_ws/src/bwbots:rw
-      - /home/${USER}/bwbots-beer-caddy/ros1/docker/resources/scripts:/root/scripts:rw
+      - /home/${USER}/bwbots-beer-caddy/ros1:/root/ros_ws:rw
+      - /home/${USER}/bwbots-beer-caddy/ros1/scripts:/root/scripts:rw
       - /home/${USER}/bwbots-beer-caddy/ros1/sequence_utils:/root/sequence_utils:rw
+      - /home/${USER}/bwbots-beer-caddy/ros1/docker/resources/configs/zed:/usr/local/zed/settings/:rw
+      - /home/${USER}/zed-resources:/usr/local/zed/resources/:rw
       - /home/${USER}/logs:/root/logs:rw
       - /home/${USER}/bags:/root/bags:rw
       - /run/systemd:/run/systemd:rw

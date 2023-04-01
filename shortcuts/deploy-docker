@@ -1,0 +1,18 @@
+#!/bin/bash
+BASE_DIR=$(realpath "$(dirname $0)")
+
+DEVICE=$1
+RESTART=${2:-n}
+
+IP=`bash ${BASE_DIR}/lib/get-ip.sh ${1}`
+KEY=`bash ${BASE_DIR}/lib/get-key.sh ${1}`
+
+if [ -z $IP ]; then
+    exit 1
+fi
+
+if [ -z $KEY ]; then
+    exit 1
+fi
+
+${BASE_DIR}/../install/deploy ${IP} "${KEY}" ${RESTART}

@@ -45,12 +45,12 @@ I recommend running all of these commands inside of a tmux session in case of ne
 [Follow this guide from NVidia](https://developer.nvidia.com/embedded/learn/get-started-jetson-nano-devkit)
 
 Setup options:
-- username: ben
+- username: bw
 - password: s0mething
 - hostname/computer name: robeert
 - Log in automatically: Yes
 
-After rebooting, try ssh: `ssh ben@chansey.local` <br>
+After rebooting, try ssh: `ssh bw@robeert.local` <br>
 Install openssh server if it doesn’t work: `sudo apt-get install openssh-server -y`
 
 ## If the Jetson's been set up already
@@ -108,7 +108,23 @@ to
 wifi.powersave = 2
 ```
 
-- `sudo reboot`
+- `sudo systemctl restart network`  This will kill your SSH session. Alternatively, you can run `sudo reboot`
+- Have a display and keyboard on hand in case this goes wrong.
+
+## Disable desktop
+
+This reduces boot times by ~15 seconds.
+
+https://forums.developer.nvidia.com/t/how-to-boot-jetson-nano-in-text-mode/73636
+
+- `sudo systemctl set-default multi-user.target`
+
+To re-enable the desktop:
+- `sudo systemctl set-default graphical.target`
+
+To start the desktop manually after logging into the CLI:
+- `sudo systemctl start gdm3.service`
+
 
 ## Add to sudo group
 - `sudo usermod -aG sudo $USER`
@@ -213,71 +229,3 @@ Run this command on your local machine:
 - `sudo systemctl disable nvgetty`
 - `sudo udevadm trigger`
 - `sudo reboot`
-
-## ROS 2 docker
-
-- `sudo apt-get install nvidia-container-runtime`
-- Edit/create the /etc/docker/daemon.json with content:
-```
-{
-    "runtimes": {
-        "nvidia": {
-            "path": "/usr/bin/nvidia-container-runtime",
-            "runtimeArgs": []
-         }
-    },
-    "default-runtime": "nvidia"
-}
-```
-- `sudo apt-get install nvidia-container-runtime`
-- `sudo systemctl restart docker`
-- `cd ~/bwbots-beer-caddy/ros2`
-- `docker build -t bwbots:latest .`
-
-## Hotspot setup
-
-- Insert USB wifi adapter
-- `sudo nmcli con add type wifi ifname wlan1 con-name robeert autoconnect yes ssid robeert`
-- `sudo nmcli con modify robeert 802-11-wireless.mode ap 802-11-wireless.band bg ipv4.method shared`
-- `sudo nmcli con modify robeert wifi-sec.key-mgmt wpa-psk`
-- `sudo nmcli con modify robeert wifi-sec.psk "s0mething"`
-- `sudo nano /etc/NetworkManager/system-connections/robeert`
-- Contents:
-```
-[connection]
-id=robeert
-uuid=<leave as is>
-type=wifi
-interface-name=wlan0
-permissions=
-autoconnect=true
-
-[wifi]
-band=bg
-mac-address-blacklist=
-mode=ap
-ssid=robeert
-hidden=false
-
-[wifi-security]
-group=ccmp;
-key-mgmt=wpa-psk
-pairwise=ccmp;
-proto=rsn;
-psk=s0mething
-
-[ipv4]
-dns-search=
-method=shared
-
-[ipv6]
-addr-gen-mode=stable-privacy
-dns-search=
-method=auto
-```
-
-- `sudo nmcli con up robeert`
-
-### Turn hotspot off
-
-- `sudo nmcli con down robeert`

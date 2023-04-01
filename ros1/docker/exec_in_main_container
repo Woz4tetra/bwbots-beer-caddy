@@ -1,2 +1,2 @@
 #!/bin/bash
-sudo docker exec -it bwbots $@
+sudo docker exec -t -it bwbots $@

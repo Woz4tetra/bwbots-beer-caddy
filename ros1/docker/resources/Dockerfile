@@ -19,9 +19,7 @@ SHELL ["/bin/bash", "-c"]
 RUN apt-get update && \
     apt-get install -y --no-install-recommends apt-utils
 RUN apt-get update && \
-    apt-get install -y \
-        nano tmux curl htop net-tools iproute2 iputils-ping gdb dumb-init \
-        build-essential libtool autoconf zip unzip wget zstd
+    apt-get install -y nano tmux curl htop net-tools iproute2 iputils-ping gdb dumb-init
 
 # ---
 # CMake
@@ -29,6 +27,8 @@ RUN apt-get update && \
 
 WORKDIR /tmp
 
+RUN apt-get update && \
+    apt-get install -y build-essential libtool autoconf zip unzip wget zstd
 RUN wget -O cmake.sh https://cmake.org/files/v3.23/cmake-3.23.1-linux-aarch64.sh
 RUN mkdir /opt/cmake
 RUN sh cmake.sh --prefix=/opt/cmake --exclude-subdir --skip-license
@@ -51,8 +51,8 @@ WORKDIR /
 # This environment variable is needed to use the streaming features on Jetson inside a container
 ENV LOGNAME root
 ENV DEBIAN_FRONTEND noninteractive
-RUN apt-get update || true
-RUN apt-get install --no-install-recommends lsb-release less udev sudo apt-transport-https -y && \
+RUN apt-get update && \
+    apt-get install --no-install-recommends lsb-release less udev sudo apt-transport-https -y && \
     echo "# R${L4T_MAJOR_VERSION} (release), REVISION: ${L4T_MINOR_VERSION}.${L4T_PATCH_VERSION}" > /etc/nv_tegra_release ; \
     wget -q --no-check-certificate -O ZED_SDK_Linux.run https://download.stereolabs.com/zedsdk/${ZED_SDK_MAJOR}.${ZED_SDK_MINOR}/l4t${L4T_MAJOR_VERSION}.${L4T_MINOR_VERSION}/jetsons && \
     chmod +x ZED_SDK_Linux.run ; ./ZED_SDK_Linux.run silent skip_tools && \
@@ -65,6 +65,9 @@ RUN ln -sf /usr/lib/aarch64-linux-gnu/tegra/libv4l2.so.0 /usr/lib/aarch64-linux-
 # ---
 # bwbots dependencies
 # ---
+
+RUN rm /usr/bin/python
+RUN ln -s /usr/bin/python3 /usr/bin/python
 
 RUN apt-get update && sudo apt-get install -y \
     libbullet-dev \
@@ -104,25 +107,38 @@ RUN apt-get update && sudo apt-get install -y \
     python3-smbus \
     libceres-dev \
     mosquitto \
-    mosquitto-clients
+    mosquitto-clients \
+    libturbojpeg0-dev \
+    python3-twisted \
+    python3-tornado \
+    python3-autobahn \
+    python3-bson
 
-RUN python3 -m pip install scipy==1.5.4 \
+RUN apt-get upgrade -y
+
+RUN python -m pip install --upgrade pip
+RUN python -m pip install --upgrade setuptools
+RUN python -m pip install scipy==1.5.4 \
     shapely==1.6.4 \
     mido \
     pyperclip \
     dataclasses \
     py-trees==0.7.6 \
     tqdm \
-    paho-mqtt
+    paho-mqtt \
+    open3d==0.15.1 \
+    psutil
 
-RUN apt-get install -y llvm-7*
+RUN apt-get update && apt-get install -y llvm-7*
 RUN ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin
-RUN python3 -m pip install Cython
-RUN python3 -m pip install llvmlite==0.32.0
-RUN python3 -m pip install numba==0.49.0
+RUN python -m pip install Cython
+RUN python -m pip install llvmlite==0.32.0
+RUN python -m pip install numba==0.49.0
 
 WORKDIR /tmp
-RUN git clone https://github.com/wjakob/tbb.git
+RUN git clone https://github.com/wjakob/tbb.git && \
+    cd tbb && \
+    git checkout 9e219e24fe223b299783200f217e9d27790a87b0
 WORKDIR /tmp/tbb/build
 RUN cmake ..
 RUN make -j4 && make install
@@ -130,6 +146,7 @@ RUN make -j4 && make install
 WORKDIR /tmp
 RUN git clone https://github.com/AprilRobotics/apriltag.git && \
     cd apriltag && \
+    git checkout 3e8e974d0d8d6ab318abf56d87506d15d7f2cc35 && \
     mkdir build
 WORKDIR /tmp/apriltag/build
 RUN cmake ..
@@ -138,19 +155,19 @@ RUN make -j4 && make install
 WORKDIR /tmp
 RUN git clone https://github.com/orocos/orocos_kinematics_dynamics.git && \
     cd orocos_kinematics_dynamics && \
+    git checkout 5541147d4a220cab97d0ae1efa1aa860557d5c32 && \
     git submodule update --init && \
     cd orocos_kdl && \
     mkdir build
 WORKDIR /tmp/orocos_kinematics_dynamics/orocos_kdl/build
 RUN cmake ..
 RUN make -j4 && make install
-RUN python3 -m pip install psutil
 RUN mkdir ../../python_orocos_kdl/build
 WORKDIR /tmp/orocos_kinematics_dynamics/python_orocos_kdl/build
 RUN cmake -D PYTHON_EXECUTABLE=/usr/bin/python3 \
-        -D PYTHON_INCLUDE_DIR=/usr/include/python3.6 \
-        -D PYTHON_LIBRARY=/usr/lib/aarch64-linux-gnu/libpython3.6m.so \
-        -D PYBIND11_PYTHON_VERSION=3 ..
+    -D PYTHON_INCLUDE_DIR=/usr/include/python3.6 \
+    -D PYTHON_LIBRARY=/usr/lib/aarch64-linux-gnu/libpython3.6m.so \
+    -D PYBIND11_PYTHON_VERSION=3 ..
 RUN make -j4 && make install
 
 WORKDIR /tmp
@@ -167,31 +184,60 @@ RUN ldconfig
 RUN rm -r /tmp/*
 
 # ---
-# bwbots
+# bwbots dependency workspace
 # ---
 
 ENV USER=root
 ENV HOME=/${USER}
 WORKDIR ${HOME}
 
+RUN sh -c 'echo "deb http://packages.ros.org/ros-testing/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+RUN apt-get update && apt-get install -y \
+    python3-osrf-pycommon \
+    python3-wstool \
+    python3-catkin-pkg
+
+ENV DEP_ROS_WS_ROOT=${HOME}/dep_ws
+ENV DEP_ROS_WS_SRC=${HOME}/dep_ws/src
+
+WORKDIR ${DEP_ROS_WS_SRC}
+RUN wstool init .
+
+COPY ./install/preferences /etc/apt/preferences
+COPY ./install/bwbots_rosinstall ${HOME}/install/bwbots_rosinstall
+
+WORKDIR ${DEP_ROS_WS_SRC}
+RUN wstool merge -t . ${HOME}/install/bwbots_rosinstall/bwbots.rosinstall
+RUN wstool update -t .
+RUN ${HOME}/install/bwbots_rosinstall/patch_packages.sh
+
+WORKDIR ${DEP_ROS_WS_ROOT}
+COPY ./install/rosdep_install.sh ${HOME}/install
+RUN ${HOME}/install/rosdep_install.sh
+
+RUN source /opt/ros/${ROS_DISTRO}/setup.bash && \
+    catkin_make -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF
+
+RUN apt-get clean
+
+# ---
+# Environment setup
+# ---
+
 ENV ROS_WS_ROOT=${HOME}/ros_ws
 ENV ROS_WS_SRC=${HOME}/ros_ws/src
 
 ENV FLASK_ENV=development
-ENV PYTHONPATH="${PYTHONPATH}:${ROS_WS_SRC}/bwbots/bw_tools"
+ENV PYTHONPATH=${ROS_WS_SRC}/bwbots/bw_tools${PYTHONPATH:+:${PYTHONPATH}}
 ENV PYTHONIOENCODING=utf-8
 
-COPY ./install ${HOME}/install
-COPY ./configs ${HOME}/configs
+COPY ./install/enable_tmux_logger.sh ${HOME}/install
+COPY ./install/bashrc ${HOME}/.bashrc
 
-RUN sudo mv ${HOME}/configs/zed/* /usr/local/zed/settings/
-RUN sudo mv ${HOME}/install/preferences /etc/apt/preferences
+COPY ./launch/entrypoint.sh /entrypoint.sh
+COPY ./launch/launch.sh /launch.sh
+COPY ./launch/roscore.sh /roscore.sh
 
-RUN cat ${HOME}/install/bashrc >> ${HOME}/.bashrc
-RUN rm ${HOME}/install/bashrc
-
-COPY ./install/entrypoint.sh /entrypoint.sh
-COPY ./install/launch.sh /launch.sh
-COPY ./install/roscore.sh /roscore.sh
+WORKDIR ${ROS_WS_ROOT}
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]

@@ -1,5 +1,5 @@
 [Unit]
-After=NetworkManager.service time-sync.target
+After=basic.target
 Description=BWBots
 
 [Service]

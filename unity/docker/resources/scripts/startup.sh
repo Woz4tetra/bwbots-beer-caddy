@@ -1,1 +1,0 @@
-export ROS_MAP_NAME=simulated

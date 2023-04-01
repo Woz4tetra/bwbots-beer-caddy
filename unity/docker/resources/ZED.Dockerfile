@@ -81,4 +81,4 @@ COPY ./install ${HOME}/install
 RUN cat ${HOME}/install/bashrc >> ${HOME}/.bashrc
 RUN rm ${HOME}/install/bashrc
 
-COPY ./install/zed_entrypoint.sh /entrypoint.sh
+COPY ./launch/zed_entrypoint.sh /entrypoint.sh

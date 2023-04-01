@@ -12,6 +12,15 @@ torch/pretrained
 ros1/logs/
 ros1/bags/
 
+
+# catkin
+build/
+devel/
+.catkin_tools/
+.catkin_workspace
+ros1/src/CMakeLists.txt
+
+
 # training
 wandb
 

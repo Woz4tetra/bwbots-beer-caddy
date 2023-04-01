@@ -7,11 +7,4 @@ read TAG_IMAGE_ID
 docker tag ${TAG_IMAGE_ID} woz4tetra/bwbots:latest
 docker push woz4tetra/bwbots:latest
 
-cd /home/nvidia
-if [ -f bwbots_ws.tar.gz ]; then
-    echo "$PWD/bwbots_ws.tar.gz exists. Remove it to create a new one."
-else
-    echo "Compressing docker_ros_ws"
-    tar -cvf bwbots_ws.tar.gz docker_ros_ws
-fi
 echo "Done!"

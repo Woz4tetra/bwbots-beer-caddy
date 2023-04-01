@@ -4,11 +4,4 @@ set -e
 docker pull woz4tetra/bwbots:latest
 docker tag woz4tetra/bwbots:latest bwbots:latest
 
-if [ -z $1 ]; then
-    echo "Skipping docker_ros_ws setup. tar.gz path not specified."
-else
-    echo "Decompressing docker_ros_ws"
-    WS_TAR_PATH=$(realpath "$1")
-    tar -xvf ${WS_TAR_PATH} -C /home/nvidia
-fi
 echo "Done!"

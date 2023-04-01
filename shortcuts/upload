@@ -1,0 +1,24 @@
+#!/bin/bash
+BASE_DIR=$(realpath "$(dirname $0)")
+
+DEVICE=$1
+LOCATION=$2
+RESTART=${3:-y}
+
+IP=`bash ${BASE_DIR}/lib/get-ip.sh ${LOCATION}`
+USERNAME=`bash ${BASE_DIR}/lib/get-username.sh ${DEVICE}`
+KEY=`bash ${BASE_DIR}/lib/get-key.sh ${DEVICE}`
+
+if [ -z $IP ]; then
+    exit 1
+fi
+
+if [ -z $KEY ]; then
+    exit 1
+fi
+
+if [ -z $USERNAME ]; then
+    exit 1
+fi
+
+${BASE_DIR}/../install/upload ${IP} "${KEY}" ${RESTART} ${USERNAME}
