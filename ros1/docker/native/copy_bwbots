@@ -1,21 +1,21 @@
 #!/bin/bash
 BASE_DIR=$(realpath "$(dirname $0)")
 
-${BASE_DIR}/copy_bwbots
+VALUE=`docker volume ls -f name=bwbots_build`
+if ! echo ${VALUE} | grep -q "bwbots_build"; then
+    echo "Creating volume"
+    docker volume create bwbots_build
+fi
 
-cd ${BASE_DIR}/resources
-
-${BASE_DIR}/stop_main_container
-
-docker run -it \
-    --name workstation_build_bwbots \
+docker run \
     --restart="no" \
     --net="host" \
     --privileged \
     --stop-signal=SIGINT \
-    -v=bwbots_workstation_build:/root/ros_ws:rw \
+    -v=bwbots_build:/root/ros_ws:rw \
     -v=/home/${USER}/bwbots-beer-caddy:/root/bwbots-beer-caddy:rw \
     -v=/home/${USER}/bwbots-beer-caddy/ros1/scripts:/root/scripts:rw \
     --rm \
-    bwbots_workstation:latest \
-    /root/install/build_bwbots.sh
+    --gpus all \
+    bwbots:latest \
+    /root/scripts/build_bwbots.sh

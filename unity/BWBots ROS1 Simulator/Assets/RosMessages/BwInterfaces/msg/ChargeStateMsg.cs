@@ -15,20 +15,17 @@ namespace RosMessageTypes.BwInterfaces
 
         public float battery_voltage;
         public float charge_current;
-        public bool is_charging;
 
         public ChargeStateMsg()
         {
             this.battery_voltage = 0.0f;
             this.charge_current = 0.0f;
-            this.is_charging = false;
         }
 
-        public ChargeStateMsg(float battery_voltage, float charge_current, bool is_charging)
+        public ChargeStateMsg(float battery_voltage, float charge_current)
         {
             this.battery_voltage = battery_voltage;
             this.charge_current = charge_current;
-            this.is_charging = is_charging;
         }
 
         public static ChargeStateMsg Deserialize(MessageDeserializer deserializer) => new ChargeStateMsg(deserializer);
@@ -37,22 +34,19 @@ namespace RosMessageTypes.BwInterfaces
         {
             deserializer.Read(out this.battery_voltage);
             deserializer.Read(out this.charge_current);
-            deserializer.Read(out this.is_charging);
         }
 
         public override void SerializeTo(MessageSerializer serializer)
         {
             serializer.Write(this.battery_voltage);
             serializer.Write(this.charge_current);
-            serializer.Write(this.is_charging);
         }
 
         public override string ToString()
         {
             return "ChargeStateMsg: " +
             "\nbattery_voltage: " + battery_voltage.ToString() +
-            "\ncharge_current: " + charge_current.ToString() +
-            "\nis_charging: " + is_charging.ToString();
+            "\ncharge_current: " + charge_current.ToString();
         }
 
 #if UNITY_EDITOR

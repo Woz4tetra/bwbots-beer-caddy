@@ -1,5 +1,5 @@
 <launch>
-    <arg name="map_name" default="$(env ROS_MAP_NAME)" />
+    <arg name="map_name" default="simulated" />
 
     <include file="$(find ros_tcp_endpoint)/launch/endpoint.launch" />
     <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">

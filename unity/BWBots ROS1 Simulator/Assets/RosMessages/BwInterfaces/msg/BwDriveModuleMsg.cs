@@ -17,6 +17,8 @@ namespace RosMessageTypes.BwInterfaces
         public double azimuth_position;
         public double wheel_position;
         public double wheel_velocity;
+        public double azimuth_position_setpoint;
+        public double wheel_velocity_setpoint;
 
         public BwDriveModuleMsg()
         {
@@ -24,14 +26,18 @@ namespace RosMessageTypes.BwInterfaces
             this.azimuth_position = 0.0;
             this.wheel_position = 0.0;
             this.wheel_velocity = 0.0;
+            this.azimuth_position_setpoint = 0.0;
+            this.wheel_velocity_setpoint = 0.0;
         }
 
-        public BwDriveModuleMsg(string module_index, double azimuth_position, double wheel_position, double wheel_velocity)
+        public BwDriveModuleMsg(string module_index, double azimuth_position, double wheel_position, double wheel_velocity, double azimuth_position_setpoint, double wheel_velocity_setpoint)
         {
             this.module_index = module_index;
             this.azimuth_position = azimuth_position;
             this.wheel_position = wheel_position;
             this.wheel_velocity = wheel_velocity;
+            this.azimuth_position_setpoint = azimuth_position_setpoint;
+            this.wheel_velocity_setpoint = wheel_velocity_setpoint;
         }
 
         public static BwDriveModuleMsg Deserialize(MessageDeserializer deserializer) => new BwDriveModuleMsg(deserializer);
@@ -42,6 +48,8 @@ namespace RosMessageTypes.BwInterfaces
             deserializer.Read(out this.azimuth_position);
             deserializer.Read(out this.wheel_position);
             deserializer.Read(out this.wheel_velocity);
+            deserializer.Read(out this.azimuth_position_setpoint);
+            deserializer.Read(out this.wheel_velocity_setpoint);
         }
 
         public override void SerializeTo(MessageSerializer serializer)
@@ -50,6 +58,8 @@ namespace RosMessageTypes.BwInterfaces
             serializer.Write(this.azimuth_position);
             serializer.Write(this.wheel_position);
             serializer.Write(this.wheel_velocity);
+            serializer.Write(this.azimuth_position_setpoint);
+            serializer.Write(this.wheel_velocity_setpoint);
         }
 
         public override string ToString()
@@ -58,7 +68,9 @@ namespace RosMessageTypes.BwInterfaces
             "\nmodule_index: " + module_index.ToString() +
             "\nazimuth_position: " + azimuth_position.ToString() +
             "\nwheel_position: " + wheel_position.ToString() +
-            "\nwheel_velocity: " + wheel_velocity.ToString();
+            "\nwheel_velocity: " + wheel_velocity.ToString() +
+            "\nazimuth_position_setpoint: " + azimuth_position_setpoint.ToString() +
+            "\nwheel_velocity_setpoint: " + wheel_velocity_setpoint.ToString();
         }
 
 #if UNITY_EDITOR

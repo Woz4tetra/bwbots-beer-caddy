@@ -36,11 +36,11 @@ class DockCharger : MonoBehaviour
         if (now - _prevPublishTime > publishDelay)
         {
             if (dock_collision.bounds.Intersects(robot_collision.bounds)) {
-                chargeState.is_charging = true;
+                chargeState.battery_voltage = 11.6f;
                 chargeState.charge_current = 0.5f;
             }
             else {
-                chargeState.is_charging = false;
+                chargeState.battery_voltage = 11.6f;
                 chargeState.charge_current = 0.0f;
             }
             _ros.Publish(topic, chargeState);

@@ -76,10 +76,10 @@ class FindTagCommand:
 
     def tag_callback(self, msg: AprilTagDetectionArray):
         if self.robot_velocity.magnitude() > self.speed_threshold:
-            rospy.logdebug(f"Robot speed is too fast to take a tag measurement. {self.robot_velocity}")
+            # rospy.logdebug(f"Robot speed is too fast to take a tag measurement. {self.robot_velocity}")
             return
         if abs(self.robot_velocity.theta) > self.angular_speed_threshold:
-            rospy.logdebug(f"Robot rotational speed is too fast to take a tag measurement. {self.robot_velocity}")
+            # rospy.logdebug(f"Robot rotational speed is too fast to take a tag measurement. {self.robot_velocity}")
             return
         
         with self.detections_lock:

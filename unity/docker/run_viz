@@ -17,7 +17,7 @@ docker run -it \
     --net="host" \
     --privileged \
     --stop-signal=SIGINT \
-    -v=/home/${USER}/bwbots-beer-caddy/ros1:/root/ros_ws:rw \
+    -v=bwbots_workstation_build:/root/ros_ws:rw \
     -v=/home/${USER}/bwbots-beer-caddy/ros1/scripts:/root/scripts:rw \
     -v="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
     --rm \

@@ -1,4 +1,8 @@
 version: "3"
+volumes:
+  bwbots_build:
+    name: bwbots_build
+    external: true
 
 services:
   bwbots:
@@ -14,9 +18,9 @@ services:
     environment:
       - ROS_MASTER_INTERFACE=wlan0
     volumes:
-      - /home/${USER}/bwbots-beer-caddy/ros1:/root/ros_ws:rw
+      - bwbots_build:/root/ros_ws:rw
+      - /home/${USER}/bwbots-beer-caddy:/root/bwbots-beer-caddy:rw
       - /home/${USER}/bwbots-beer-caddy/ros1/scripts:/root/scripts:rw
-      - /home/${USER}/bwbots-beer-caddy/ros1/sequence_utils:/root/sequence_utils:rw
       - /home/${USER}/bwbots-beer-caddy/ros1/docker/resources/configs/zed:/usr/local/zed/settings/:rw
       - /home/${USER}/zed-resources:/usr/local/zed/resources/:rw
       - /home/${USER}/logs:/root/logs:rw

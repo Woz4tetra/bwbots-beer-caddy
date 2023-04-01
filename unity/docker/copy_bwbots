@@ -1,11 +1,16 @@
 #!/bin/bash
 BASE_DIR=$(realpath "$(dirname $0)")
 
-${BASE_DIR}/copy_bwbots
+mkdir -p ${HOME}/bwbots-beer-caddy/ros1/logs
+mkdir -p ${HOME}/bwbots-beer-caddy/ros1/bags
 
 cd ${BASE_DIR}/resources
 
-${BASE_DIR}/stop_main_container
+VALUE=`docker volume ls -f name=bwbots_workstation_build`
+if ! echo ${VALUE} | grep -q "bwbots_workstation_build"; then
+    echo "Creating volume"
+    docker volume create bwbots_workstation_build
+fi
 
 docker run -it \
     --name workstation_build_bwbots \
@@ -18,4 +23,4 @@ docker run -it \
     -v=/home/${USER}/bwbots-beer-caddy/ros1/scripts:/root/scripts:rw \
     --rm \
     bwbots_workstation:latest \
-    /root/install/build_bwbots.sh
+    /root/install/copy_bwbots.sh
