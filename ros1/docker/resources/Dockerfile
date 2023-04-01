@@ -219,6 +219,7 @@ RUN source /opt/ros/${ROS_DISTRO}/setup.bash && \
     catkin_make -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF
 
 RUN apt-get clean
+RUN hash -r
 
 # ---
 # Environment setup

@@ -15,3 +15,9 @@ unity/
 torch/
 webapp/.devcontainer
 webapp/node_modules
+ros1/build/
+ros1/devel/
+.catkin_tools/
+*.egg-info/
+ros1/src/CMakeLists.txt
+.pytest_cache/

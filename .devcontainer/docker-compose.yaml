@@ -16,9 +16,8 @@ services:
     # https://askubuntu.com/questions/1237400/how-to-fix-x-error-badaccess-baddrawable-badshmseg-while-running-graphical-ap
     ipc: host
     volumes:
-      - /home/${USER}/docker_ros_ws:/root/ros_ws:rw
-      - /home/${USER}/bwbots-beer-caddy/ros1/bwbots:/root/ros_ws/src/bwbots:rw
-      - /home/${USER}/bwbots-beer-caddy/unity/docker/resources/scripts:/root/scripts:rw
+      - /home/${USER}/bwbots-beer-caddy/ros1:/root/ros_ws/src/bwbots:rw
+      - /home/${USER}/bwbots-beer-caddy/ros1/scripts:/root/scripts:rw
       - /home/${USER}/bwbots-beer-caddy/ros1/logs:/root/logs:rw
       - /home/${USER}/bwbots-beer-caddy/ros1/bags:/root/bags:rw
       - /home/${USER}/bwbots-beer-caddy:/root/bwbots-beer-caddy:rw

@@ -1,9 +1,9 @@
 #include "move_away_recovery_behavior.h"
 
-PLUGINLIB_EXPORT_CLASS(move_away_recovery_behavior::MoveAwayRecoveryBehavior, nav_core::RecoveryBehavior)
+PLUGINLIB_EXPORT_CLASS(bw_move_base::MoveAwayRecoveryBehavior, nav_core::RecoveryBehavior)
 
 
-using namespace move_away_recovery_behavior;
+using namespace bw_move_base;
 
 
 MoveAwayRecoveryBehavior::MoveAwayRecoveryBehavior() : global_costmap_(NULL)
@@ -119,15 +119,29 @@ std::pair<double, double> MoveAwayRecoveryBehavior::findNearestObstacle()
 
     std::vector<costmap_2d::Costmap2DROS*> costmaps = {global_costmap_, local_costmap_};
 
+    std::string global_frame = global_costmap_->getGlobalFrameID();
+    std::string robot_frame = global_costmap_->getBaseFrameID();
+
+    geometry_msgs::TransformStamped global_to_robot_transform;
+    try
+    {
+        global_to_robot_transform = tf_->lookupTransform(
+            robot_frame, global_frame,
+            ros::Time(0), ros::Duration(1.0)
+        );
+    }
+    catch (tf2::TransformException& ex)
+    {
+        ROS_WARN_THROTTLE(1.0, "Could not transform obstacle coordinates: %s", ex.what());
+        return std::make_pair(0.0, 0.0);
+    }
+
     for (costmap_2d::Costmap2DROS* costmap_ros : costmaps)
     {
         costmap_2d::Costmap2D* costmap = costmap_ros->getCostmap();
         unsigned int map_size = costmap->getSizeInCellsX() * costmap->getSizeInCellsY();
         unsigned int mx, my;
         double wx, wy;
-
-        std::string global_frame = costmap_ros->getGlobalFrameID();
-        std::string robot_frame = costmap_ros->getBaseFrameID();
 
         for (unsigned int i = 0; i < map_size; ++i)
         {
@@ -137,25 +151,18 @@ std::pair<double, double> MoveAwayRecoveryBehavior::findNearestObstacle()
                 costmap->mapToWorld(mx, my, wx, wy);
 
                 // Transform the obstacle coordinates to the robot's local frame
-                geometry_msgs::PointStamped obstacle_global, obstacle_robot;
+                geometry_msgs::PoseStamped obstacle_global, obstacle_robot;
                 obstacle_global.header.stamp = ros::Time(0);
                 obstacle_global.header.frame_id = global_frame;
-                obstacle_global.point.x = wx;
-                obstacle_global.point.y = wy;
-                obstacle_global.point.z = 0;
+                obstacle_global.pose.position.x = wx;
+                obstacle_global.pose.position.y = wy;
+                obstacle_global.pose.position.z = 0;
+                obstacle_global.pose.orientation.w = 1.0;
 
-                try
-                {
-                    tf_->transform(obstacle_global, obstacle_robot, robot_frame);
-                }
-                catch (tf2::TransformException& ex)
-                {
-                    ROS_WARN("Could not transform obstacle coordinates: %s", ex.what());
-                    continue;
-                }
+                tf2::doTransform(obstacle_global, obstacle_robot, global_to_robot_transform);
 
-                double dx = obstacle_robot.point.x;
-                double dy = obstacle_robot.point.y;
+                double dx = obstacle_robot.pose.position.x;
+                double dy = obstacle_robot.pose.position.y;
                 double distance = std::hypot(dx, dy);
                 double angle = std::atan2(dy, dx);
 

@@ -1,11 +1,9 @@
-<class_libraries>
-    <library path="lib/libmove_away_recovery_behavior">
-    <class name="bw_move_base::MoveAwayRecoveryBehavior"
+<library path="lib/libbw_move_base">
+    <class name="bw_move_base/MoveAwayRecoveryBehavior"
             type="bw_move_base::MoveAwayRecoveryBehavior"
             base_class_type="nav_core::RecoveryBehavior">
         <description>
         A recovery behavior plugin that moves the robot away from the nearest obstacle.
         </description>
     </class>
-    </library>
-</class_libraries>
+</library>

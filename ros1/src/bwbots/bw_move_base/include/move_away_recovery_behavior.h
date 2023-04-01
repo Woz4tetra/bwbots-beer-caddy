@@ -7,9 +7,9 @@
 #include <pluginlib/class_list_macros.h>
 
 /**
- * @brief move_away_recovery_behavior namespace contains the implementation of MoveAwayRecoveryBehavior
+ * @brief bw_move_base namespace contains the implementation of MoveAwayRecoveryBehavior
  */
-namespace move_away_recovery_behavior
+namespace bw_move_base
 {
     /**
      * @class MoveAwayRecoveryBehavior

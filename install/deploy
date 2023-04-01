@@ -32,5 +32,6 @@ SSH_COMMAND="ssh -i ${REMOTE_KEY} ${USERNAME}@${DESTINATION_NAME}"
 
 # build bwbots
 ${SSH_COMMAND} "sudo ${DEST_FULL_PATH}/ros1/docker/native/build_container"
+${SSH_COMMAND} "${DEST_FULL_PATH}/ros1/docker/native/build_bwbots"
 
-${BASE_DIR}/restart ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART_SERVICE}
+${BASE_DIR}/restart ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART_SERVICE} ${USERNAME}

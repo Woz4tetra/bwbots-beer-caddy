@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
     pluginlib
     roscpp
     tf2_ros
+    tf2_geometry_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -108,7 +109,7 @@ catkin_python_setup()
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS nav_core costmap_2d geometry_msgs pluginlib roscpp tf2_ros
+  CATKIN_DEPENDS nav_core costmap_2d geometry_msgs pluginlib roscpp tf2_ros tf2_geometry_msgs
 )
 
 ###########
@@ -128,7 +129,7 @@ add_library(${PROJECT_NAME} src/move_away_recovery_behavior.cpp)
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
@@ -182,11 +183,11 @@ install(TARGETS ${PROJECT_NAME}
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
+  PATTERN ".svn" EXCLUDE
 )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
-install(FILES nodelet_plugins.xml
+install(FILES plugins.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 

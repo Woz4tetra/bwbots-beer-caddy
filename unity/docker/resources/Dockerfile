@@ -151,7 +151,7 @@ RUN catkin build
 ENV ROS_WS_ROOT=${HOME}/ros_ws
 ENV ROS_WS_SRC=${ROS_WS_ROOT}/src
 
-ENV PYTHONPATH=${ROS_WS_SRC}/bw_tools:/opt/yolov5${PYTHONPATH:+:${PYTHONPATH}}
+ENV PYTHONPATH=${ROS_WS_SRC}/bwbots/bw_tools:/opt/yolov5${PYTHONPATH:+:${PYTHONPATH}}
 
 # ---
 # bwbots launch environment

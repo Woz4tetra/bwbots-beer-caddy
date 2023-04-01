@@ -257,7 +257,7 @@ std_msgs::ColorRGBA BwYolo::get_detection_color(cv::Mat color_cv_image, cv::Mat 
     return color;
 }
 
-double BwYolo::get_depth_from_detection(cv::Mat depth_cv_image, vision_msgs::Detection2D detection_2d_msg, cv::Mat& out_mask, double& z_min, double& z_max)
+void BwYolo::get_depth_from_detection(cv::Mat depth_cv_image, vision_msgs::Detection2D detection_2d_msg, cv::Mat& out_mask, double& z_min, double& z_max)
 {
     // assumes depth_cv_image has been converted to CV_32FC1 where 1.0 == 1 meter
     // extract pixel coordinates of bounding box
@@ -489,7 +489,7 @@ vision_msgs::Detection2DArray BwYolo::detections_to_msg(const std::vector<std::v
     return detection_2d_arr_msg;
 }
 
-void BwYolo::draw_overlay(cv::Mat img, const std::vector<std::vector<Detection>>& detections, bool label)
+void BwYolo::draw_overlay(cv::Mat img, const std::vector<std::vector<Detection>>& detections, cv::Mat debug_mask, bool label)
 {
     if (detections.empty()) {
         return;

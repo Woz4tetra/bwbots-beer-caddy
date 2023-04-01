@@ -37,12 +37,22 @@
 #include <geometry_msgs/PoseWithCovariance.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Pose.h>
+#include <geometry_msgs/Point.h>
 #include <geometry_msgs/TransformStamped.h>
 
 #include <dynamic_reconfigure/server.h>
 #include <bw_yolo/YoloDetectionConfig.h>
 
 #include "detector.h"
+
+
+geometry_msgs::Point make_point(double x, double y, double z) {
+    geometry_msgs::Point pt;
+    pt.x = x;
+    pt.y = y;
+    pt.z = z;
+    return pt;
+}
 
 
 class BwYolo
