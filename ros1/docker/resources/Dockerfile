@@ -19,7 +19,7 @@ SHELL ["/bin/bash", "-c"]
 RUN apt-get update && \
     apt-get install -y --no-install-recommends apt-utils
 RUN apt-get update && \
-    apt-get install -y nano tmux curl htop net-tools iproute2 iputils-ping gdb dumb-init
+    apt-get install -y nano tmux curl htop net-tools iproute2 iputils-ping gdb dumb-init rsync
 
 # ---
 # CMake

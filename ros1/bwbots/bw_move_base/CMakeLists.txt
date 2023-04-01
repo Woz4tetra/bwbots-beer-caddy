@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
     geometry_msgs
     pluginlib
     roscpp
+    tf2
     tf2_ros
     tf2_geometry_msgs
 )
@@ -109,7 +110,7 @@ catkin_python_setup()
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS nav_core costmap_2d geometry_msgs pluginlib roscpp tf2_ros tf2_geometry_msgs
+  CATKIN_DEPENDS nav_core costmap_2d geometry_msgs pluginlib roscpp tf2 tf2_ros tf2_geometry_msgs
 )
 
 ###########

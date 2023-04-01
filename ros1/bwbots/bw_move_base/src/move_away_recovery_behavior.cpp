@@ -50,6 +50,7 @@ void MoveAwayRecoveryBehavior::footprintCallback(const geometry_msgs::PolygonSta
 
 void MoveAwayRecoveryBehavior::runBehavior()
 {
+    ROS_WARN("Running move away recovery behavior");
     if (!global_costmap_)
     {
         ROS_ERROR("Global costmap is not initialized.");
@@ -69,6 +70,7 @@ void MoveAwayRecoveryBehavior::runBehavior()
 
         if (distance > safe_distance_)
         {
+            ROS_INFO("The robot is at a safe distance. Exiting.");
             break;
         }
 
@@ -106,6 +108,7 @@ void MoveAwayRecoveryBehavior::runBehavior()
 
 void MoveAwayRecoveryBehavior::stopRobot()
 {
+    ROS_INFO("Setting robot velocity to zero.");
     geometry_msgs::Twist cmd_vel;
     cmd_vel.linear.x = 0;
     cmd_vel.angular.z = 0;
