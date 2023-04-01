@@ -3,7 +3,6 @@ BASE_DIR=$(realpath "$(dirname $0)")
 
 DEVICE=$1
 LOCATION=$2
-RESTART=${3:-y}
 
 IP=`bash ${BASE_DIR}/lib/get-ip.sh ${LOCATION}`
 USERNAME=`bash ${BASE_DIR}/lib/get-username.sh ${DEVICE}`

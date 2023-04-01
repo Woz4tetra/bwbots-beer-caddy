@@ -12,21 +12,40 @@ MoveAwayRecoveryBehavior::MoveAwayRecoveryBehavior() : global_costmap_(NULL)
 
 void MoveAwayRecoveryBehavior::initialize(std::string name, tf2_ros::Buffer* tf, costmap_2d::Costmap2DROS* global_costmap, costmap_2d::Costmap2DROS* local_costmap)
 {
+    if (!global_costmap || !local_costmap)
+    {
+        ROS_ERROR("Global and local costmaps must be initialized.");
+        return;
+    }
+
     tf_ = tf;
     global_costmap_ = global_costmap;
     local_costmap_ = local_costmap;
 
     ros::NodeHandle private_nh("~/" + name);
-    private_nh.param("safe_distance", safe_distance_, 1.0);
-    private_nh.param("linear_velocity", linear_velocity_, 0.1);
+    private_nh.param("safe_distance_buffer", safe_distance_buffer_, 0.1);
+    private_nh.param("linear_velocity_gain", linear_velocity_gain_, 0.1);
     private_nh.param("angular_velocity_gain", angular_velocity_gain_, 0.5);
     private_nh.param("frequency", frequency_, 10.0);
     private_nh.param("max_linear_acceleration", max_linear_acceleration_, 0.1);
     private_nh.param("max_angular_acceleration", max_angular_acceleration_, 0.5);
-    private_nh.param("time_step", time_step_, 0.1);
 
     ros::NodeHandle nh;
     cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
+    footprint_sub_ = nh.subscribe("local_costmap/footprint", 1, &MoveAwayRecoveryBehavior::footprintCallback, this);
+}
+
+void MoveAwayRecoveryBehavior::footprintCallback(const geometry_msgs::PolygonStamped::ConstPtr& msg)
+{
+    double max_distance = 0.0;
+
+    for (const geometry_msgs::Point32& point : msg->polygon.points)
+    {
+        double distance = std::hypot(point.x, point.y);
+        max_distance = std::max(max_distance, distance);
+    }
+
+    safe_distance_ = max_distance + safe_distance_buffer_;
 }
 
 void MoveAwayRecoveryBehavior::runBehavior()
@@ -38,43 +57,46 @@ void MoveAwayRecoveryBehavior::runBehavior()
     }
 
     ros::Rate rate(frequency_);
-    bool safe = false;
+    ros::Time last_time = ros::Time::now(); // Store the time of the last tick
     geometry_msgs::Twist prev_cmd_vel;
     
-    double max_linear_diff = max_linear_acceleration_ * time_step_;
-    double max_angular_diff = max_angular_acceleration_ * time_step_;
-
-    while (ros::ok() && !safe)
+    while (ros::ok())
     {
         std::pair<double, double> nearest_obstacle = findNearestObstacle();
+
         double distance = nearest_obstacle.first;
         double angle = nearest_obstacle.second;
 
         if (distance > safe_distance_)
         {
-            safe = true;
+            break;
         }
-        else
-        {
-            // Calculate linear and angular velocities based on the distance and angle to the nearest obstacle
-            double linear_velocity = -linear_velocity_ * distance;
-            double angular_velocity = -angular_velocity_gain_ * angle;
 
-            // Limit acceleration
-            
-            double linear_diff = linear_velocity - prev_cmd_vel.linear.x;
-            double angular_diff = angular_velocity - prev_cmd_vel.angular.z;
+        ros::Time current_time = ros::Time::now();
+        double dt = (current_time - last_time).toSec();
+        last_time = current_time;
+        
+        // Calculate linear and angular velocities based on the distance and angle to the nearest obstacle
+        double linear_velocity = -linear_velocity_gain_ * distance;
+        double angular_velocity = -angular_velocity_gain_ * angle;
 
-            linear_diff = std::max(std::min(linear_diff, max_linear_diff), -max_linear_diff);
-            angular_diff = std::max(std::min(angular_diff, max_angular_diff), -max_angular_diff);
+        // Limit acceleration
+        
+        double linear_diff = linear_velocity - prev_cmd_vel.linear.x;
+        double angular_diff = angular_velocity - prev_cmd_vel.angular.z;
 
-            geometry_msgs::Twist cmd_vel;
-            cmd_vel.linear.x = prev_cmd_vel.linear.x + linear_diff;
-            cmd_vel.angular.z = prev_cmd_vel.angular.z + angular_diff;
+        double max_linear_diff = max_linear_acceleration_ * dt;
+        double max_angular_diff = max_angular_acceleration_ * dt;
 
-            cmd_vel_pub_.publish(cmd_vel);
-            prev_cmd_vel = cmd_vel;
-        }
+        linear_diff = std::max(std::min(linear_diff, max_linear_diff), -max_linear_diff);
+        angular_diff = std::max(std::min(angular_diff, max_angular_diff), -max_angular_diff);
+
+        geometry_msgs::Twist cmd_vel;
+        cmd_vel.linear.x = prev_cmd_vel.linear.x + linear_diff;
+        cmd_vel.angular.z = prev_cmd_vel.angular.z + angular_diff;
+
+        cmd_vel_pub_.publish(cmd_vel);
+        prev_cmd_vel = cmd_vel;
 
         rate.sleep();
     }
