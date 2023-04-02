@@ -5,7 +5,8 @@
 #include <costmap_2d/costmap_2d_ros.h>
 #include <costmap_2d/costmap_2d.h>
 #include <geometry_msgs/Twist.h>
-#include <geometry_msgs/PointStamped.h>
+#include <geometry_msgs/Polygon.h>
+#include <geometry_msgs/PolygonStamped.h>
 #include <pluginlib/class_list_macros.h>
 
 /**
@@ -49,29 +50,26 @@ namespace bw_move_base
         double linear_velocity_gain_;   //!< The proportional gain for the linear velocity calculation
         double angular_velocity_gain_;  //!< The proportional gain for the angular velocity calculation
         double frequency_;              //!< The control loop frequency
+        double timeout_;
+        double safety_waiting_time_;
+        geometry_msgs::Twist prev_cmd_vel_;
 
         double max_linear_acceleration_; //!< The maximum linear acceleration allowed
         double max_angular_acceleration_; //!< The maximum angular acceleration allowed
+        double max_linear_velocity_;
+        double max_angular_velocity_;
 
         ros::Publisher cmd_vel_pub_;  //!< Publisher for the velocity commands
-        ros::Subscriber footprint_sub_; //!< Subscriber for the robot's footprint
         tf2_ros::Buffer* tf_;         //!< Pointer to the tf2_ros::Buffer object
         costmap_2d::Costmap2DROS* global_costmap_; //!< Pointer to the global costmap
         costmap_2d::Costmap2DROS* local_costmap_; //!< Pointer to the local costmap
 
-        /**
-         * @brief Footprint callback function
-         * 
-         * @param msg The geometry_msgs::PolygonStamped message containing the robot's footprint
-         */
-        void footprintCallback(const geometry_msgs::PolygonStamped::ConstPtr& msg);
-
-        /**
-         * @brief Find the nearest obstacle in the global and local costmaps
-         * 
-         * @return A pair containing the distance and angle to the nearest obstacle
-         */
-        std::pair<double, double> findNearestObstacle();
+        std::pair<double, double> findNearestObstacle(costmap_2d::Costmap2D* costmap, const std::vector<costmap_2d::MapLocation>& cells, const geometry_msgs::PoseStamped& robot_pose);
+        double getFurthestFootprintDistance(geometry_msgs::Polygon polygon);
+        geometry_msgs::Polygon transformPolygonToGlobal(geometry_msgs::Polygon polygon);
+        std::vector<costmap_2d::MapLocation> convertPolygonToMapLocations(const geometry_msgs::Polygon& polygon, costmap_2d::Costmap2D* costmap);
+        bool transformPolygonToGlobal(const geometry_msgs::Polygon& input_polygon, geometry_msgs::Polygon& output_polygon);
+        geometry_msgs::Twist getAccelerationLimitedCommand(double distance, double angle, double dt);
 
         /**
          * @brief Stop the robot by publishing a zero-velocity command

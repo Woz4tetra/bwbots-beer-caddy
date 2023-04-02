@@ -45,8 +45,8 @@ aggressive_reset2:
 
 move_away_recovery:
     safe_distance: 1.0
-    linear_velocity: 0.1
-    angular_velocity_gain: 0.5
+    linear_velocity_gain: 1.0
+    angular_velocity_gain: 0.2
     frequency: 10.0
 
 # The rate in Hz at which to run the control loop and send velocity commands
