@@ -12,17 +12,23 @@ MoveAwayRecoveryBehavior::MoveAwayRecoveryBehavior() : global_costmap_(NULL)
 
 void MoveAwayRecoveryBehavior::initialize(std::string name, tf2_ros::Buffer* tf, costmap_2d::Costmap2DROS* global_costmap, costmap_2d::Costmap2DROS* local_costmap)
 {
+    // Check if global and local costmaps are initialized
     if (!global_costmap || !local_costmap)
     {
+        // If either costmap is not initialized, log an error and return
         ROS_ERROR("Global and local costmaps must be initialized.");
         return;
     }
 
+    // Set the tf, global_costmap_, and local_costmap_ class members
     tf_ = tf;
     global_costmap_ = global_costmap;
     local_costmap_ = local_costmap;
 
+    // Create a private node handle with the given name
     ros::NodeHandle private_nh("~/" + name);
+
+    // Load parameters from the parameter server
     private_nh.param("safe_distance_buffer", safe_distance_buffer_, 0.1);
     private_nh.param("linear_velocity_gain", linear_velocity_gain_, 0.1);
     private_nh.param("angular_velocity_gain", angular_velocity_gain_, 0.5);
@@ -34,21 +40,30 @@ void MoveAwayRecoveryBehavior::initialize(std::string name, tf2_ros::Buffer* tf,
     private_nh.param("timeout", timeout_, 10.0);
     private_nh.param("safety_waiting_time", safety_waiting_time_, 1.0);
 
+    // Create a node handle for general use
     ros::NodeHandle nh;
+
+    // Advertise the cmd_vel topic to publish velocity commands
     cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
 }
 
 
 double MoveAwayRecoveryBehavior::getFurthestFootprintDistance(geometry_msgs::Polygon polygon)
 {
+    // Initialize the maximum distance variable to 0.0
     double max_distance = 0.0;
 
+    // Iterate through all the points in the input polygon
     for (const geometry_msgs::Point32& point : polygon.points)
     {
+        // Calculate the distance between the robot's reference point and the current point
         double distance = std::hypot(point.x, point.y);
+
+        // Update the maximum distance if the current distance is greater
         max_distance = std::max(max_distance, distance);
     }
 
+    // Return the maximum distance found
     return max_distance;
 }
 
@@ -128,36 +143,40 @@ void MoveAwayRecoveryBehavior::runBehavior()
 
 geometry_msgs::Twist MoveAwayRecoveryBehavior::getAccelerationLimitedCommand(double distance, double angle, double dt)
 {
-    // Calculate linear and angular velocities based on the distance and angle to the nearest obstacle
     if (abs(angle) > M_PI / 2.0) {
         distance *= -1.0;
         angle *= -1.0;
     }
+    // Calculate linear and angular velocities based on the distance and angle to the nearest obstacle
     double linear_velocity = -linear_velocity_gain_ * distance;
     double angular_velocity = angular_velocity_gain_ * angle;
 
     // Limit acceleration
-    
     double linear_diff = linear_velocity - prev_cmd_vel_.linear.x;
     double angular_diff = angular_velocity - prev_cmd_vel_.angular.z;
 
     double max_linear_diff = max_linear_acceleration_ * dt;
     double max_angular_diff = max_angular_acceleration_ * dt;
 
+    // Clamp the difference in linear and angular velocities to the maximum allowed acceleration
     linear_diff = std::max(std::min(linear_diff, max_linear_diff), -max_linear_diff);
     angular_diff = std::max(std::min(angular_diff, max_angular_diff), -max_angular_diff);
 
+    // Calculate the new limited linear and angular velocities
     double limited_linear_velocity = prev_cmd_vel_.linear.x + linear_diff;
     double limited_angular_velocity = prev_cmd_vel_.angular.z + angular_diff;
 
+    // Clamp the limited linear and angular velocities to the maximum allowed velocities
     limited_linear_velocity = std::max(std::min(limited_linear_velocity, max_linear_velocity_), -max_linear_velocity_);
     limited_angular_velocity = std::max(std::min(limited_angular_velocity, max_angular_velocity_), -max_angular_velocity_);
 
+    // Create and populate the Twist message with the limited linear and angular velocities
     geometry_msgs::Twist cmd_vel;
     cmd_vel.linear.x = limited_linear_velocity;
     cmd_vel.angular.z = limited_angular_velocity;
     prev_cmd_vel_ = cmd_vel;
 
+    // Return the acceleration-limited velocity command
     return cmd_vel;
 }
 
@@ -214,13 +233,18 @@ std::vector<costmap_2d::MapLocation> MoveAwayRecoveryBehavior::convertPolygonToM
 {
     std::vector<costmap_2d::MapLocation> mapLocations;
 
+    // Iterate through the points in the polygon
     for (const auto& point : polygon.points)
     {
+        // Convert the point's world coordinates to map coordinates in the costmap
         costmap_2d::MapLocation map_location;
         costmap->worldToMap(point.x, point.y, map_location.x, map_location.y);
+
+        // Add the converted map location to the vector of map locations
         mapLocations.push_back(map_location);
     }
 
+    // Return the vector of map locations corresponding to the polygon's points
     return mapLocations;
 }
 
@@ -241,21 +265,29 @@ std::pair<double, double> MoveAwayRecoveryBehavior::findNearestObstacle(costmap_
     double avg_angle = 0.0;
     int count = 0;
 
+    // Iterate through the cells in the costmap
     for (const auto& cell : cells)
     {
+        // Skip cells that are not lethal obstacles
         if (costmap->getCost(cell.x, cell.y) != costmap_2d::LETHAL_OBSTACLE) {
             continue;
         }
+
+        // Convert cell coordinates to world coordinates
         double wx, wy;
         costmap->mapToWorld(cell.x, cell.y, wx, wy);
 
+        // Calculate the distance and angle from the robot's pose to the obstacle
         double distance = std::hypot(wx - robot_pose.pose.position.x, wy - robot_pose.pose.position.y);
         double angle = std::atan2(wy - robot_pose.pose.position.y, wx - robot_pose.pose.position.x) + M_PI;
+
+        // Accumulate the distance and angle to compute average later
         sum_distance += distance;
         sum_angle += angle;
         count++;
     }
 
+    // Compute the average distance and angle to the nearest obstacle
     if (count == 0) {
         avg_distance = safe_distance_;
         avg_angle = 0.0;
@@ -266,5 +298,6 @@ std::pair<double, double> MoveAwayRecoveryBehavior::findNearestObstacle(costmap_
         avg_angle -= M_PI;
     }
 
+    // Return the average distance and angle to the nearest obstacle
     return {avg_distance, avg_angle};
 }
