@@ -39,6 +39,7 @@ void MoveAwayRecoveryBehavior::initialize(std::string name, tf2_ros::Buffer* tf,
     private_nh.param("max_angular_velocity", max_angular_velocity_, 1.57);
     private_nh.param("timeout", timeout_, 10.0);
     private_nh.param("safety_waiting_time", safety_waiting_time_, 1.0);
+    private_nh.param("inflation_radius_", inflation_radius_, 1.0);
 
     // Create a node handle for general use
     ros::NodeHandle nh;
@@ -87,11 +88,14 @@ void MoveAwayRecoveryBehavior::runBehavior()
     // Get the global costmap and its data
     costmap_2d::Costmap2D* global_costmap = global_costmap_->getCostmap();
 
+    geometry_msgs::Polygon robot_footprint = global_costmap_->getRobotFootprintPolygon();
+    geometry_msgs::Polygon inflated_robot_footprint = inflatePolygon(robot_footprint, inflation_radius_);
+    ROS_INFO_STREAM("inflated_robot_footprint: " << inflated_robot_footprint);
+
     while (ros::ok() && ros::Time::now() - start_time < ros::Duration(timeout_))
     {
-        geometry_msgs::Polygon robot_footprint = global_costmap_->getRobotFootprintPolygon();
         geometry_msgs::Polygon global_footprint;
-        if (!transformPolygonToGlobal(robot_footprint, global_footprint)) {
+        if (!transformPolygonToGlobal(inflated_robot_footprint, global_footprint)) {
             continue;
         }
 
@@ -229,6 +233,55 @@ bool MoveAwayRecoveryBehavior::transformPolygonToGlobal(const geometry_msgs::Pol
     return true;
 }
 
+geometry_msgs::Polygon MoveAwayRecoveryBehavior::inflatePolygon(const geometry_msgs::Polygon& polygon, double inflation_radius)
+{
+    geometry_msgs::Polygon inflated_polygon;
+
+    // Iterate through the points in the polygon
+    for (size_t i = 0; i < polygon.points.size(); ++i)
+    {
+        // Get the previous, current, and next points in the polygon
+        const geometry_msgs::Point32& prev_point = polygon.points[(i + polygon.points.size() - 1) % polygon.points.size()];
+        const geometry_msgs::Point32& current_point = polygon.points[i];
+        const geometry_msgs::Point32& next_point = polygon.points[(i + 1) % polygon.points.size()];
+
+        // Calculate the vectors between the points
+        geometry_msgs::Point32 prev_vec, next_vec;
+        prev_vec.x = current_point.x - prev_point.x;
+        prev_vec.y = current_point.y - prev_point.y;
+        next_vec.x = next_point.x - current_point.x;
+        next_vec.y = next_point.y - current_point.y;
+
+        // Normalize the vectors
+        double prev_vec_length = std::hypot(prev_vec.x, prev_vec.y);
+        double next_vec_length = std::hypot(next_vec.x, next_vec.y);
+        prev_vec.x /= prev_vec_length;
+        prev_vec.y /= prev_vec_length;
+        next_vec.x /= next_vec_length;
+        next_vec.y /= next_vec_length;
+
+        // Calculate the average of the two normalized vectors
+        geometry_msgs::Point32 avg_vec;
+        avg_vec.x = (prev_vec.x + next_vec.x) / 2.0;
+        avg_vec.y = (prev_vec.y + next_vec.y) / 2.0;
+
+        // Normalize the average vector and scale by the inflation radius
+        double avg_vec_length = std::hypot(avg_vec.x, avg_vec.y);
+        avg_vec.x = (avg_vec.x / avg_vec_length) * inflation_radius;
+        avg_vec.y = (avg_vec.y / avg_vec_length) * inflation_radius;
+
+        // Calculate the inflated point
+        geometry_msgs::Point32 inflated_point;
+        inflated_point.x = current_point.x + avg_vec.x;
+        inflated_point.y = current_point.y + avg_vec.y;
+
+        // Add the inflated point to the inflated_polygon
+        inflated_polygon.points.push_back(inflated_point);
+    }
+
+    return inflated_polygon;
+}
+
 std::vector<costmap_2d::MapLocation> MoveAwayRecoveryBehavior::convertPolygonToMapLocations(const geometry_msgs::Polygon& polygon, costmap_2d::Costmap2D* costmap)
 {
     std::vector<costmap_2d::MapLocation> mapLocations;
@@ -259,9 +312,8 @@ void MoveAwayRecoveryBehavior::stopRobot()
 
 std::pair<double, double> MoveAwayRecoveryBehavior::findNearestObstacle(costmap_2d::Costmap2D* costmap, const std::vector<costmap_2d::MapLocation>& cells, const geometry_msgs::PoseStamped& robot_pose)
 {
-    double sum_distance = 0.0;
+    double min_distance = safe_distance_;
     double sum_angle = 0.0;
-    double avg_distance = 0.0;
     double avg_angle = 0.0;
     int count = 0;
 
@@ -282,22 +334,22 @@ std::pair<double, double> MoveAwayRecoveryBehavior::findNearestObstacle(costmap_
         double angle = std::atan2(wy - robot_pose.pose.position.y, wx - robot_pose.pose.position.x) + M_PI;
 
         // Accumulate the distance and angle to compute average later
-        sum_distance += distance;
+        if (distance < min_distance) {
+            min_distance = distance;
+        }
         sum_angle += angle;
         count++;
     }
 
     // Compute the average distance and angle to the nearest obstacle
     if (count == 0) {
-        avg_distance = safe_distance_;
         avg_angle = 0.0;
     }
     else {
-        avg_distance = sum_distance / count;
         avg_angle = sum_angle / count;
         avg_angle -= M_PI;
     }
 
     // Return the average distance and angle to the nearest obstacle
-    return {avg_distance, avg_angle};
+    return {min_distance, avg_angle};
 }

@@ -61,6 +61,7 @@ namespace bw_move_base
         double max_angular_acceleration_; //!< Maximum allowed angular acceleration (rad/s^2)
         double max_linear_velocity_;    //!< Maximum allowed linear velocity (m/s)
         double max_angular_velocity_;   //!< Maximum allowed angular velocity (rad/s)
+        double inflation_radius_;       //!< How much to inflate the robot footprint by for safety checks (m)
 
         ros::Publisher cmd_vel_pub_;    //!< Publisher for the velocity commands
         tf2_ros::Buffer* tf_;           //!< Pointer to the tf2_ros::Buffer object
@@ -101,6 +102,18 @@ namespace bw_move_base
          * @return Vector of costmap_2d::MapLocation objects representing the cells within the polygon
          */
         std::vector<costmap_2d::MapLocation> convertPolygonToMapLocations(const geometry_msgs::Polygon& polygon, costmap_2d::Costmap2D* costmap);
+
+        /**
+         * @brief Inflate a given polygon by a specified radius.
+         * This function creates a new polygon by inflating the input polygon by the given inflation radius. It calculates
+         * the normal at each vertex of the input polygon and moves the vertices outward by the specified inflation radius.
+         * The newly calculated vertices form the inflated polygon.
+         * 
+         * @param polygon The input polygon to be inflated.
+         * @param inflation_radius The radius by which to inflate the polygon.
+         * @return geometry_msgs::Polygon The inflated polygon.
+         */
+        geometry_msgs::Polygon inflatePolygon(const geometry_msgs::Polygon& polygon, double inflation_radius);
 
         /**
          * @brief Transforms a given input polygon to the global frame
