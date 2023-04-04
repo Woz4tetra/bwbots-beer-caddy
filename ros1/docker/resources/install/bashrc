@@ -80,7 +80,9 @@ if ! shopt -oq posix; then
   fi
 fi
 
-source ${HOME}/scripts/set_master.sh eth0
+source ${HOME}/scripts/set_master.sh wlan0
 source ${DEP_ROS_WS_ROOT}/devel/setup.bash
 source ${ROS_WS_ROOT}/devel/setup.bash
 source ${HOME}/scripts/startup.sh
+
+[ -d "${HOME}/bwbots-beer-caddy" ] && cd "${HOME}/bwbots-beer-caddy"

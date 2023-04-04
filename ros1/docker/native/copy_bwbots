@@ -18,4 +18,4 @@ docker run \
     --rm \
     --gpus all \
     bwbots:latest \
-    /root/scripts/build_bwbots.sh
+    /root/scripts/copy_bwbots.sh

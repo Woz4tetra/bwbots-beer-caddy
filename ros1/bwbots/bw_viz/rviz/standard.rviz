@@ -9,7 +9,6 @@ Panels:
         - /Camera1/Visibility1
         - /mcl_particles1
         - /Ground Marker1
-        - /Ground Marker1/Status1
       Splitter Ratio: 0.3412107527256012
     Tree Height: 545
   - Class: rviz/Selection
@@ -605,10 +604,15 @@ Visualization Manager:
       Marker Topic: /apriltag/tag_markers
       Name: Apriltag Markers
       Namespaces:
+        cube11: true
         cube12: true
+        posx11: true
         posx12: true
+        posy11: true
         posy12: true
+        posz11: true
         posz12: true
+        text11: true
         text12: true
       Queue Size: 100
       Value: true
@@ -673,17 +677,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.47184205055236816
-        Y: -0.3216630220413208
-        Z: -2.0278775991755538e-08
+        X: -1.082056999206543
+        Y: 0.8062137365341187
+        Z: 4.5655838221136946e-07
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.0947970151901245
+      Pitch: 1.3897967338562012
       Target Frame: <Fixed Frame>
-      Yaw: 2.826753854751587
+      Yaw: 2.8667540550231934
     Saved: ~
 Window Geometry:
   Camera:
@@ -703,5 +707,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 2524
-  X: 2596
+  X: 72
   Y: 35

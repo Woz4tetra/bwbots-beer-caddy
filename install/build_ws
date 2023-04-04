@@ -35,6 +35,6 @@ echo "Stopping ${SERVICE_NAME}"
 ${SSH_COMMAND} -t "sudo systemctl stop ${SERVICE_NAME}.service"
 
 # build bwbots
-${SSH_COMMAND} "${DEST_FULL_PATH}/ros1/docker/native/build_bwbots"
+${SSH_COMMAND} "${DEST_FULL_PATH}/ros1/docker/native/copy_bwbots && ${DEST_FULL_PATH}/ros1/docker/native/build_bwbots"
 
 ${BASE_DIR}/restart ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART_SERVICE} ${USERNAME}

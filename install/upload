@@ -24,4 +24,6 @@ SSH_COMMAND="ssh -i ${REMOTE_KEY} ${USERNAME}@${DESTINATION_NAME}"
 
 OUTPUT=$( rsync -avur --exclude-from=${LOCAL_PATH}/install/exclude.txt  -e "ssh -i ${REMOTE_KEY}"  ${LOCAL_PATH} ${USERNAME}@${DESTINATION_NAME}:${DESTINATION_PATH} | tee /dev/tty)
 
+${SSH_COMMAND} "${DEST_FULL_PATH}/ros1/docker/native/copy_bwbots"
+
 ${BASE_DIR}/restart ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART_SERVICE} ${USERNAME}

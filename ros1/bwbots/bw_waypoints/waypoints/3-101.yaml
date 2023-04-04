@@ -1,1 +1,12 @@
-[]
+- {name: desk, parent_frame: map, theta: -1.5550187709834193, x: -0.7290123030096686,
+  y: -0.31771314496526015}
+- {name: kitchen, parent_frame: map, theta: -1.4075374237194762, x: -6.060564855562141,
+  y: 1.3613420189140606}
+- {name: dispenser1, parent_frame: map, theta: -0.19662075515801747, x: -2.511500291560091,
+  y: 1.9185834614210808}
+- {name: dispenser1_prep, parent_frame: map, theta: -0.19662075515801747, x: -3.1980129246917017,
+  y: 2.055332883908718}
+- {name: dock_tag, parent_frame: map, theta: -0.11510681949336797, x: 0.19699602607716843,
+  y: -0.037771472901503955}
+- {name: dock_prep, parent_frame: map, theta: -0.11510681949336797, x: -0.49837173894735226,
+  y: 0.04262548826496504}
