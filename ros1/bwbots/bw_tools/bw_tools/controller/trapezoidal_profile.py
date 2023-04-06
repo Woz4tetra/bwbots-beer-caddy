@@ -23,10 +23,7 @@ class TrapezoidalProfile:
         else:  # we are in the target velocity region, so no degrade factor is needed
             trapezoid_speed = self.config.max_speed
         
-        if trapezoid_speed < self.config.min_speed:
-            trapezoid_speed = self.config.min_speed
-        if trapezoid_speed > self.config.max_speed:
-            trapezoid_speed = self.config.max_speed
+        trapezoid_speed = min(max(trapezoid_speed, self.config.min_speed), self.config.max_speed)
         
         trapezoid_velocity = trapezoid_speed
         trapezoid_velocity = trapezoid_velocity if goal > 0.0 else -trapezoid_velocity
