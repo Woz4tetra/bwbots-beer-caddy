@@ -1,21 +1,33 @@
 <launch>
-    <arg name="map_name" default="simulated" />
+    <arg name="map_name" default="$(env ROS_MAP_NAME)"/>
+    <arg name="robot_name" default="robeert"/>
 
     <include file="$(find ros_tcp_endpoint)/launch/endpoint.launch" />
     <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
         <arg name="port" value="9091" />
         <arg name="address" value="0.0.0.0" />
     </include>
+    
+    
+    <include file="$(find bw_description)/launch/bw_description.launch">
+        <arg name="model" value="$(find bw_description)/urdf/$(arg robot_name).urdf.xml"/>
+        <arg name="joint_names" value="$(find bw_bringup)/config/$(arg robot_name)/joints.yaml"/>
+    </include>
+    <include file="$(find bw_bringup)/config/$(arg robot_name)/static_transforms_$(arg robot_name).launch"/>
+    <include file="$(find bw_description)/launch/imu_joint.launch">
+        <arg name="combine_with_odom" value="true"/>
+    </include>
+    <include file="$(find bw_tunnel)/launch/twist_mux.launch"/>
 
-    <include file="$(find bw_description)/launch/bw_description.launch" />
-    <include file="$(find bw_rplidar)/launch/robeert_filters.launch" />
-    <include file="$(find bw_tunnel)/launch/twist_mux.launch" />
+    <group ns="laser">
+        <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="laser_filter">
+            <rosparam command="load" file="$(find bw_bringup)/config/$(arg robot_name)/laser_filter.yaml" />
+        </node>
+    </group>
     <include file="$(find bw_joystick)/launch/bw_joystick.launch">
         <arg name="device" value="/dev/input/js0" />
     </include>
-    <include file="$(find bw_description)/launch/imu_joint.launch">
-        <arg name="combine_with_odom" value="true" />
-    </include>
+
     <include file="$(find bw_move_base)/launch/bw_move_base.launch" />
     <include file="$(find bw_behaviors)/launch/bw_behaviors.launch" />
     <include file="$(find bw_yolo)/launch/label_publisher.launch"/>
@@ -25,8 +37,6 @@
     <include file="$(find bw_dispensers)/launch/bw_dispensers.launch">
         <arg name="simulated" value="true" />
     </include>
-
-    <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find bw_viz)/rviz/standard.rviz" /> -->
 
     <node pkg="tf" type="static_transform_publisher" name="imu_tf"
         args="0.0 0.0 0.0  0 0 0 1 camera_link zed2_imu_link 20" />

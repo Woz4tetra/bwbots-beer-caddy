@@ -25,8 +25,7 @@ services:
       - ${PROJECT_DIR}:/opt/${ORGANIZATION}/${PROJECT_NAME}:rw
       - ${PROJECT_DIR}/scripts:/opt/${ORGANIZATION}/scripts:rw
       # TODO: mount in training data
-      - ${PROJECT_DIR}/logs:/media/storage/logs:rw
-      - /media/storage/${PROJECT_NAME}_bags/bags/:/media/storage/bags:rw
+      - /media/storage/bwbots-beer-caddy-media:/media/storage:rw
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /home/${USER}/.Xauthority:/home/${ORGANIZATION}/.Xauthority:rw
       # Allow container to control docker
