@@ -40,6 +40,7 @@ sudo apt-get install -y --ignore-missing ros-noetic-rospy \
     libsdl-dev \
     python3-pip \
     python3-tk \
+    python3-venv \
     v4l-utils
 
 sudo apt-get upgrade -y
