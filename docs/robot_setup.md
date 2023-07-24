@@ -1,41 +1,9 @@
-
-# SD card Installation
+# Host dependencies
 
 This guide assumes you're using a linux machine to run all these commands. You'll have to adapt these instructions if you're on another OS.
 
-## From an SD card backup
-
-### Loading a backup
-
-[Based on this guide](https://www.jetsonhacks.com/2020/08/08/clone-sd-card-jetson-nano-and-xavier-nx/)
-
-- [Download Jetson SD card image](https://i.kym-cdn.com/photos/images/newsfeed/002/203/505/797.png) WARNING this link doesn't work yet.
-- Find disk path
-- Run all commands as root: `sudo su`
-- `parted -l`
-  - GUI version: open "Disks"
-- `umount /dev/sdd1`
-  - Replace /dev/sdd1 with the partition that the OS auto mounts.
-- `gunzip -c ./robeert.img.gz | dd of=/dev/sdd bs=64K status=progress`
-  - Replace /dev/sdd with the top level disk name
-  - WARNING: you can very easily destroy your disk if you select the wrong one. Please use caution here.
-
-
-### Creating a backup
-
-- `sudo dd if=/dev/sdd conv=sync,noerror bs=64K status=progress | gzip -c > ./robeert.img.gz`
-  - Replace `/dev/sdd` with the top level disk name
-  - WARNING: you can very easily destroy your disk if you select the wrong one. Please use caution here.
-
----
-
-# Manual installation
-
-If you don't have access to this SD card backup or need to start from scratch, follow these steps.
-
-Unless otherwise stated, these commands are to be run on the Jetson.
-
 I recommend running all of these commands inside of a tmux session in case of network dropouts:
+
 - Create tmux session: `tmux new -s build`
 - Hide tmux session: ctrl-B D
 - Reattach tmux session: `tmux a -t build`
@@ -45,6 +13,7 @@ I recommend running all of these commands inside of a tmux session in case of ne
 [Follow this guide from NVidia](https://developer.nvidia.com/embedded/learn/get-started-jetson-nano-devkit)
 
 Setup options:
+
 - username: bw
 - password: s0mething
 - hostname/computer name: robeert
@@ -56,6 +25,7 @@ Install openssh server if it doesn’t work: `sudo apt-get install openssh-serve
 ## If the Jetson's been set up already
 
 ### Change host name
+
 - `sudo nano /etc/hostname`
 - Replace with the robot's name
 - `sudo nano /etc/hosts`
@@ -68,6 +38,7 @@ Install openssh server if it doesn’t work: `sudo apt-get install openssh-serve
 - Change to s0mething
 
 ## Apt refresh + basic packages
+
 - `sudo apt update`
 - `sudo apt upgrade`
 - `sudo apt autoremove`
@@ -79,6 +50,7 @@ Install openssh server if it doesn’t work: `sudo apt-get install openssh-serve
 If you haven't generated new SSH keys, [follow this guide](ssh_instructions.md)
 
 If you already have a key generated:
+
 - Upload keys to `~/.ssh` on the Jetson (make the directory if it doesn’t exist)
 - `cp robeert.pub authorized_keys`
 - Optionally disable password login:
@@ -90,12 +62,13 @@ If you already have a key generated:
 - Find the Jetson's IP with `ifconfig`
 - Try to login with `ssh -i ~/.ssh/robeert nvidia@<your ip>`
 
-## Disable wifi power saving 
+## Disable wifi power saving
 
 [Based on this guide](https://unix.stackexchange.com/questions/269661/how-to-turn-off-wireless-power-management-permanently)
 
 - `sudo nano /etc/NetworkManager/conf.d/default-wifi-powersave-on.conf`
 - Change:
+
 ```
 [connection]
 wifi.powersave = 3
@@ -108,7 +81,7 @@ to
 wifi.powersave = 2
 ```
 
-- `sudo systemctl restart network`  This will kill your SSH session. Alternatively, you can run `sudo reboot`
+- `sudo systemctl restart network` This will kill your SSH session. Alternatively, you can run `sudo reboot`
 - Have a display and keyboard on hand in case this goes wrong.
 
 ## Disable desktop
@@ -120,13 +93,15 @@ https://forums.developer.nvidia.com/t/how-to-boot-jetson-nano-in-text-mode/73636
 - `sudo systemctl set-default multi-user.target`
 
 To re-enable the desktop:
+
 - `sudo systemctl set-default graphical.target`
 
 To start the desktop manually after logging into the CLI:
+
 - `sudo systemctl start gdm3.service`
 
-
 ## Add to sudo group
+
 - `sudo usermod -aG sudo $USER`
 - `sudo visudo`
 - If vim opens,
@@ -143,6 +118,7 @@ To start the desktop manually after logging into the CLI:
 - If no password prompt appears, these steps worked
 
 ## Increase memory security limit
+
 - `sudo nano /etc/security/limits.conf`
 - File should look like this (increase all limits to 8GB):
   ```
@@ -158,74 +134,41 @@ To start the desktop manually after logging into the CLI:
 
 Run this command on your local machine:
 
-`~/bwbots-beer-caddy/install/upload.sh robeert.local ~/.ssh/robeert n`
+- `~/bwbots-beer-caddy/shortcuts/upload robeert n`
 
-## Python dependencies
+# Install dev rules
 
-- `export MAX_JOBS=4`
-- `sudo -H python3 -m pip install --upgrade cython`
-- `MAKEFLAGS="-j4" sudo -H python3 -m pip install --upgrade --force-reinstall numpy`
-- `sudo -H python3 -m pip install setuptools --upgrade`
-- `sudo -H python3 -m pip install --upgrade pip`
-- Add this to `~/.bashrc`. This prevents `Illegal instruction (core dumped)` error when importing numpy:
-  ```
-  export OPENBLAS_CORETYPE=ARMV8
-  ```
+- Login into the Jetson: `~/bwbots-beer-caddy/shortcuts/login robeert`
+- Install ZED rules: `~/bwbots-beer-caddy/scripts/setup_zed_udev_rules.sh`
+- Install Teensy rules: `~/bwbots-beer-caddy/scripts/setup_teensy_udev_rules.sh`
 
-## Upload firmware
+# Install docker image
 
-### Install platformio
+- Login into the Jetson: `~/bwbots-beer-caddy/shortcuts/login robeert`
+- Pull container: `~/bwbots-beer-caddy/docker/jetson/pull_container`
+- Install systemd service: `sudo ~/bwbots-beer-caddy/docker/systemd/install_systemd.sh`
 
-[Based on this guide](https://docs.platformio.org/en/latest/core/installation.html#super-quick-mac-linux)
+# Configure serial port
 
-- `python3 -c "$(curl -fsSL https://raw.githubusercontent.com/platformio/platformio/master/scripts/get-platformio.py)"`
-- `sudo ln -s /home/$USER/.platformio/penv/bin/platformio /usr/local/bin`
+## Disable serial console
 
-### Main firmware upload
-
-#### Compile
-
-- `cd ~/bwbots-beer-caddy/firmware/bw_bcause`
-- `./compile.sh`
-- Packages should download
-- Platformio should say "SUCCESS"
-
-#### Upload
-- sudo apt-get install libusb-0.1-4
-- `wget https://www.pjrc.com/teensy/00-teensy.rules`
-- `sudo mv 00-teensy.rules /etc/udev/rules.d/49-teensy.rules`
-- `sudo usermod -aG dialout $USER`
+- `sudo systemctl stop nvgetty`
+- `sudo systemctl disable nvgetty`
+- `sudo udevadm trigger`
 - `sudo reboot`
-- `cd ~/bwbots-beer-caddy/firmware/bw_bcause`
-- `./upload.sh`
-- Platformio should say "SUCCESS"
 
-#### Troubleshooting
+# Install firmware
+
+- Ensure container is running: `sudo systemctl status bwbots-beer-caddy.service`
+- If not, troubleshoot. Restart with: `sudo systemctl restart bwbots-beer-caddy.service`
+- Enter container: `~/bwbots-beer-caddy/docker/jetson/enter_container`
+- Upload main firmware: `flash_bw_bcause`
+- Upload load cell firmware: `flash_load_cell`
+
+## Troubleshooting
 
 - If uploading gets stuck on `Waiting for Teensy device...`, you'll need to trigger an upload using the teensy app.
 - For this you'll need a separate machine (with a screen)
 - Follow the instructions here to download and install Teensyduino: https://www.pjrc.com/teensy/td_download.html
 - Upload the blink project from the examples dropdown menu
 - Try uploading using the above method again
-
-### Load cell firmware upload
-
-#### Compile
-
-- `cd ~/bwbots-beer-caddy/firmware/bw_load_cell`
-- `./compile.sh`
-- Packages should download
-- Platformio should say "SUCCESS"
-
-#### Upload
-- `cd ~/bwbots-beer-caddy/firmware/bw_load_cell`
-- `./upload.sh`
-- Platformio should say "SUCCESS"
-
-## Configure serial port
-
-### Disable serial console
-- `sudo systemctl stop nvgetty`
-- `sudo systemctl disable nvgetty`
-- `sudo udevadm trigger`
-- `sudo reboot`

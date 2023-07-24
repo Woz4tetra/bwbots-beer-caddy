@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+    <node name="rviz" pkg="rviz" type="rviz" args="-d /home/bwbots/bwbots-beer-caddy/src/bw_viz/rviz/standard.rviz" output="screen" required="true"/>
+</launch>

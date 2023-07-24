@@ -28,9 +28,8 @@ After installing and activating your license, in the Unity Hub app:
 
 1. Switch to the Installs tab
 1. Select "Install Editor"
-1. Find version 2021.3.16f1 and install (for now, I'm keeping up with the latest release of Unity. 
-    The latest will probably work).
-
+1. Find version 2021.3.16f1 and install (for now, I'm keeping up with the latest release of Unity.
+   The latest will probably work).
 
 ## Project Setup
 
@@ -39,12 +38,13 @@ Once the correct version of the Unity Editor is setup, you'll need to configure 
 1. In the Unity Hub app's Projects tab
 1. Select "Open" and find the root directory for the Unity project (./unity/BWBots ROS1 Simulator)
 
-The Unity Hub app should automatically select the correct version for this project, 
-but if you a message about a version mismatch, 
+The Unity Hub app should automatically select the correct version for this project,
+but if you a message about a version mismatch,
 you can download the editor corresponding to the project
 or use the latest and potentially have to deal with errors.
 
 To switch versions:
+
 1. In the Unity Hub app
 1. Find the DillSim project in the Projects list
 1. In the Editor Version column, select the correct editor version (2021.3.16f1)
@@ -62,7 +62,6 @@ If Omnisharp fails to start, this could be the reason: https://github.com/OmniSh
 
 # Dependencies and Configuration
 
-
 Follow the [Unity Robotics quick setup guide](https://github.com/Unity-Technologies/Unity-Robotics-Hub/blob/main/tutorials/quick_setup.md)
 
 A new menu option call "Robotics" should appear. Click Robotics > ROS Settings.
@@ -71,71 +70,28 @@ A new menu option call "Robotics" should appear. Click Robotics > ROS Settings.
 
 ![alt text](images/UnityRosSettings.png "UnityRosSettings")
 
-
-# Running the Simulation using Docker (recommended)
+# Running the Simulation using Docker
 
 These steps assume you have `bwbots-beer-caddy` cloned into your home folder.
 This also assumes you're running on a linux operating system that supports docker.
 These scripts won't work on a non-linux system.
 
-1. `cd ~/bwbots-beer-caddy/ros1/docker/workstation`
+1. `cd ~/bwbots-beer-caddy/docker/workstation`
 1. `sudo ./install_docker_dependencies`
 1. `./build_container`
+1. `./clean_build_ros_ws`
 
 If you run into permission issues with docker, you'll need to look into fixing that.
 A bandaid fix is to put this in your `.bashrc`:
 
 `alias docker="sudo docker"`
 
-## Updating container
-
-All scripts in this section are in `~/bwbots-beer-caddy/ros1/docker/workstation`
-
-If changes are made to the container, simply run `./build_container` again.
-
-The bwbots packages and workspace are mounted to the container when the container starts.
-This means when `catkin_make` is run in the container, the build is saved to the host.
-This is done to save rebuilding the container everytime a change is made.
-
-If a change is made that requires rebuilding the catkin workspace, run `./build_bwbots`.
-
-If a package that isn't in the bwbots metapackage is added or changed, run `./post_build`.
-This script also rebuilds bwbots packages.
-
-Here's a table of actions if you don't want to run `./build_container` every time:
-|Change|Action|
-|---|---|
-|Dockerfile change (major dependency addition)|`./build_container`|
-|New package added to `./resources/install/clone_ros_packages.sh`|`./post_build`|
-|A source file in a bwbots package needs to be recompiled|`./build_bwbots`|
-|A config, launch, or python file is changed|No action|
-
-Running `./build_container` includes the `post_build` and `build_bwbots` actions.
-
-After any of these actions, restart the container (see the next two sections).
-
 ## Running the containers
 
-1. `cd ~/bwbots-beer-caddy/ros1/docker/workstation`
-1. `./run_containers`
-1. View container logs: `./tail-session`
-1. Open rviz: `./run_viz`
-1. Enter the container: `./enter_main_container`
-
-## Stopping the containers
-
-1. Stop bwbots and roscore containers: `./stop_all_containers`
-1. Stop bwbots container: `./stop_main_container`
-
-# Running the Simulation (non-docker)
-
-https://www.youtube.com/watch?v=yX8yrOAjfKM&t=3m51s
-
-1. Assuming you've setup ROS on your local machine [using this guide](local_setup.md),
-run this command in a terminal window: 
-    ```bash
-    roslaunch bw_bringup simulation.launch
-    ```
+1. `~/bwbots-beer-caddy/docker/workstation/run_containers`
+1. View container logs: `~/bwbots-beer-caddy/scripts/logs`
+1. Open rviz: `~/bwbots-beer-caddy/docker/workstation/run_viz`
+1. Enter the dev container: `~/bwbots-beer-caddy/docker/workstation/enter_dev_container`
 
 # Start the Unity simulation
 
@@ -167,11 +123,11 @@ Holding Left-Ctrl switches to fast movement mode (speed is configurable).
 
 To drive the robot use the QWEASD keys.
 
-|Key|Action|
-|---|---|
-| W | drive forward |
-| A | rotate left |
-| S | drive backward |
-| D | rotate right |
-| Q | strafe left (at an angle) |
-| E | strafe right (at an angle) |
+| Key | Action                     |
+| --- | -------------------------- |
+| W   | drive forward              |
+| A   | rotate left                |
+| S   | drive backward             |
+| D   | rotate right               |
+| Q   | strafe left (at an angle)  |
+| E   | strafe right (at an angle) |

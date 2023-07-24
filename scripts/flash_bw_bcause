@@ -1,0 +1,7 @@
+#!/bin/bash
+BASE_DIR=$(realpath "$(dirname $0)")
+
+set -e
+
+cd ${BASE_DIR}/../firmware/bw_bcause
+./upload.sh

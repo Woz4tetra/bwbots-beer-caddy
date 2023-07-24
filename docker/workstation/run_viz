@@ -9,6 +9,7 @@ PROJECT_DIR=$(realpath "${BASE_DIR}/../../")
 IMAGE_VERSION=$(${BASE_DIR}/../get_image_tag)
 IMAGE_PREFIX=$(${BASE_DIR}/get_built_image)
 ORGANIZATION=$(${BASE_DIR}/../get_organization)
+PROJECT_NAME=$(${BASE_DIR}/../get_project_name)
 
 docker run -it \
     --name workstation_${ORGANIZATION}_rviz \
@@ -19,9 +20,9 @@ docker run -it \
     --net="host" \
     --privileged \
     --stop-signal=SIGINT \
-    -v=workstation_${ORGANIZATION}_build:/home/${ORGANIZATION}/ros_ws:rw \
-    -v=${PROJECT_DIR}:/opt/${ORGANIZATION}/${ORGANIZATION}:rw \
+    -v=workstation_${PROJECT_NAME}_build:/home/${ORGANIZATION}/ros_ws:rw \
+    -v=${PROJECT_DIR}:/opt/${ORGANIZATION}/${PROJECT_NAME}:rw \
     -v=${PROJECT_DIR}/scripts:/opt/${ORGANIZATION}/scripts:rw \
     --rm \
     ${IMAGE_PREFIX}_${IMAGE_VERSION} \
-    /opt/${ORGANIZATION}/entrypoint.sh roslaunch ${ORGANIZATION}_viz ${LAUNCH_FILE}
+    /opt/${ORGANIZATION}/entrypoint.sh roslaunch bw_viz ${LAUNCH_FILE}

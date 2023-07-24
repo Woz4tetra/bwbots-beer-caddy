@@ -1,3 +1,4 @@
+#!/bin/bash
 BASE_DIR=$(realpath "$(dirname $0)")
 
 while true; do

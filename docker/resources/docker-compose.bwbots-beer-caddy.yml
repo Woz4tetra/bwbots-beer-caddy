@@ -1,13 +1,13 @@
 version: "3"
 volumes:
-  bwbots_build:
-    name: bwbots_build
+  bwbots-beer-caddy_build:
+    name: bwbots-beer-caddy_build
     external: true
 
 services:
-  bwbots:
+  bwbots-beer-caddy:
     image: ${IMAGE_VERSION}
-    container_name: bwbots
+    container_name: bwbots-beer-caddy
     restart: "no"
     network_mode: "host"
     runtime: "nvidia"

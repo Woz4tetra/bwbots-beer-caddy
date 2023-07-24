@@ -1,14 +1,14 @@
 version: "3"
 
 volumes:
-  workstation_bwbots_build:
-    name: workstation_bwbots_build
+  workstation_bwbots-beer-caddy_build:
+    name: workstation_${PROJECT_NAME}_build
     external: true
 
 services:
-  workstation_bwbots:
-    image: ${IMAGE_VERSION}
-    container_name: workstation_bwbots
+  workstation_bwbots-beer-caddy:
+    image: ${IMAGE_PREFIX}_${IMAGE_VERSION}
+    container_name: ${IMAGE_PREFIX}_${PROJECT_NAME}
     restart: "no"
     network_mode: "host"
     privileged: true
@@ -22,7 +22,8 @@ services:
     ipc: host
     volumes:
       - workstation_${PROJECT_NAME}_build:/home/${ORGANIZATION}/ros_ws:rw
-      - ${PROJECT_DIR}:/opt/${ORGANIZATION}/${PROJECT_NAME}:rw
-      - ${PROJECT_DIR}/logs:/opt/${ORGANIZATION}/logs:rw
-      - ${PROJECT_DIR}/bags:/opt/${ORGANIZATION}/bags:rw
+      - ${PROJECT_DIR}:/opt/${ORGANIZATION}/${PROJECT_NAME}:rw=
+      - ${PROJECT_DIR}/scripts:/opt/${ORGANIZATION}/scripts:rw
+      - ${PROJECT_DIR}/logs:/media/storage/logs:rw
+      - /media/storage/${PROJECT_NAME}_bags/bags/:/media/storage/bags:rw
     command: ["/opt/${ORGANIZATION}/launch.sh"]
