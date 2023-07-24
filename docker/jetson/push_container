@@ -1,0 +1,8 @@
+#!/bin/bash
+set -e
+
+BASE_DIR=$(realpath "$(dirname $0)")
+IMAGE_TAG=$(${BASE_DIR}/../get_image_tag)
+docker tag ${IMAGE_TAG} woz4tetra/${IMAGE_TAG}
+docker push woz4tetra/${IMAGE_TAG}
+echo "Pushed ${IMAGE_TAG}"

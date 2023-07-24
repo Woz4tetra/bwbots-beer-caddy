@@ -2,5 +2,4 @@ bags/
 logs/
 torch/wandb/
 unity/BWBots ROS1 Simulator/
-ros1/bwbots/bw_laser_slam/bags
-webapp/node_modules
+src/bw_laser_slam/bags

@@ -1,0 +1,5 @@
+
+- git:
+    local-name: zed-ros-wrapper
+    uri: https://github.com/frc-88/zed-ros-wrapper.git
+    version: tj2_detections

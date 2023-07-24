@@ -1,0 +1,8 @@
+#!/bin/bash
+set -e
+
+BASE_DIR=$(realpath "$(dirname $0)")
+IMAGE_TAG=$(${BASE_DIR}/../get_image_tag)
+docker pull woz4tetra/${IMAGE_TAG}
+docker tag woz4tetra/${IMAGE_TAG} ${IMAGE_TAG}
+echo "Pulled ${IMAGE_TAG}"

@@ -1,0 +1,31 @@
+#!/bin/bash
+BASE_DIR=$(realpath "$(dirname $0)")
+PARENT_DIR=$(dirname $BASE_DIR)
+DESTINATION_NAME=$1
+REMOTE_KEY=$2
+UPLOAD=$3
+
+LOCAL_PATH=${PARENT_DIR}
+DESTINATION_PATH=/home/tj2
+LOCAL_NAME=$(basename $LOCAL_PATH)
+DEST_FULL_PATH=${DESTINATION_PATH}/${LOCAL_NAME}
+DATA_RELATIVE_DIR=src/tj2_data/data
+
+if [ -z ${DESTINATION_NAME} ]; then
+    echo "Please set a destination IP or hostname"
+    exit
+fi
+
+if [ -z ${REMOTE_KEY} ]; then
+    echo "Please set an SSH key file"
+    exit
+fi
+
+SSH_COMMAND="ssh -i ${REMOTE_KEY} -p 5810 tj2@${DESTINATION_NAME}"
+
+# sync both ways
+if [ ${UPLOAD} = y ]; then
+    rsync -rtuv -e "ssh -i ${REMOTE_KEY} -p 5810" ${LOCAL_PATH}/${DATA_RELATIVE_DIR}/* tj2@${DESTINATION_NAME}:${DEST_FULL_PATH}/${DATA_RELATIVE_DIR}
+else
+    rsync -rtuv -e "ssh -i ${REMOTE_KEY} -p 5810" tj2@${DESTINATION_NAME}:${DEST_FULL_PATH}/${DATA_RELATIVE_DIR}/* ${LOCAL_PATH}/${DATA_RELATIVE_DIR}
+fi

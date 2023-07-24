@@ -1,0 +1,23 @@
+#!/bin/bash
+BASE_DIR=$(realpath "$(dirname $0)")
+
+${BASE_DIR}/stop_container
+${BASE_DIR}/copy_project
+cd ${BASE_DIR}/../resources
+IMAGE_VERSION=$(${BASE_DIR}/../get_image_tag)
+ORGANIZATION=$(${BASE_DIR}/../get_organization)
+PROJECT_DIR=$(realpath "${BASE_DIR}/../../")
+PROJECT_NAME=$(${BASE_DIR}/../get_project_name)
+docker run \
+    --user ${ORGANIZATION} \
+    --restart="no" \
+    --net="host" \
+    --privileged \
+    --stop-signal=SIGINT \
+    -v=${PROJECT_NAME}_build:/home/${ORGANIZATION}/ros_ws:rw \
+    -v ${PROJECT_DIR}:/opt/${ORGANIZATION}/${PROJECT_NAME}:rw \
+    -v ${PROJECT_DIR}/scripts:/opt/${ORGANIZATION}/scripts:rw \
+    --rm \
+    --gpus all \
+    ${IMAGE_VERSION} \
+    /opt/${ORGANIZATION}/scripts/build_ros_ws.sh

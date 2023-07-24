@@ -1,0 +1,37 @@
+version: "3"
+volumes:
+  bwbots_build:
+    name: bwbots_build
+    external: true
+
+services:
+  bwbots:
+    image: ${IMAGE_VERSION}
+    container_name: bwbots
+    restart: "no"
+    network_mode: "host"
+    runtime: "nvidia"
+    privileged: true
+    stop_signal: SIGINT
+    environment:
+      - ROS_MASTER_INTERFACE=eth0
+    group_add:
+      - dialout
+    volumes:
+      - ${PROJECT_NAME}_build:/home/${ORGANIZATION}/ros_ws:rw
+      - ${PROJECT_DIR}:/opt/${ORGANIZATION}/${PROJECT_NAME}:rw
+      - ${PROJECT_DIR}/scripts:/opt/${ORGANIZATION}/scripts:rw
+      - ${PROJECT_DIR}/docker/resources/configs/zed:/usr/local/zed/settings/:rw
+      - /home/${USER}/zed-resources:/usr/local/zed/resources/:rw
+      - /media/storage:/media/storage:rw
+      - /run/systemd:/run/systemd:rw
+      - /dev:/dev:rw
+      # Allow container to control NetworkManager
+      - /run/dbus/system_bus_socket:/run/dbus/system_bus_socket
+    command: ["/opt/${ORGANIZATION}/launch.sh"]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]

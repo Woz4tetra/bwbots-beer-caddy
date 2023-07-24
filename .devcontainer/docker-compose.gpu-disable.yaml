@@ -1,5 +1,5 @@
 version: '3'
 services:
-  bwbots_devcontainer:
+  bwbots-beer-caddy_devcontainer:
     environment:
       - HAS_GPU=disable

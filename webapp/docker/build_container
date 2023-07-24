@@ -1,5 +1,0 @@
-#!/bin/bash
-BASE_DIR=$(realpath "$(dirname $0)")
-
-cd ${BASE_DIR}/..
-docker build -f ./Dockerfile -t bwbots_webapp:latest .

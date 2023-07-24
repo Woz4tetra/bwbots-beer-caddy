@@ -2,8 +2,8 @@
 DESTINATION_NAME=$1
 REMOTE_KEY=$2
 RESTART_SERVICE=$3
-USERNAME=${4:-bw}
-SERVICE_NAME=bwbots
+
+SERVICE_NAME=tj2_ros
 
 if [ -z ${DESTINATION_NAME} ]; then
     echo "Please set a destination IP or hostname"
@@ -15,11 +15,11 @@ if [ -z ${REMOTE_KEY} ]; then
     exit
 fi
 
-SSH_COMMAND="ssh -i ${REMOTE_KEY} ${USERNAME}@${DESTINATION_NAME}"
+SSH_COMMAND="ssh -i ${REMOTE_KEY} -p 5810 tj2@${DESTINATION_NAME}"
 
 # restart systemd
 if [ -z $RESTART_SERVICE ]; then
-    echo "Restart ${SERVICE_NAME}.service? (Y/n) "
+    echo "Restart ${SERVICE_NAME}? (Y/n) "
     read response
     case $response in
       ([Nn])     echo "Skipping restart";;

@@ -1,2 +1,2 @@
-git config --global --add safe.directory /root/bwbots-beer-caddy
-git config --global --add safe.directory /root/bwbots-beer-caddy/firmware/tunnel
+git config --global --add safe.directory /opt/${ORGANIZATION}/${PROJECT_NAME}
+git config --global --add safe.directory /opt/${ORGANIZATION}/${PROJECT_NAME}/firmware/tunnel

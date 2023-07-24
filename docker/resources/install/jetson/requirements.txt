@@ -1,0 +1,5 @@
+py-trees==0.7.6
+jsonlines
+ezdxf
+filterpy
+pynmcli==1.0.5

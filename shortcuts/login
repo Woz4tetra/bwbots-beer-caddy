@@ -2,11 +2,10 @@
 BASE_DIR=$(realpath "$(dirname $0)")
 
 DEVICE=$1
-LOCATION=$2
+RESTART=$2
 
-IP=`bash ${BASE_DIR}/lib/get-ip.sh ${LOCATION}`
-USERNAME=`bash ${BASE_DIR}/lib/get-username.sh ${DEVICE}`
-KEY=`bash ${BASE_DIR}/lib/get-key.sh ${DEVICE}`
+IP=`bash ${BASE_DIR}/lib/get-ip.sh ${1}`
+KEY=`bash ${BASE_DIR}/lib/get-key.sh ${1}`
 
 if [ -z $IP ]; then
     exit 1
@@ -16,8 +15,4 @@ if [ -z $KEY ]; then
     exit 1
 fi
 
-if [ -z $USERNAME ]; then
-    exit 1
-fi
-
-ssh -i "${KEY}" ${USERNAME}@${IP}
+ssh -i "${KEY}" bw@${IP}

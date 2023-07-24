@@ -1,0 +1,6 @@
+py-trees==0.7.6
+jsonlines
+ezdxf
+filterpy
+mypy
+pynput

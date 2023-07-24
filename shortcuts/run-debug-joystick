@@ -1,0 +1,6 @@
+#!/bin/bash
+BASE_DIR=$(realpath "$(dirname $0)")
+
+IP=`bash ${BASE_DIR}/lib/get-ip.sh ${1}`
+
+${BASE_DIR}/../docker/workstation/run_joystick $IP $2

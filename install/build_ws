@@ -4,11 +4,9 @@ PARENT_DIR=$(dirname $BASE_DIR)
 DESTINATION_NAME=$1
 REMOTE_KEY=$2
 RESTART_SERVICE=$3
-USERNAME=${4:-bw}
-SERVICE_NAME=bwbots
 
 LOCAL_PATH=${PARENT_DIR}
-DESTINATION_PATH=/home/${USERNAME}
+DESTINATION_PATH=/home/bw
 
 if [ -z ${DESTINATION_NAME} ]; then
     echo "Please set a destination IP or hostname"
@@ -23,18 +21,13 @@ fi
 LOCAL_PATH=$(realpath $LOCAL_PATH)
 LOCAL_NAME=$(basename $LOCAL_PATH)
 DEST_FULL_PATH=${DESTINATION_PATH}/${LOCAL_NAME}
-CATKIN_WS_PATH=${DESTINATION_PATH}/ros_ws
-PACKAGES_PATH=${LOCAL_PATH}/ros1/bwbots
+PACKAGES_PATH=${LOCAL_PATH}
 
-${BASE_DIR}/upload ${DESTINATION_NAME} ${REMOTE_KEY} n ${USERNAME}
+${BASE_DIR}/upload ${DESTINATION_NAME} ${REMOTE_KEY} n
 
-SSH_COMMAND="ssh -i ${REMOTE_KEY} ${USERNAME}@${DESTINATION_NAME}"
+SSH_COMMAND="ssh -i ${REMOTE_KEY} bw@${DESTINATION_NAME}"
 
-# stop service
-echo "Stopping ${SERVICE_NAME}"
-${SSH_COMMAND} -t "sudo systemctl stop ${SERVICE_NAME}.service"
+# build ros workspace
+${SSH_COMMAND} "${DEST_FULL_PATH}/docker/jetson/build_ros_ws"
 
-# build bwbots
-${SSH_COMMAND} "${DEST_FULL_PATH}/ros1/docker/native/copy_bwbots && ${DEST_FULL_PATH}/ros1/docker/native/build_bwbots"
-
-${BASE_DIR}/restart ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART_SERVICE} ${USERNAME}
+${BASE_DIR}/restart ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART_SERVICE}

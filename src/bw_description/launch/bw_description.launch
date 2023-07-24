@@ -1,0 +1,22 @@
+<launch>
+    <arg name="model" default="$(find bw_description)/urdf/robeert.urdf.xml"/>
+    <arg name="joint_names" default="$(find bw_bringup)/config/robeert/joints.yaml"/>
+    <arg name="gui" default="false" />
+
+    <param name="robot_description" command="$(find xacro)/xacro $(arg model)" />
+    <param name="use_gui" value="$(arg gui)"/>
+    <rosparam param="source_list" subst_value="True">
+    [
+        "/bw/joint_states",
+    ]
+    </rosparam>
+
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+    <group ns="bw" >
+        <node name="bw_description" pkg="bw_description" type="bw_description_node" output="screen">
+            <rosparam param="joint_names" file="$(arg joint_names)" command="load"/>
+        </node>
+    </group>
+</launch>

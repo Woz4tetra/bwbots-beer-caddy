@@ -1,0 +1,16 @@
+#!/bin/bash
+set -e
+BASE_DIR=$(realpath "$(dirname $0)")
+
+${BASE_DIR}/build_container
+cd ${BASE_DIR}/../resources
+
+IMAGE_VERSION=$(${BASE_DIR}/../get_image_tag)
+ORGANIZATION=$(${BASE_DIR}/../get_organization)
+PROJECT_NAME=$(${BASE_DIR}/../get_project_name)
+docker build \
+    -f ./training.Dockerfile \
+    --build-arg SOURCE_IMAGE=workstation_${IMAGE_VERSION} \
+    --build-arg PROJECT_NAME=${PROJECT_NAME} \
+    --build-arg ORGANIZATION=${ORGANIZATION} \
+    -t training_${IMAGE_VERSION} .

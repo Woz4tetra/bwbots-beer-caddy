@@ -1,9 +1,0 @@
-#!/bin/bash
-if [ -z $1 ]; then
-    BASE_DIR=$(realpath "$(dirname $0)")
-else
-    BASE_DIR=$(realpath "$1")
-fi
-
-${BASE_DIR}/stop_main_container
-${BASE_DIR}/run_containers

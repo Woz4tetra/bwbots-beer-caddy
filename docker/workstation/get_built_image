@@ -1,0 +1,12 @@
+#!/bin/bash
+BASE_DIR=$(realpath "$(dirname $0)")
+
+ORGANIZATION=$(${BASE_DIR}/../get_organization)
+
+docker image list | grep -q training_${ORGANIZATION}
+if [ $? -eq 0 ]; then
+	IMAGE_PREFIX=training
+else
+	IMAGE_PREFIX=workstation
+fi
+echo ${IMAGE_PREFIX}

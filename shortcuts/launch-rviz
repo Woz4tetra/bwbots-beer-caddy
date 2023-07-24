@@ -2,5 +2,6 @@
 BASE_DIR=$(realpath "$(dirname $0)")
 
 IP=`bash ${BASE_DIR}/lib/get-ip.sh ${1}`
+CONFIG_FILE=$2
 
-${BASE_DIR}/../unity/docker/run_viz $IP $2
+${BASE_DIR}/../docker/workstation/run_viz $IP $CONFIG_FILE

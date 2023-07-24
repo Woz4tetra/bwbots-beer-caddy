@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<launch>
-    <include file="$(find bw_tags)/launch/drive_calibration.launch">
-        <arg name="image_topic" value="/drive_calibration_zed/left/image_rect_color"/>
-        <arg name="info_topic" value="/drive_calibration_zed/left/camera_info"/>
-    </include>
-</launch>

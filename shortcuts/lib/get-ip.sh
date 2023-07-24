@@ -1,17 +1,13 @@
-LOCATION=$1
+DEVICE=$1
 
-case $LOCATION in
+case $DEVICE in
 
-  home)
+  robeert)
     echo -n "192.168.0.196"
-    ;;
-
-  local)
-    echo -n ""
     ;;
 
   *)
     echo -n ""
-    >&2 echo "error invalid location name: ${LOCATION}"
+    >&2 echo "error invalid device name: ${DEVICE}"
     ;;
 esac
