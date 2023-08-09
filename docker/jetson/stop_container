@@ -5,8 +5,10 @@ else
     BASE_DIR=$(realpath "$1")
 fi
 
+export PROJECT_DIR=$(realpath "${BASE_DIR}/../../")
+export PROJECT_NAME=$(${BASE_DIR}/../get_project_name)
 export IMAGE_VERSION=$(${BASE_DIR}/../get_image_tag)
-ORGANIZATION=$(${BASE_DIR}/../get_organization)
+export ORGANIZATION=$(${BASE_DIR}/../get_organization)
 
 cd ${BASE_DIR}/../resources
-docker-compose -f docker-compose.${ORGANIZATION}.yml stop
+docker-compose -f docker-compose.${PROJECT_NAME}.yml stop

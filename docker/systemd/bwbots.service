@@ -4,11 +4,11 @@ Description=bwbots ROS
 
 [Service]
 Type=oneshot
-User=bwbots
-Group=bwbots
+User=nvidia
+Group=nvidia
 RemainAfterExit=yes
-ExecStart=/usr/local/bin/run_containers /home/bw/bwbots-beer-caddy/docker/jetson
-ExecStop=/usr/local/bin/stop_container /home/bw/bwbots-beer-caddy/docker/jetson
+ExecStart=/usr/local/bin/run_containers /home/nvidia/bwbots-beer-caddy/docker/jetson
+ExecStop=/usr/local/bin/stop_container /home/nvidia/bwbots-beer-caddy/docker/jetson
 
 [Install]
 WantedBy=multi-user.target

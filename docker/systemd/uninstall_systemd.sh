@@ -4,11 +4,11 @@ if [ "$EUID" -ne 0 ]
     exit
 fi
 
+BASE_DIR=$(realpath "$(dirname $0)")
+
 ORGANIZATION=$(${BASE_DIR}/../get_organization)
 
 echo "Running ${ORGANIZATION} systemd service uninstall script"
-
-BASE_DIR=$(realpath "$(dirname $0)")
 
 if [ "${BASE_INSTALL_DIR}" = "" ]; then
   BASE_INSTALL_DIR=/usr/local

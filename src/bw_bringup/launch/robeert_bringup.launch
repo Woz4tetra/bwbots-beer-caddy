@@ -38,7 +38,7 @@
 
     <include file="$(find bw_move_base)/launch/bw_move_base.launch"/>
     <include file="$(find bw_behaviors)/launch/bw_behaviors.launch"/>
-    <include file="$(find bw_zed)/launch/bw_zed.launch"/>
+    <include file="$(find bw_zed)/launch/zed2.launch"/>
 
     <include file="$(find bw_waypoints)/launch/bw_waypoints.launch">
         <arg name="waypoints_path" value="$(find bw_data)/waypoints/$(env ROS_MAP_NAME)"/>
@@ -51,5 +51,5 @@
         <arg name="mode" value="localize"/>
         <arg name="map_name" value="$(arg map_name)"/>
     </include>
-    <include file="$(find bw_localization)/launch/bw_localization.launch"/>
+    <!-- <include file="$(find bw_localization)/launch/bw_localization.launch"/> -->
 </launch>

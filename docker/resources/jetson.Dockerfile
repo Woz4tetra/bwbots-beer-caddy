@@ -104,7 +104,7 @@ ENV ROS_WS_ROOT=${HOME}/ros_ws
 ENV ROS_WS_SRC=${ROS_WS_ROOT}/src
 ENV FLASK_ENV=development \
     PATH=${HOME}/.local/bin:/opt/${ORGANIZATION}/scripts${PATH:+:${PATH}} \
-    PYTHONPATH=${ROS_WS_SRC}/${ORGANIZATION}/bw_tools${PYTHONPATH:+:${PYTHONPATH}} \
+    PYTHONPATH=${ROS_WS_SRC}/${PROJECT_NAME}/bw_tools${PYTHONPATH:+:${PYTHONPATH}} \
     PYTHONIOENCODING=utf-8
 
 COPY --chown=1000:1000 ./install/host_bashrc ${HOME}/.bashrc

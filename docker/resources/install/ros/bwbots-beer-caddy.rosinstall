@@ -198,3 +198,15 @@
     local-name: camera_info_manager_py
     uri: https://github.com/mllofriu/camera_info_manager_py.git
     version: be1046dc8acc3d37f43052bfd4fc8d1db9619d93
+- git:
+    local-name: py_trees_ros
+    uri: https://github.com/splintered-reality/py_trees_ros.git
+    version: release/0.6.x
+- git:
+    local-name: py_trees_msgs
+    uri: https://github.com/splintered-reality/py_trees_msgs.git
+    version: release/0.3.x
+- git:
+    local-name: executive_smach
+    uri: https://github.com/ros/executive_smach.git
+    version: noetic-devel

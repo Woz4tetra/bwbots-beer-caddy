@@ -7,7 +7,7 @@ services:
     restart: "no"
     network_mode: "host"
     environment:
-      - ROS_MASTER_INTERFACE=eth0
+      - ROS_MASTER_INTERFACE=wlan0
     volumes:
       - ${PROJECT_DIR}/scripts:/opt/${ORGANIZATION}/scripts:rw
     privileged: true

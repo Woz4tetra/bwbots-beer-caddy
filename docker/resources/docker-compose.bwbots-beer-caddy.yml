@@ -14,7 +14,7 @@ services:
     privileged: true
     stop_signal: SIGINT
     environment:
-      - ROS_MASTER_INTERFACE=eth0
+      - ROS_MASTER_INTERFACE=wlan0
     group_add:
       - dialout
     volumes:
