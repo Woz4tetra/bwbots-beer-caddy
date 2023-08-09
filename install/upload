@@ -4,10 +4,11 @@ PARENT_DIR=$(dirname $BASE_DIR)
 DESTINATION_NAME=$1
 REMOTE_KEY=$2
 RESTART_SERVICE=$3
+REMOTE_USER_NAME=$4
 
-SERVICE_NAME=tj2_ros
+SERVICE_NAME=bwbots
 LOCAL_PATH=${PARENT_DIR}
-DESTINATION_PATH=/home/tj2
+DESTINATION_PATH=/home/${REMOTE_USER_NAME}
 LOCAL_NAME=$(basename $LOCAL_PATH)
 DEST_FULL_PATH=${DESTINATION_PATH}/${LOCAL_NAME}
 
@@ -21,21 +22,21 @@ if [ -z ${REMOTE_KEY} ]; then
     exit
 fi
 
-SSH_COMMAND="ssh -i ${REMOTE_KEY} -p 5810 tj2@${DESTINATION_NAME}"
+SSH_COMMAND="ssh -i ${REMOTE_KEY} ${REMOTE_USER_NAME}@${DESTINATION_NAME}"
 
 echo "Syncing time"
-${BASE_DIR}/sync_time ${DESTINATION_NAME} ${REMOTE_KEY}
+${BASE_DIR}/sync_time ${DESTINATION_NAME} ${REMOTE_KEY} ${REMOTE_USER_NAME}
 
 echo "Uploading package data"
-rsync -av --delete --exclude-from=${LOCAL_PATH}/install/exclude.txt  -e "ssh -i ${REMOTE_KEY} -p 5810"  ${LOCAL_PATH} tj2@${DESTINATION_NAME}:${DESTINATION_PATH}
+rsync -av --delete --exclude-from=${LOCAL_PATH}/install/exclude.txt  -e "ssh -i ${REMOTE_KEY}"  ${LOCAL_PATH} ${REMOTE_USER_NAME}@${DESTINATION_NAME}:${DESTINATION_PATH}
 
 echo "Uploading data"
-${BASE_DIR}/sync_data ${DESTINATION_NAME} ${REMOTE_KEY} y
+${BASE_DIR}/sync_data ${DESTINATION_NAME} ${REMOTE_KEY} y ${REMOTE_USER_NAME}
 
 echo "Copying into workspace"
-${SSH_COMMAND} "${DEST_FULL_PATH}/docker/jetson/copy_tj2_ros"
+${SSH_COMMAND} "${DEST_FULL_PATH}/docker/jetson/copy_project"
 
 echo "Downloading data"
-${BASE_DIR}/sync_data ${DESTINATION_NAME} ${REMOTE_KEY} n
+${BASE_DIR}/sync_data ${DESTINATION_NAME} ${REMOTE_KEY} n ${REMOTE_USER_NAME}
 
-${BASE_DIR}/restart ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART_SERVICE} ${SERVICE_NAME}
+${BASE_DIR}/restart ${DESTINATION_NAME} ${REMOTE_KEY} ${RESTART_SERVICE} ${REMOTE_USER_NAME}

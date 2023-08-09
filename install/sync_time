@@ -1,6 +1,7 @@
 #!/bin/bash
 DESTINATION_NAME=$1
 REMOTE_KEY=$2
+REMOTE_USER_NAME=$3
 
 if [ -z ${DESTINATION_NAME} ]; then
     echo "Please set a destination IP or hostname"
@@ -12,6 +13,6 @@ if [ -z ${REMOTE_KEY} ]; then
     exit
 fi
 
-SSH_COMMAND="ssh -i ${REMOTE_KEY} -p 5810 tj2@${DESTINATION_NAME}"
+SSH_COMMAND="ssh -i ${REMOTE_KEY} ${REMOTE_USER_NAME}@${DESTINATION_NAME}"
 
 ${SSH_COMMAND} -t "sudo timedatectl set-time \"`date '+%Y-%m-%d %H:%M:%S'`\""

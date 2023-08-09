@@ -63,8 +63,10 @@ sudo make install
 # platformio
 cd /tmp
 wget -O get-platformio.py https://raw.githubusercontent.com/platformio/platformio/master/scripts/get-platformio.py
+export LC_ALL=en_US.utf-8
+export LANG=en_US.utf-8
 python get-platformio.py
-ln -s $HOME/.platformio/penv/bin/platformio /usr/local/bin
+sudo ln -s $HOME/.platformio/penv/bin/platformio /usr/local/bin
 
 # clean up
 sudo ldconfig

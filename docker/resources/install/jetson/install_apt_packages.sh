@@ -43,7 +43,9 @@ sudo apt-get install -y \
     python3-bson \
     libv4l-dev \
     libgeos-dev \
-    ffmpeg
+    ffmpeg \
+    python3.6-venv \
+    python3-wheel
 
 sudo apt-get upgrade -y
 sudo apt-get autoremove -y

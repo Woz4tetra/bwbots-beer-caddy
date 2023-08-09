@@ -4,8 +4,9 @@ PARENT_DIR=$(dirname $BASE_DIR)
 DESTINATION_NAME=$1
 REMOTE_KEY=$2
 PATTERN=$3
+REMOTE_USER_NAME=$4
 
-LOCAL_PATH=/opt/tj2/bags/
+LOCAL_PATH=/media/storage/bags/bwbots-beer-caddy-media
 
 if [ -z ${DESTINATION_NAME} ]; then
     echo "Please set a destination IP or hostname"
@@ -17,8 +18,8 @@ if [ -z ${REMOTE_KEY} ]; then
     exit
 fi
 
-SSH_COMMAND="ssh -i ${REMOTE_KEY} -p 5810 tj2@${DESTINATION_NAME}"
+SSH_COMMAND="ssh -i ${REMOTE_KEY} ${REMOTE_USER_NAME}@${DESTINATION_NAME}"
 
 ${SSH_COMMAND} "ls -l /media/storage/bags/${PATTERN}"
 
-rsync -rtuv -e "ssh -i ${REMOTE_KEY} -p 5810" tj2@${DESTINATION_NAME}:/media/storage/bags/${PATTERN} ${LOCAL_PATH}
+rsync -rtuv -e "ssh -i ${REMOTE_KEY}" ${REMOTE_USER_NAME}@${DESTINATION_NAME}:/media/storage/bags/${PATTERN} ${LOCAL_PATH}

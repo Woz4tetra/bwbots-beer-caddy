@@ -1,1 +1,1 @@
-rosservice call /tj2_zed/stop_yolo_object_detection
+rosservice call /zed/stop_yolo_object_detection

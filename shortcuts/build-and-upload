@@ -6,6 +6,7 @@ RESTART=${2:-y}
 
 IP=`bash ${BASE_DIR}/lib/get-ip.sh ${1}`
 KEY=`bash ${BASE_DIR}/lib/get-key.sh ${1}`
+REMOTE_USER_NAME=`bash ${BASE_DIR}/lib/get-username.sh ${1}`
 
 if [ -z $IP ]; then
     exit 1
@@ -15,4 +16,4 @@ if [ -z $KEY ]; then
     exit 1
 fi
 
-${BASE_DIR}/../install/build_ws ${IP} "${KEY}" ${RESTART}
+${BASE_DIR}/../install/build_ws ${IP} "${KEY}" ${RESTART} ${REMOTE_USER_NAME}
