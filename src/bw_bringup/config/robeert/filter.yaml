@@ -1,0 +1,19 @@
+landmark_converter:
+  covariance: [
+      0.0100, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000,
+      0.0000, 0.0100, 0.0000, 0.0000, 0.0000, 0.0000,
+      0.0000, 0.0000, 0.100, 0.0000, 0.0000, 0.0000,
+      0.0000, 0.0000, 0.0000, 0.100, 0.0000, 0.0000,
+      0.0000, 0.0000, 0.0000, 0.0000, 0.100, 0.0000,
+      0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0100,
+  ]
+  landmark_ids: [1, 2, 3, 4, 5, 6, 7, 8]
+
+bw_filter:
+  map_frame: map
+  play_forward_buffer_size: 20
+  tag_fast_forward_sample_dt: 0.05
+  update_rate: 50.0
+  roll_pitch_threshold: 0.2
+  ground_distance_threshold: 0.5
+  ground_angle_threshold: 0.5

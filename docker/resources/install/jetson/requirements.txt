@@ -1,4 +1,4 @@
-py-trees==2.2.3
+py-trees==2.1.6
 jsonlines
 ezdxf
 filterpy

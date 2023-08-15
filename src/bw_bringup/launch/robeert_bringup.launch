@@ -49,17 +49,19 @@
     <include file="$(find bw_laser_slam)/launch/bw_laser_slam.launch">
         <arg name="mode" value="localize"/>
         <arg name="map_name" value="$(arg map_name)"/>
-        <arg name="laser_scan_topic" value="$(arg laser_scan_topic)"/>
+        <arg name="laser_scan_topic" value="/laser/scan"/>
         <arg name="gmapping_config" value="$(find bw_bringup)/config/$(arg robot_name)/gmapping.yaml"/>
         <arg name="amcl_config" value="$(find bw_bringup)/config/$(arg robot_name)/amcl.yaml"/>
     </include>
 
-    <node pkg="apriltag_ros" type="apriltag_ros_continuous_node" name="apriltags" required="false" output="screen">
-        <rosparam command="load" file="$(find bw_bringup)/config/$(arg robot_name)/tags.yaml"/>
-        <param name="publish_tag_detections_image" type="bool" value="false"/>
-        <remap from="camera_info" to="/zed/rgb/camera_info"/>
-        <remap from="image_rect" to="/zed/rgb/image_rect_color"/>
-    </node>
+    <group ns="bw">
+        <node pkg="apriltag_ros" type="apriltag_ros_continuous_node" name="apriltags" required="false" output="screen">
+            <rosparam command="load" file="$(find bw_bringup)/config/$(arg robot_name)/tags.yaml"/>
+            <param name="publish_tag_detections_image" type="bool" value="false"/>
+            <remap from="camera_info" to="/zed/rgb/camera_info"/>
+            <remap from="image_rect" to="/zed/rgb/image_rect_color"/>
+        </node>
+    </group>
 
     <include file="$(find bw_filter)/launch/bw_filter.launch"/>
 </launch>
