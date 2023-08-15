@@ -38,7 +38,7 @@ class BwLaserSlam:
         self.package_dir = self.rospack.get_path(self.node_name)
         self.default_launches_dir = self.package_dir + "/launch/sublaunch"
 
-        self.data_package_dir = self.rospack.get_path("tj2_data")
+        self.data_package_dir = self.rospack.get_path("bw_data")
         self.default_maps_dir = self.data_package_dir + "/data/maps"
 
         self.service_ns_name = rospy.get_param("~service_ns_name", "/bw")

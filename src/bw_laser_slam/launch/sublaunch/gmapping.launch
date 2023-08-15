@@ -1,6 +1,6 @@
 <launch>
     <arg name="laser_scan_topic"   default="/laser/scan"/>
-    <arg name="gmapping_config"        default="$(find tj2_laser_slam)/config/gmapping.yaml"/>
+    <arg name="gmapping_config"        default="$(find bw_laser_slam)/config/gmapping.yaml"/>
     <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping" output="screen">
         <!-- <remap from="scan" to="/laser/scan_filtered"/> -->
         <remap from="scan" to="$(arg laser_scan_topic)"/>

@@ -1,5 +1,4 @@
 # specific files/directories
-scripts/startup.sh
 pcb/bw_beer_caddy/export
 pcb/bw_beer_caddy/bw_beer_caddy-backups
 fp-info-cache

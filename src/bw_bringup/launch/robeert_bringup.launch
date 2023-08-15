@@ -20,8 +20,7 @@
     <include file="$(find bw_tunnel)/launch/twist_mux.launch"/>
 
     <include file="$(find bw_load_cell)/launch/bw_load_cell.launch">
-        <arg name="device_path" default="/dev/serial/by-id/usb-Silicon_Labs_CP2104_USB_to_UART_Bridge_Controller_018D31F7-if00-port0"/>
-        <arg name="calibration_value" default="-33393.6015625"/>
+        <arg name="config_path" default="$(find bw_bringup)/config/$(arg robot_name)/load_cell.yaml"/>
     </include>
 
     <group ns="laser">
@@ -37,7 +36,7 @@
     </group>
 
     <include file="$(find bw_move_base)/launch/bw_move_base.launch"/>
-    <include file="$(find bw_behaviors)/launch/bw_behaviors.launch"/>
+    <!-- <include file="$(find bw_behaviors)/launch/bw_behaviors.launch"/> -->
     <include file="$(find bw_zed)/launch/zed2.launch"/>
 
     <include file="$(find bw_waypoints)/launch/bw_waypoints.launch">
@@ -51,8 +50,16 @@
         <arg name="mode" value="localize"/>
         <arg name="map_name" value="$(arg map_name)"/>
         <arg name="laser_scan_topic" value="$(arg laser_scan_topic)"/>
-        <arg name="gmapping_config" value="$(find tj2_bringup)/config/diffyjr/gmapping.yaml"/>
-        <arg name="amcl_config" value="$(find tj2_bringup)/config/diffyjr/amcl.yaml"/>
+        <arg name="gmapping_config" value="$(find bw_bringup)/config/$(arg robot_name)/gmapping.yaml"/>
+        <arg name="amcl_config" value="$(find bw_bringup)/config/$(arg robot_name)/amcl.yaml"/>
     </include>
+
+    <node pkg="apriltag_ros" type="apriltag_ros_continuous_node" name="apriltags" required="false" output="screen">
+        <rosparam command="load" file="$(find bw_bringup)/config/$(arg robot_name)/tags.yaml"/>
+        <param name="publish_tag_detections_image" type="bool" value="false"/>
+        <remap from="camera_info" to="/zed/rgb/camera_info"/>
+        <remap from="image_rect" to="/zed/rgb/image_rect_color"/>
+    </node>
+
     <include file="$(find bw_filter)/launch/bw_filter.launch"/>
 </launch>

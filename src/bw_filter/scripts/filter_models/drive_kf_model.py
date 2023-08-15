@@ -2,7 +2,7 @@ import numpy as np
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseWithCovarianceStamped
 
-from tj2_tools.robot_state import Pose2d, Velocity
+from bw_tools.robot_state import Pose2d, Velocity
 
 from .helpers import (
     jit_predict,

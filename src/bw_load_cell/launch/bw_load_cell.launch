@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-    <arg name="device_path" default="/dev/ttyACM1"/>
-    <arg name="calibration_value" default="-33393.6015625"/>
+    <arg name="config_path" default="$(find bw_bringup)/config/robeert/load_cell.yaml"/>
     <group ns="bw">
         <group ns="load_cell">
             <node name="bw_load_cell" pkg="bw_load_cell" type="bw_load_cell" output="screen" required="false" respawn="true">
-                <param name="device_path" value="$(arg device_path)"/>
+                <rosparam command="load" file="$(arg config_path)" />
                 <param name="device_baud" value="115200"/>
-                <param name="calibration_value" value="$(arg calibration_value)"/>
                 <param name="last_read_timeout" value="15.0"/>
             </node>
         </group>

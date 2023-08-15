@@ -23,6 +23,7 @@ services:
       - ${PROJECT_DIR}/scripts:/opt/${ORGANIZATION}/scripts:rw
       - ${PROJECT_DIR}/docker/resources/configs/zed:/usr/local/zed/settings/:rw
       - /home/${USER}/zed-resources:/usr/local/zed/resources/:rw
+      - /home/${USER}/.robot:/opt/${ORGANIZATION}/robot:rw
       - /media/storage:/media/storage:rw
       - /run/systemd:/run/systemd:rw
       - /dev:/dev:rw

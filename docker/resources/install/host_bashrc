@@ -83,4 +83,4 @@ fi
 source /opt/${ORGANIZATION}/scripts/set_master.sh ${ROS_MASTER_INTERFACE}
 source ${DEP_ROS_WS_ROOT}/devel/setup.bash
 source ${ROS_WS_ROOT}/devel/setup.bash
-source /opt/${ORGANIZATION}/scripts/startup.sh
+source /opt/${ORGANIZATION}/robot

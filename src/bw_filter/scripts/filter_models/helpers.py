@@ -5,7 +5,7 @@ from typing import Tuple, Dict
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry
 
-from tj2_tools.robot_state import Pose2d, Velocity
+from bw_tools.robot_state import Pose2d, Velocity
 
 NUM_MEASUREMENTS = 3
 NUM_POSE_STATES_ROS = 6
