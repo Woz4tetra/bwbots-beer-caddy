@@ -24,10 +24,6 @@ sudo apt-get install -y --ignore-missing ros-noetic-robot-localization \
     ros-noetic-dwa-local-planner \
     ros-noetic-base-local-planner \
     ros-noetic-costmap-converter \
-    ros-noetic-py-trees-ros \
-    ros-noetic-py-trees-msgs \
-    ros-noetic-py-trees \
-    ros-noetic-rqt-py-trees \
     ros-noetic-rosbridge-suite \
     ros-noetic-ros-numpy
 

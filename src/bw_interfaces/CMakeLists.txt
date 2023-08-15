@@ -49,54 +49,17 @@ find_package(catkin REQUIRED COMPONENTS
 
 # # Generate messages in the 'msg' folder
 add_message_files(
-  FILES
-  BwDriveModule.msg
-  BwDriveState.msg
-  ChargeState.msg
-  DrinkMission.msg
-  DrinkMissionArray.msg
-  LoadCell.msg
-  Labels.msg
-  BwSequence.msg
-  BwSequenceElement.msg
-  BwSequenceState.msg
-  Waypoint.msg
-  WaypointArray.msg
-  WifiNetwork.msg
+  DIRECTORY
 )
 
 # # Generate services in the 'srv' folder
 add_service_files(
-  FILES
-  OdomReset.srv
-  CalibrateScale.srv
-  PlaySequence.srv
-  StopSequence.srv
-  DeleteWaypoint.srv
-  GetAllWaypoints.srv
-  GetWaypoint.srv
-  GetWaypoints.srv
-  SaveWaypoint.srv
-  SaveTF.srv
-  ConnectWifi.srv
-  ListWifi.srv
+  DIRECTORY
 )
 
 # # Generate actions in the 'action' folder
 add_action_files(
-  FILES
-  Dispense.action
-  FindTag.action
-  FollowDetection.action
-  FollowWaypoints.action
-  HasDrink.action
-  GoToPose.action
-  RunBehavior.action
-  RunSequence.action
-  SaveTagAsWaypoint.action
-  SetRobotState.action
-  ShuffleUntilCharging.action
-  WaitForDrink.action
+  DIRECTORY
 )
 
 # # Generate added messages and services with any dependencies listed here

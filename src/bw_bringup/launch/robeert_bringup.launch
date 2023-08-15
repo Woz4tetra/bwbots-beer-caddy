@@ -50,6 +50,9 @@
     <include file="$(find bw_laser_slam)/launch/bw_laser_slam.launch">
         <arg name="mode" value="localize"/>
         <arg name="map_name" value="$(arg map_name)"/>
+        <arg name="laser_scan_topic" value="$(arg laser_scan_topic)"/>
+        <arg name="gmapping_config" value="$(find tj2_bringup)/config/diffyjr/gmapping.yaml"/>
+        <arg name="amcl_config" value="$(find tj2_bringup)/config/diffyjr/amcl.yaml"/>
     </include>
-    <!-- <include file="$(find bw_localization)/launch/bw_localization.launch"/> -->
+    <include file="$(find bw_filter)/launch/bw_filter.launch"/>
 </launch>

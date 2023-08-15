@@ -5,7 +5,7 @@
 # Print the commands
 set -x
 # Download the lightest installer
-wget -q https://download.stereolabs.com/zedsdk/3.5/jp44/jetsons -O zed_installer.run
+download zed_installer.run https://download.stereolabs.com/zedsdk/3.5/jp44/jetsons -q
 # Extracting only the file we're interested in
 bash ./zed_installer.run --tar -x './99-slabs.rules'  > /dev/null 2>&1
 sudo mv "./99-slabs.rules" "/etc/udev/rules.d/99-zed.rules"

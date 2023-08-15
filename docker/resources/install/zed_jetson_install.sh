@@ -6,7 +6,7 @@ cd /opt/${ORGANIZATION}
 sudo apt-get update
 sudo apt-get install --no-install-recommends lsb-release less udev sudo apt-transport-https -y
 sudo sh -c 'echo "# R${L4T_MAJOR_VERSION} (release), REVISION: ${L4T_MINOR_VERSION}.${L4T_PATCH_VERSION}" > /etc/nv_tegra_release'
-wget -q --no-check-certificate -O ZED_SDK_Linux.run https://download.stereolabs.com/zedsdk/${ZED_SDK_MAJOR}.${ZED_SDK_MINOR}/l4t${L4T_MAJOR_VERSION}.${L4T_MINOR_VERSION}/jetsons
+download ZED_SDK_Linux.run https://download.stereolabs.com/zedsdk/${ZED_SDK_MAJOR}.${ZED_SDK_MINOR}/l4t${L4T_MAJOR_VERSION}.${L4T_MINOR_VERSION}/jetsons -q --no-check-certificate
 bash ./ZED_SDK_Linux.run silent skip_tools
 sudo rm -rf /usr/local/zed/resources/*
 sudo rm -rf ZED_SDK_Linux.run

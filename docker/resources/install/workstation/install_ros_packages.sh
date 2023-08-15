@@ -32,8 +32,9 @@ fi
 cd ${DEP_ROS_WS_ROOT}
 /opt/${ORGANIZATION}/install/rosdep_install.sh
 source /opt/ros/${ROS_DISTRO}/setup.bash
-catkin_make -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF
+catkin_make
 
+sudo apt-get clean
 sudo rm -rf /var/lib/apt/lists/*
 
 echo "Installed ROS workstation packages"

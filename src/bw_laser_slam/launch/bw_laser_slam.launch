@@ -2,8 +2,16 @@
 <launch>
     <arg name="map_name" default="map-{date}"/>
     <arg name="mode" default="mapping"/> <!-- "mapping", "localize" -->
+    <arg name="laser_scan_topic"   default="/laser/scan"/>
+    <arg name="gmapping_config"    default="$(find bw_laser_slam)/config/gmapping.yaml"/>
+    <arg name="amcl_config"        default="$(find bw_laser_slam)/config/amcl.yaml"/>
+    
+
     <node pkg="bw_laser_slam" type="bw_laser_slam_node.py" name="bw_laser_slam" output="screen">
         <param name="mode" value="$(arg mode)"/>
         <param name="map_name" value="$(arg map_name)"/>
+        <param name="laser_scan_topic" value="$(arg laser_scan_topic)"/>
+        <param name="gmapping_config" value="$(arg gmapping_config)"/>
+        <param name="amcl_config" value="$(arg amcl_config)"/>
     </node>
 </launch>

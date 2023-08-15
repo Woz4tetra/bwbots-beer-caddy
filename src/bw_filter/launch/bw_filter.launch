@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <arg name="filter_params" default="$(find bw_bringup)/config/robeert/filter.yaml"/>
+
+    <group ns="bw">
+        <rosparam command="load" file="$(arg filter_params)" ns=""/>
+
+        <node pkg="bw_filter" type="bw_filter_node.py" name="bw_filter" output="screen">
+            <remap from="amcl_pose" to="/amcl_pose" />
+            <remap from="initialpose" to="/initialpose"/>
+        </node>
+
+        <node pkg="bw_filter" type="landmark_converter.py" name="landmark_converter" required="false" output="screen"/>
+        <node pkg="bw_filter" type="amcl_tag_initialization.py" name="amcl_tag_initialization" required="false" output="screen">
+            <remap from="amcl_pose" to="/amcl_pose"/>
+            <remap from="initialpose" to="/initialpose"/>
+            <param name="cooldown_time" value="1.0"/>
+        </node>
+    </group>
+</launch>

@@ -7,7 +7,7 @@ sudo chown -R 1000:1000 /tmp
 
 # platformio
 cd /tmp
-wget -O get-platformio.py https://raw.githubusercontent.com/platformio/platformio/master/scripts/get-platformio.py
+download get-platformio.py https://raw.githubusercontent.com/platformio/platformio-core-installer/master/get-platformio.py
 python get-platformio.py
 sudo ln -s $HOME/.platformio/penv/bin/platformio /usr/local/bin
 

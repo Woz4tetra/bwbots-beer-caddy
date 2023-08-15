@@ -26,6 +26,8 @@ RUN sudo mkdir -p /opt/${ORGANIZATION}/install && sudo chown -R 1000:1000 /opt/$
 COPY --chown=1000:1000 ./install/setup_user.sh /opt/${ORGANIZATION}/install
 RUN bash /opt/${ORGANIZATION}/install/setup_user.sh
 
+COPY --chown=1000:1000 ./install/download /usr/bin
+
 USER ${USER}
 
 # ---

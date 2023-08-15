@@ -36,13 +36,19 @@ class BwLaserSlam:
 
         self.rospack = rospkg.RosPack()
         self.package_dir = self.rospack.get_path(self.node_name)
-        self.default_maps_dir = self.package_dir + "/maps"
         self.default_launches_dir = self.package_dir + "/launch/sublaunch"
+
+        self.data_package_dir = self.rospack.get_path("tj2_data")
+        self.default_maps_dir = self.data_package_dir + "/data/maps"
 
         self.service_ns_name = rospy.get_param("~service_ns_name", "/bw")
         self.start_mode = rospy.get_param("~mode", "mapping")
         self.min_localize_rate_threshold = rospy.get_param("~min_localize_rate_threshold", 1.0)
         self.min_mapping_rate_threshold = rospy.get_param("~min_mapping_rate_threshold", 1.0)
+        
+        self.laser_scan_topic = rospy.get_param("~laser_scan_topic", "")
+        self.gmapping_config = rospy.get_param("~gmapping_config", "")
+        self.amcl_config = rospy.get_param("~amcl_config", "")
         
         self.mode = self.NONE
         self.map_dir = rospy.get_param("~map_dir", self.default_maps_dir)
@@ -52,24 +58,29 @@ class BwLaserSlam:
 
         self.set_map_paths()
 
+        rospy.loginfo(f"Map directory is {self.map_dir}")
         if not os.path.isdir(self.map_dir):
             os.makedirs(self.map_dir)
+            
+        self.amcl_args = dict(
+            map_path=self.map_path + ".yaml",
+            laser_scan_topic=self.laser_scan_topic,
+            amcl_config=self.amcl_config
+        )
 
-        self.slam_launch_path = rospy.get_param("~slam_launch", self.default_launches_dir + "/gmapping.launch")
-        # self.slam_launch_path = rospy.get_param("~slam_launch", self.default_launches_dir + "/als_slam.launch")
-        self.localize_launch_path = rospy.get_param("~localize_launch", self.default_launches_dir + "/amcl.launch")
-        # self.localize_launch_path = rospy.get_param("~localize_launch", self.default_launches_dir + "/als_localize.launch")
+        self.gmapping_launch_path = rospy.get_param("~gmapping_launch", self.default_launches_dir + "/gmapping.launch")
+        self.amcl_launch_path = rospy.get_param("~amcl_launch", self.default_launches_dir + "/amcl.launch")
         self.map_saver_launch_path = rospy.get_param("~map_saver_launch", self.default_launches_dir + "/map_saver.launch")
         self.fake_map_launch_path = rospy.get_param("~fake_map_launch", self.default_launches_dir + "/fake_map.launch")
-
-        self.slam_launcher = LaunchManager(self.slam_launch_path, map_path=self.map_path + ".yaml")
-        self.localize_launcher = LaunchManager(self.localize_launch_path, map_path=self.map_path + ".yaml")
+        
+        self.gmapping_launcher = LaunchManager(self.gmapping_launch_path, laser_scan_topic=self.laser_scan_topic, gmapping_config=self.gmapping_config)
+        self.amcl_launcher = LaunchManager(self.amcl_launch_path, **self.amcl_args)
         self.map_saver_launcher = LaunchManager(self.map_saver_launch_path, map_path=self.map_path)
         self.fake_map_launcher = LaunchManager(self.fake_map_launch_path)
 
         self.launchers = [
-            self.slam_launcher,
-            self.localize_launcher,
+            self.gmapping_launcher,
+            self.amcl_launcher,
             self.map_saver_launcher,
             self.fake_map_launcher,
         ]
@@ -142,18 +153,19 @@ class BwLaserSlam:
             self.map_name = map_name
             self.set_map_paths()
             rospy.loginfo("Setting map path to %s" % self.map_path)
-            self.localize_launcher.set_args(map_path=self.map_path + ".yaml")
+            self.amcl_args["map_path"] = self.map_path + ".yaml"
+            self.amcl_launcher.set_args(**self.amcl_args)
             self.map_saver_launcher.set_args(map_path=self.map_path)
 
         if mode == self.LOCALIZE:
-            self.slam_launcher.stop()
-            self.localize_launcher.start()
+            self.gmapping_launcher.stop()
+            self.amcl_launcher.start()
         elif mode == self.MAPPING:
-            self.slam_launcher.start()
-            self.localize_launcher.stop()
+            self.gmapping_launcher.start()
+            self.amcl_launcher.stop()
         else:
-            self.slam_launcher.stop()
-            self.localize_launcher.stop()
+            self.gmapping_launcher.stop()
+            self.amcl_launcher.stop()
         
         self.mode = mode
         rospy.loginfo("Mode switched to %s" % self.mode)
@@ -194,13 +206,6 @@ class BwLaserSlam:
         self.map_saver_launcher.start()
         self.map_saver_launcher.join(timeout=self.map_saver_wait_time)
         rospy.loginfo("Map saved!")
-        
-        config_path = self.map_path + ".yaml"
-        with open(config_path) as file:
-            config = yaml.safe_load(file)
-            config["image"] = os.path.basename(config["image"])
-        with open(config_path, 'w') as file:
-            yaml.safe_dump(config, file)
 
     # def signal_handler(self, sig, frame):
     #     self.shutdown_hook()

@@ -1,2 +1,0 @@
-string delivery_waypoint_key
-string drink_dispenser_tag

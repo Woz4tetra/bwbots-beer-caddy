@@ -62,7 +62,7 @@ class LaunchManager:
             rospy.loginfo("roslaunch already running. args: %s" % self.roslaunch_args)
             return False
         else:
-            rospy.loginfo("roslaunch args: %s" % self.roslaunch_args)
+            rospy.loginfo("[%s] roslaunch args: %s" % (self.launch_path, self.roslaunch_args))
             self.process = Popen(self.roslaunch_args, preexec_fn=os.setpgrp)  #, stdout=PIPE, stderr=PIPE)
             return True
     
