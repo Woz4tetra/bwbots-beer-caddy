@@ -5,7 +5,7 @@
         "databaseFilename": "${default}",
         "limitSymbolsToIncludedHeaders": false
       },
-      "includePath": ["/opt/ros/noetic/include/**", "/usr/include/**"],
+      "includePath": ["/opt/ros/${ROS_DISTRO}/include/**", "/usr/include/**"],
       "name": "ROS",
       "intelliSenseMode": "gcc-x64",
       "compilerPath": "/usr/bin/gcc",

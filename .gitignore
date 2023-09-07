@@ -9,6 +9,12 @@ torch/outputs
 torch/dataset
 torch/pretrained
 docker-compose.gpu.yaml
+scripts/tags/cache.pkl
+
+# images
+*.jpg
+*.png
+*.pdf
 
 # training
 wandb

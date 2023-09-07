@@ -5,37 +5,38 @@ set -e
 sudo sh -c 'echo "deb http://packages.ros.org/ros-testing/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 sudo apt-get update
 
-sudo apt-get install -y --ignore-missing ros-noetic-rospy \
-    ros-noetic-catkin \
-    ros-noetic-tf \
-    ros-noetic-rviz \
-    ros-noetic-topic-tools \
-    ros-noetic-joy \
-    ros-noetic-roscpp \
-    ros-noetic-std-msgs \
-    ros-noetic-sensor-msgs \
-    ros-noetic-geometry-msgs \
-    ros-noetic-tf2-ros \
-    ros-noetic-tf2-geometry-msgs \
-    ros-noetic-geometry2 \
-    ros-noetic-tf2 \
-    ros-noetic-nav-msgs \
-    ros-noetic-navigation \
-    ros-noetic-message-generation \
-    ros-noetic-roslaunch \
-    ros-noetic-message-runtime \
-    ros-noetic-message-filters \
-    ros-noetic-visualization-msgs \
-    ros-noetic-image-transport \
-    ros-noetic-vision-msgs \
-    ros-noetic-pcl-msgs \
-    ros-noetic-camera-info-manager \
-    ros-noetic-dynamic-reconfigure \
-    ros-noetic-image-transport-plugins \
-    ros-noetic-image-pipeline \
-    ros-noetic-image-common \
-    ros-noetic-marker-msgs \
-    ros-noetic-usb-cam \
+sudo apt-get install -y --ignore-missing \
+    ros-${ROS_DISTRO}-rospy \
+    ros-${ROS_DISTRO}-catkin \
+    ros-${ROS_DISTRO}-tf \
+    ros-${ROS_DISTRO}-rviz \
+    ros-${ROS_DISTRO}-topic-tools \
+    ros-${ROS_DISTRO}-joy \
+    ros-${ROS_DISTRO}-roscpp \
+    ros-${ROS_DISTRO}-std-msgs \
+    ros-${ROS_DISTRO}-sensor-msgs \
+    ros-${ROS_DISTRO}-geometry-msgs \
+    ros-${ROS_DISTRO}-tf2-ros \
+    ros-${ROS_DISTRO}-tf2-geometry-msgs \
+    ros-${ROS_DISTRO}-geometry2 \
+    ros-${ROS_DISTRO}-tf2 \
+    ros-${ROS_DISTRO}-nav-msgs \
+    ros-${ROS_DISTRO}-navigation \
+    ros-${ROS_DISTRO}-message-generation \
+    ros-${ROS_DISTRO}-roslaunch \
+    ros-${ROS_DISTRO}-message-runtime \
+    ros-${ROS_DISTRO}-message-filters \
+    ros-${ROS_DISTRO}-visualization-msgs \
+    ros-${ROS_DISTRO}-image-transport \
+    ros-${ROS_DISTRO}-vision-msgs \
+    ros-${ROS_DISTRO}-pcl-msgs \
+    ros-${ROS_DISTRO}-camera-info-manager \
+    ros-${ROS_DISTRO}-dynamic-reconfigure \
+    ros-${ROS_DISTRO}-image-transport-plugins \
+    ros-${ROS_DISTRO}-image-pipeline \
+    ros-${ROS_DISTRO}-image-common \
+    ros-${ROS_DISTRO}-marker-msgs \
+    ros-${ROS_DISTRO}-usb-cam \
     libsdl-image1.2-dev \
     libsdl-dev \
     python3-pip \
@@ -44,7 +45,5 @@ sudo apt-get install -y --ignore-missing ros-noetic-rospy \
     v4l-utils
 
 sudo apt-get upgrade -y
-
-sudo rm -rf /var/lib/apt/lists/*
 
 echo "Installed all basic apt packages"

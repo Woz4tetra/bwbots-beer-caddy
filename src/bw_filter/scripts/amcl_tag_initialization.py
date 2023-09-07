@@ -5,34 +5,35 @@ from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from helpers import amcl_and_landmark_agree, is_roll_pitch_reasonable
 from bw_tools.robot_state import Velocity, Pose2d
+from bw_tools.typing import get_param, seconds_to_duration
 
 
 class AmclTagInitialization:
     def __init__(self) -> None:
         rospy.init_node("amcl_tag_initialization")
 
-        self.linear_velocity_threshold = rospy.get_param(
+        self.linear_velocity_threshold = get_param(
             "~linear_velocity_threshold", 0.1
         )
-        self.angular_velocity_threshold = rospy.get_param(
+        self.angular_velocity_threshold = get_param(
             "~angular_velocity_threshold", 0.1
         )
-        self.z_threshold = rospy.get_param("~z_threshold", 0.75)
-        self.roll_pitch_threshold = rospy.get_param("~roll_pitch_threshold", 0.2)
-        self.ground_distance_threshold = rospy.get_param(
+        self.z_threshold = get_param("~z_threshold", 0.75)
+        self.roll_pitch_threshold = get_param("~roll_pitch_threshold", 0.2)
+        self.ground_distance_threshold = get_param(
             "~ground_distance_threshold", 0.5
         )
-        self.ground_angle_threshold = rospy.get_param("~ground_angle_threshold", 0.5)
+        self.ground_angle_threshold = get_param("~ground_angle_threshold", 0.5)
 
-        self.initial_cov_xx = rospy.get_param("/amcl/initial_cov_xx", 0.25)
-        self.initial_cov_yy = rospy.get_param("/amcl/initial_cov_yy", 0.25)
-        self.initial_cov_aa = rospy.get_param("/amcl/initial_cov_aa", 0.06854)
+        self.initial_cov_xx = get_param("/amcl/initial_cov_xx", 0.25)
+        self.initial_cov_yy = get_param("/amcl/initial_cov_yy", 0.25)
+        self.initial_cov_aa = get_param("/amcl/initial_cov_aa", 0.06854)
 
         # 0.0 == only reset once
-        self.cooldown_time = rospy.Duration(rospy.get_param("~cooldown_time", 0.0))  # type: ignore
+        self.cooldown_time = seconds_to_duration(get_param("~cooldown_time", 0.0))
 
-        self.stale_measurement_time = rospy.Duration(
-            rospy.get_param("~stale_measurement_time", 0.5)  # type: ignore
+        self.stale_measurement_time = seconds_to_duration(
+            get_param("~stale_measurement_time", 0.5)
         )
 
         self.last_reset_time = rospy.Time()

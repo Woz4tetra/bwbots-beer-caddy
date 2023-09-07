@@ -9,6 +9,7 @@ PROJECT_NAME=$(${BASE_DIR}/../get_project_name)
 ORGANIZATION=$(${BASE_DIR}/../get_organization)
 docker build \
     -f ./workstation.Dockerfile \
+    --build-arg ROS_DISTRO=noetic \
     --build-arg PROJECT_NAME=${PROJECT_NAME} \
     --build-arg ORGANIZATION=${ORGANIZATION} \
     -t workstation_${IMAGE_VERSION} .

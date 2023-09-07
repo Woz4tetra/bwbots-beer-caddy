@@ -82,6 +82,6 @@ fi
 
 alias rm="rm -I"
 
-source /opt/ros/noetic/setup.bash
 source ${DEP_ROS_WS_ROOT}/devel/setup.bash
 source ${ROS_WS_ROOT}/devel/setup.bash
+source /opt/${ORGANIZATION}/robot

@@ -14,6 +14,4 @@ cd ${DEP_ROS_WS_ROOT}
 source /opt/ros/${ROS_DISTRO}/setup.bash
 catkin_make -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF
 
-sudo rm -rf /var/lib/apt/lists/*
-
 echo "Installed ROS training packages"

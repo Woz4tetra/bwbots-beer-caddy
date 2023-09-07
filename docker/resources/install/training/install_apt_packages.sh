@@ -5,30 +5,30 @@ set -e
 sudo sh -c 'echo "deb http://packages.ros.org/ros-testing/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 sudo apt-get update
 
-sudo apt-get install -y --ignore-missing ros-noetic-robot-localization \
-    ros-noetic-xacro \
-    ros-noetic-robot-state-publisher \
-    ros-noetic-joint-state-publisher \
-    ros-noetic-serial \
-    ros-noetic-twist-mux \
-    ros-noetic-cv-bridge \
-    ros-noetic-image-geometry \
-    ros-noetic-perception-pcl \
-    ros-noetic-amcl \
-    ros-noetic-map-server \
-    ros-noetic-gmapping \
-    ros-noetic-laser-filters \
-    ros-noetic-move-base \
-    ros-noetic-teb-local-planner \
-    ros-noetic-global-planner \
-    ros-noetic-dwa-local-planner \
-    ros-noetic-base-local-planner \
-    ros-noetic-costmap-converter \
-    ros-noetic-rosbridge-suite \
-    ros-noetic-ros-numpy
+sudo apt-get install -y --ignore-missing \
+    ros-${ROS_DISTRO}-robot-localization \
+    ros-${ROS_DISTRO}-xacro \
+    ros-${ROS_DISTRO}-robot-state-publisher \
+    ros-${ROS_DISTRO}-joint-state-publisher \
+    ros-${ROS_DISTRO}-serial \
+    ros-${ROS_DISTRO}-twist-mux \
+    ros-${ROS_DISTRO}-cv-bridge \
+    ros-${ROS_DISTRO}-image-geometry \
+    ros-${ROS_DISTRO}-perception-pcl \
+    ros-${ROS_DISTRO}-amcl \
+    ros-${ROS_DISTRO}-map-server \
+    ros-${ROS_DISTRO}-gmapping \
+    ros-${ROS_DISTRO}-laser-filters \
+    ros-${ROS_DISTRO}-move-base \
+    ros-${ROS_DISTRO}-teb-local-planner \
+    ros-${ROS_DISTRO}-global-planner \
+    ros-${ROS_DISTRO}-dwa-local-planner \
+    ros-${ROS_DISTRO}-base-local-planner \
+    ros-${ROS_DISTRO}-costmap-converter \
+    ros-${ROS_DISTRO}-rosbridge-suite \
+    ros-${ROS_DISTRO}-ros-numpy \
+    ros-${ROS_DISTRO}-rviz
 
 sudo apt-get upgrade -y
-
-sudo rm -rf /var/lib/apt/lists/*
 
 echo "Installed all basic apt packages"

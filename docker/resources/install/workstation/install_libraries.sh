@@ -11,6 +11,17 @@ download get-platformio.py https://raw.githubusercontent.com/platformio/platform
 python get-platformio.py
 sudo ln -s $HOME/.platformio/penv/bin/platformio /usr/local/bin
 
+# apriltag
+cd /tmp
+git clone https://github.com/AprilRobotics/apriltag.git
+cd apriltag
+git checkout 3e8e974d0d8d6ab318abf56d87506d15d7f2cc35
+mkdir build
+cd /tmp/apriltag/build
+cmake ..
+make -j4
+sudo make install
+
 # clean up
 sudo ldconfig
 rm -r /tmp/* || true

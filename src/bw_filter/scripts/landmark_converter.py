@@ -12,21 +12,20 @@ from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
 
 from bw_tools.transforms import lookup_transform
 from bw_tools.robot_state import SimpleFilter
+from bw_tools.typing import get_param
 
 
 class LandmarkConverter:
     def __init__(self) -> None:
         rospy.init_node("landmark_converter")
 
-        self.base_frame = str(rospy.get_param("~base_frame", "base_tilt_link"))
-        self.map_frame = str(rospy.get_param("~map_frame", "map"))
-        self.field_frame = str(rospy.get_param("~field_frame", "field"))
-        self.max_tag_distance = float(rospy.get_param("~max_tag_distance", 2.0))
-        self.time_covariance_filter_k = float(
-            rospy.get_param("~time_covariance_filter_k", 0.5)
-        )
-        self.landmark_ids = frozenset(rospy.get_param("~landmark_ids", [0]))
-        base_covariance = rospy.get_param(
+        self.base_frame = get_param("~base_frame", "base_tilt_link")
+        self.map_frame = get_param("~map_frame", "map")
+        self.field_frame = get_param("~field_frame", "field")
+        self.max_tag_distance = get_param("~max_tag_distance", 2.0)
+        self.time_covariance_filter_k = get_param("~time_covariance_filter_k", 0.5)
+        self.landmark_ids = frozenset(get_param("~landmark_ids", [0]))
+        base_covariance = get_param(
             "~covariance", np.eye(6, dtype=np.float64).flatten().tolist()
         )
         assert (

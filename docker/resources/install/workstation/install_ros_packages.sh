@@ -34,7 +34,4 @@ cd ${DEP_ROS_WS_ROOT}
 source /opt/ros/${ROS_DISTRO}/setup.bash
 catkin_make
 
-sudo apt-get clean
-sudo rm -rf /var/lib/apt/lists/*
-
 echo "Installed ROS workstation packages"

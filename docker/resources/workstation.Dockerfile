@@ -1,17 +1,15 @@
-FROM osrf/ros:noetic-desktop-full
+ARG ROS_DISTRO
+FROM ros:${ROS_DISTRO}-ros-core
 
+ARG ROS_DISTRO
 ARG PROJECT_NAME
 ARG ORGANIZATION
 
+ENV ROS_DISTRO=${ROS_DISTRO}
 ENV PROJECT_NAME=${PROJECT_NAME}
 ENV ORGANIZATION=${ORGANIZATION}
 
-ENV L4T_MAJOR_VERSION=32 \
-    L4T_MINOR_VERSION=6 \
-    L4T_PATCH_VERSION=1 \
-    ZED_SDK_MAJOR=3 \
-    ZED_SDK_MINOR=8 \
-    DEBIAN_FRONTEND=noninteractive \
+ENV DEBIAN_FRONTEND=noninteractive \
     SHELL=/bin/bash
 SHELL ["/bin/bash", "-c"] 
 
@@ -92,7 +90,7 @@ ENV ROS_WS_ROOT=${HOME}/ros_ws
 ENV ROS_WS_SRC=${ROS_WS_ROOT}/src
 ENV FLASK_ENV=development \
     PATH=${HOME}/.local/bin:/opt/${ORGANIZATION}/scripts${PATH:+:${PATH}} \
-    PYTHONPATH=${ROS_WS_SRC}/${PROJECT_NAME}/bw_tools${PYTHONPATH:+:${PYTHONPATH}} \
+    PYTHONPATH=/opt/${ORGANIZATION}/${PROJECT_NAME}/src/bw_tools${PYTHONPATH:+:${PYTHONPATH}} \
     PYTHONIOENCODING=utf-8
 
 COPY --chown=1000:1000 ./install/client_bashrc ${HOME}/.bashrc
