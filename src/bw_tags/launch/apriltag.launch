@@ -6,8 +6,7 @@
     <arg name="info_topic" default="camera_info" />
 
     <group ns="$(arg node_namespace)">
-        <rosparam command="load" file="$(find bw_tags)/config/apriltag/settings.yaml" ns="apriltag" />
-        <rosparam command="load" file="$(find bw_tags)/config/apriltag/tags.yaml" ns="apriltag" />
+        <rosparam command="load" file="$(find bw_tags)/config/settings.yaml" ns="apriltag" />
 
         <node pkg="apriltag_ros" type="apriltag_ros_continuous_node" name="apriltag" clear_params="true" required="false" output="screen" launch-prefix="$(arg launch_prefix)" >
             <remap from="camera_info" to="$(arg info_topic)" />
