@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-from typing import List, Optional
 import math
+from typing import List, Optional
+
 import numpy as np
 import rospy
-import tf2_ros
 import tf2_geometry_msgs
+import tf2_ros
 import tf.transformations
-
 from apriltag_ros.msg import AprilTagDetectionArray
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
 
-from bw_tools.transforms import lookup_transform
 from bw_tools.robot_state import SimpleFilter
-from bw_tools.typing import get_param
+from bw_tools.transforms import lookup_transform
+from bw_tools.typing.basic import get_param
 
 
 class LandmarkConverter:
@@ -25,12 +25,8 @@ class LandmarkConverter:
         self.max_tag_distance = get_param("~max_tag_distance", 2.0)
         self.time_covariance_filter_k = get_param("~time_covariance_filter_k", 0.5)
         self.landmark_ids = frozenset(get_param("~landmark_ids", [0]))
-        base_covariance = get_param(
-            "~covariance", np.eye(6, dtype=np.float64).flatten().tolist()
-        )
-        assert (
-            len(base_covariance) == 36
-        ), f"Invalid covariance. Length is {len(base_covariance)}: {base_covariance}"
+        base_covariance = get_param("~covariance", np.eye(6, dtype=np.float64).flatten().tolist())
+        assert len(base_covariance) == 36, f"Invalid covariance. Length is {len(base_covariance)}: {base_covariance}"
         self.base_covariance = np.array(base_covariance).reshape((6, 6))
 
         self.landmark = PoseWithCovarianceStamped()
@@ -43,12 +39,8 @@ class LandmarkConverter:
         self.buffer = tf2_ros.Buffer()
         self.transform_listener = tf2_ros.TransformListener(self.buffer)
 
-        self.tag_sub = rospy.Subscriber(
-            "tag_detections", AprilTagDetectionArray, self.tags_callback, queue_size=10
-        )
-        self.landmark_pub = rospy.Publisher(
-            "landmark", PoseWithCovarianceStamped, queue_size=10
-        )
+        self.tag_sub = rospy.Subscriber("tag_detections", AprilTagDetectionArray, self.tags_callback, queue_size=10)
+        self.landmark_pub = rospy.Publisher("landmark", PoseWithCovarianceStamped, queue_size=10)
 
     def tags_callback(self, msg: AprilTagDetectionArray) -> None:
         assert msg.detections is not None
@@ -121,14 +113,10 @@ class LandmarkConverter:
             landmark_in_base.pose.orientation.w,
         )
 
-        inverse_mat = tf.transformations.inverse_matrix(
-            tf.transformations.translation_matrix(translation)
-        )
+        inverse_mat = tf.transformations.inverse_matrix(tf.transformations.translation_matrix(translation))
 
         inverse_mat = tf.transformations.concatenate_matrices(
-            tf.transformations.inverse_matrix(
-                tf.transformations.quaternion_matrix(rotation)
-            ),
+            tf.transformations.inverse_matrix(tf.transformations.quaternion_matrix(rotation)),
             inverse_mat,
         )
 
@@ -181,19 +169,12 @@ class LandmarkConverter:
             ]
         )
 
-    def delta_pose_covariance_scale(
-        self, current_pose: PoseStamped, prev_pose: PoseStamped
-    ) -> None:
-        distance = np.linalg.norm(
-            self.pose_stamped_to_vector(current_pose)
-            - self.pose_stamped_to_vector(prev_pose)
-        )
-        scale = 4 * distance + 1.0
+    def delta_pose_covariance_scale(self, current_pose: PoseStamped, prev_pose: PoseStamped) -> float:
+        distance = np.linalg.norm(self.pose_stamped_to_vector(current_pose) - self.pose_stamped_to_vector(prev_pose))
+        scale = 4 * float(distance) + 1.0
         return scale
 
-    def time_covariance_scale(
-        self, current_pose: PoseStamped, prev_pose: PoseStamped
-    ) -> float:
+    def time_covariance_scale(self, current_pose: PoseStamped, prev_pose: PoseStamped) -> float:
         time_delta = (current_pose.header.stamp - prev_pose.header.stamp).to_sec()
         time_delta = max(time_delta, 5.0)
         filtered_delta = self.time_covariance_filter.update(time_delta)
@@ -201,15 +182,11 @@ class LandmarkConverter:
             time_delta = filtered_delta
         return time_delta * 2.0
 
-    def update_covariance(
-        self, tag_poses: List[PoseStamped], overall_pose: PoseStamped
-    ) -> None:
+    def update_covariance(self, tag_poses: List[PoseStamped], overall_pose: PoseStamped) -> None:
         distances = [self.get_pose_distance(pose) for pose in tag_poses]
         aggregate_distance = float(np.median(distances))
 
-        covariance = self.base_covariance * self.num_tags_covariance_scale(
-            len(tag_poses)
-        )
+        covariance = self.base_covariance * self.num_tags_covariance_scale(len(tag_poses))
         covariance *= self.pose_distance_covariance_scale(aggregate_distance)
 
         covariance *= self.delta_pose_covariance_scale(overall_pose, self.prev_landmark)

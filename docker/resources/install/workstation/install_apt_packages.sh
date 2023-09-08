@@ -20,6 +20,7 @@ sudo apt-get install -y --ignore-missing \
     ros-${ROS_DISTRO}-tf2-geometry-msgs \
     ros-${ROS_DISTRO}-geometry2 \
     ros-${ROS_DISTRO}-tf2 \
+    ros-${ROS_DISTRO}-tf-conversions \
     ros-${ROS_DISTRO}-nav-msgs \
     ros-${ROS_DISTRO}-navigation \
     ros-${ROS_DISTRO}-message-generation \

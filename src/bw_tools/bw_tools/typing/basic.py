@@ -1,5 +1,5 @@
 import rospy
-from typing import Union, cast, TypeVar
+from typing import cast, TypeVar
 
 
 T = TypeVar("T")

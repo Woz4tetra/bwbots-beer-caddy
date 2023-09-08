@@ -21,7 +21,7 @@
   "omnisharp.dotnetPath": "/usr/bin/dotnet",
   "editor.formatOnSave": true,
   "python.analysis.typeCheckingMode": "basic",
-  "python.formatting.provider": "none",
+  "python.formatting.provider": "black",
   "python.linting.flake8CategorySeverity.E": "Hint",
   "python.linting.flake8CategorySeverity.F": "Hint",
   "python.linting.flake8CategorySeverity.W": "Hint",
@@ -35,10 +35,17 @@
   },
   "git.openRepositoryInParentFolders": "always",
   "[python]": {
-    "editor.formatOnType": true,
-    "editor.defaultFormatter": "ms-python.black-formatter"
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true
+    }
   },
+  "isort.args": ["--profile", "black"],
   "editor.rulers": [120],
+  "python.linting.enabled": true,
+  "python.linting.flake8Enabled": true,
+  "python.linting.lintOnSave": true,
   "python.linting.flake8Args": ["--max-line-length=120"],
   "python.autoComplete.extraPaths": [
     "/home/ben/ros_ws/devel/lib/python3.8/site-packages",
@@ -123,11 +130,7 @@
   "files.watcherExclude": {
     "**/.git/objects/**": true,
     "**/.git/subtree-cache/**": true,
-    "**/node_modules/*/**": true,
-    "**/dataset_builder/data/*/**": true,
-    "**/dataset_builder/charged_up_2023/wandb/*/**": true,
-    "**/playground/bounce_trajectories/data/*/**": true,
-    "**/playground/swerve/swerve_bag_plotter/data/*/**": true
+    "**/node_modules/*/**": true
   },
   "ros.distro": "noetic"
 }

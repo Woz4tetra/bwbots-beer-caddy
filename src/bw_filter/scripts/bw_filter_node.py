@@ -20,7 +20,7 @@ from filter_models import TagFastForward
 from filter_models import DriveKalmanModel as FilterModel
 from helpers import amcl_and_landmark_agree, is_roll_pitch_reasonable
 from bw_tools.robot_state import Pose2d, Velocity
-from bw_tools.typing import get_param
+from bw_tools.typing.basic import get_param
 
 
 class BwFilter:
@@ -31,14 +31,10 @@ class BwFilter:
         self.base_frame = ""
 
         self.play_forward_buffer_size = get_param("~play_forward_buffer_size", 20)
-        self.tag_fast_forward_sample_dt = get_param(
-            "~tag_fast_forward_sample_dt", 0.05
-        )
+        self.tag_fast_forward_sample_dt = get_param("~tag_fast_forward_sample_dt", 0.05)
         self.update_rate = get_param("~update_rate", 50.0)
         self.roll_pitch_threshold = get_param("~roll_pitch_threshold", 0.2)
-        self.ground_distance_threshold = get_param(
-            "~ground_distance_threshold", 0.5
-        )
+        self.ground_distance_threshold = get_param("~ground_distance_threshold", 0.5)
         self.ground_angle_threshold = get_param("~ground_angle_threshold", 0.5)
 
         self.prev_odom = Odometry()
