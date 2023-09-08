@@ -22,9 +22,7 @@ ENV ROS_DISTRO=${ROS_DISTRO}
 ENV PROJECT_NAME=${PROJECT_NAME}
 ENV ORGANIZATION=${ORGANIZATION}
 
-ENV ZED_SDK_MAJOR=3 \
-    ZED_SDK_MINOR=8 \
-    DEBIAN_FRONTEND=noninteractive \
+ENV DEBIAN_FRONTEND=noninteractive \
     SHELL=/bin/bash
 SHELL ["/bin/bash", "-c"] 
 
@@ -32,18 +30,16 @@ SHELL ["/bin/bash", "-c"]
 # Basic tools
 # ---
 
-RUN sudo apt-get update && \
-    sudo apt-get install -y apt-utils \
-         git nano tmux curl wget htop net-tools iproute2 iputils-ping \
-         gdb dumb-init rsync entr build-essential libtool autoconf zip unzip zstd
+COPY --chown=1000:1000 ./install/install_basic_tools.sh /opt/${ORGANIZATION}/install/
+RUN bash /opt/${ORGANIZATION}/install/install_basic_tools.sh
 
 # ---
 # Multistage copy
 # ---
 
 COPY --from=base_image /tmp/multistage_copy /tmp/multistage_copy
-COPY --chown=1000:1000 ./install/training/copy_over_multistage.sh /opt/${ORGANIZATION}/install/training/
-RUN bash /opt/${ORGANIZATION}/install/training/copy_over_multistage.sh
+COPY --chown=1000:1000 ./install/training/copy_over_multistage.sh /opt/${ORGANIZATION}/install/
+RUN bash /opt/${ORGANIZATION}/install/copy_over_multistage.sh
 
 
 # ---
@@ -62,6 +58,8 @@ COPY --chown=1000:1000 ./install/setup_user.sh /opt/${ORGANIZATION}/install
 RUN bash /opt/${ORGANIZATION}/install/setup_user.sh
 
 COPY --chown=1000:1000 ./install/download /usr/bin
+
+RUN chown -R 1000:1000 /usr/local/zed/
 
 USER ${USER}
 
@@ -118,9 +116,9 @@ RUN cd /opt/${ORGANIZATION}/install/workstation && bash ./install_python_extras.
 COPY --chown=1000:1000 \
     ./install/training/install_apt_packages.sh \
     ./install/training/install_python_dependencies.sh \
-    /opt/${ORGANIZATION}/install/training/
-RUN bash /opt/${ORGANIZATION}/install/training/install_apt_packages.sh && \
-    bash /opt/${ORGANIZATION}/install/training/install_python_dependencies.sh
+    /opt/${ORGANIZATION}/install/
+RUN bash /opt/${ORGANIZATION}/install/install_apt_packages.sh && \
+    bash /opt/${ORGANIZATION}/install/install_python_dependencies.sh
 
 # ---
 # Training library dependencies
@@ -128,8 +126,8 @@ RUN bash /opt/${ORGANIZATION}/install/training/install_apt_packages.sh && \
 
 COPY --chown=1000:1000 \
     ./install/training/install_torchscript.sh \
-    /opt/${ORGANIZATION}/install/training/
-RUN bash -x /opt/${ORGANIZATION}/install/training/install_torchscript.sh
+    /opt/${ORGANIZATION}/install/
+RUN bash -x /opt/${ORGANIZATION}/install/install_torchscript.sh
 
 # ---
 # Environment variables
@@ -156,8 +154,8 @@ ENV FLASK_ENV=development \
 COPY --chown=1000:1000 \
     ./install/training/install_ros_packages.sh \
     ./install/training/${PROJECT_NAME}_training.rosinstall \
-    /opt/${ORGANIZATION}/install/training/
-RUN bash /opt/${ORGANIZATION}/install/training/install_ros_packages.sh /opt/${ORGANIZATION}/install/training/${PROJECT_NAME}_training.rosinstall
+    /opt/${ORGANIZATION}/install/
+RUN bash /opt/${ORGANIZATION}/install/install_ros_packages.sh /opt/${ORGANIZATION}/install/${PROJECT_NAME}_training.rosinstall
 
 
 # ---
@@ -166,10 +164,16 @@ RUN bash /opt/${ORGANIZATION}/install/training/install_ros_packages.sh /opt/${OR
 
 COPY --chown=1000:1000 ./install/client_bashrc ${HOME}/.bashrc
 
-RUN chown 1000:1000 ${HOME} && \
+COPY --chown=1000:1000 \
+    ./launch/entrypoint.sh \
+    ./launch/launch.sh \
+    ./launch/roscore.sh \
+    /opt/${ORGANIZATION}/
+RUN ln -s /opt/${ORGANIZATION}/${PROJECT_NAME} ${HOME}/${PROJECT_NAME}
+
+RUN mkdir -p ${HOME}/.ros && \
     chown -R 1000:1000 ${HOME}/.ros
 
 WORKDIR ${HOME}
-USER ${USER}
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]

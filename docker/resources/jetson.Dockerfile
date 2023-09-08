@@ -1,5 +1,10 @@
 ARG ROS_DISTRO
+
 FROM dustynv/ros:${ROS_DISTRO}-pytorch-l4t-r32.6.1
+
+ARG ROS_DISTRO
+ARG PROJECT_NAME
+ARG ORGANIZATION
 
 ENV ROS_DISTRO=${ROS_DISTRO}
 ENV PROJECT_NAME=${PROJECT_NAME}
@@ -33,9 +38,8 @@ USER ${USER}
 # Basic tools
 # ---
 
-RUN sudo apt-get update && \
-    sudo apt-get install -y apt-utils \
-         git nano tmux curl wget htop net-tools iproute2 iputils-ping gdb dumb-init rsync
+COPY --chown=1000:1000 ./install/install_basic_tools.sh /opt/${ORGANIZATION}/install/
+RUN bash /opt/${ORGANIZATION}/install/install_basic_tools.sh
 
 # ---
 # CMake

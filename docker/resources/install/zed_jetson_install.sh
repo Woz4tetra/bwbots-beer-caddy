@@ -11,6 +11,7 @@ bash ./ZED_SDK_Linux.run silent skip_tools
 sudo rm -rf /usr/local/zed/resources/*
 sudo rm -rf ZED_SDK_Linux.run
 sudo rm -rf /var/lib/apt/lists/*
+sudo chown -R 1000:1000 /usr/local/zed/
 # This symbolic link is needed to use the streaming features on Jetson inside a container
 sudo ln -sf /usr/lib/aarch64-linux-gnu/tegra/libv4l2.so.0 /usr/lib/aarch64-linux-gnu/libv4l2.so
 

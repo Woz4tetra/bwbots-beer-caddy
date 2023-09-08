@@ -42,7 +42,9 @@ sudo apt-get install -y --ignore-missing \
     python3-pip \
     python3-tk \
     python3-venv \
-    v4l-utils
+    v4l-utils \
+    qtbase5-dev \
+    qtdeclarative5-dev
 
 sudo apt-get upgrade -y
 

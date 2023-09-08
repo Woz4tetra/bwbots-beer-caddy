@@ -7,13 +7,13 @@ if [ "$EUID" -ne 0 ]
 fi
 
 ${BASE_DIR}/stop_all_containers
-${BASE_DIR}/../../scripts/prioritize_wifi
 IMAGE_VERSION=$(${BASE_DIR}/../get_image_tag)
 ORGANIZATION=$(${BASE_DIR}/../get_organization)
 PROJECT_NAME=$(${BASE_DIR}/../get_project_name)
 cd ${BASE_DIR}/../resources
 docker build \
     -f ./jetson.Dockerfile \
+    --build-arg ROS_DISTRO=noetic \
     --build-arg PROJECT_NAME=${PROJECT_NAME} \
     --build-arg ORGANIZATION=${ORGANIZATION} \
     -t ${IMAGE_VERSION} .

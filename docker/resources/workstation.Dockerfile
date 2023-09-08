@@ -32,10 +32,8 @@ USER ${USER}
 # Basic tools
 # ---
 
-RUN sudo apt-get update && \
-    sudo apt-get install -y apt-utils \
-         git nano tmux curl wget htop net-tools iproute2 iputils-ping \
-         gdb dumb-init rsync entr build-essential libtool autoconf zip unzip zstd
+COPY --chown=1000:1000 ./install/install_basic_tools.sh /opt/${ORGANIZATION}/install/
+RUN bash /opt/${ORGANIZATION}/install/install_basic_tools.sh
 
 # ---
 # PyTorch CMake
@@ -88,10 +86,15 @@ RUN cd /opt/${ORGANIZATION}/install/workstation && bash ./install_python_extras.
 
 ENV ROS_WS_ROOT=${HOME}/ros_ws
 ENV ROS_WS_SRC=${ROS_WS_ROOT}/src
+
 ENV FLASK_ENV=development \
     PATH=${HOME}/.local/bin:/opt/${ORGANIZATION}/scripts${PATH:+:${PATH}} \
     PYTHONPATH=/opt/${ORGANIZATION}/${PROJECT_NAME}/src/bw_tools${PYTHONPATH:+:${PYTHONPATH}} \
     PYTHONIOENCODING=utf-8
+
+# ---
+# launch environment
+# ---
 
 COPY --chown=1000:1000 ./install/client_bashrc ${HOME}/.bashrc
 
@@ -102,7 +105,8 @@ COPY --chown=1000:1000 \
     /opt/${ORGANIZATION}/
 RUN ln -s /opt/${ORGANIZATION}/${PROJECT_NAME} ${HOME}/${PROJECT_NAME}
 
-RUN chown 1000:1000 ${HOME}
+RUN mkdir -p ${HOME}/.ros && \
+    chown -R 1000:1000 ${HOME}/.ros
 
 WORKDIR ${HOME}
 
