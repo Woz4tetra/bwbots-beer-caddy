@@ -1,5 +1,5 @@
 [Unit]
-After=basic.target
+After=bwbots-hotspot.service
 Description=bwbots ROS
 
 [Service]
@@ -12,4 +12,3 @@ ExecStop=/usr/local/bin/stop_container /home/nvidia/bwbots-beer-caddy/docker/jet
 
 [Install]
 WantedBy=multi-user.target
-

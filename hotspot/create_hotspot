@@ -1,0 +1,29 @@
+#!/bin/bash
+BASE_DIR=$(realpath "$(dirname $0)")
+
+cd ${BASE_DIR}
+
+source ${HOME}/.robot
+PASSWORD=$1
+
+if [ -z ${PASSWORD} ]; then
+    echo "Please set a password"
+    exit
+fi
+
+HOTSPOT_INTERFACE=$(python3 <<EOF
+import os
+from config import load_config
+
+config = load_config()
+print(config.wifi_interface, end="")
+EOF
+)
+
+sudo nmcli con add type wifi ifname ${HOTSPOT_INTERFACE} con-name hotspot autoconnect yes ssid ${ROBOT}
+sudo nmcli con modify hotspot 802-11-wireless.mode ap 802-11-wireless.band bg ipv4.method shared
+sudo nmcli con modify hotspot wifi-sec.key-mgmt wpa-psk
+sudo nmcli con modify hotspot wifi-sec.psk "${PASSWORD}"
+sudo nmcli con up hotspot
+
+echo "Hotspot created"

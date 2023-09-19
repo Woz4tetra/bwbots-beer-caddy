@@ -1,0 +1,4 @@
+#!/bin/bash
+BASE_DIR=$(realpath "$(dirname $0)")
+
+sudo python3 ${BASE_DIR}/main.py

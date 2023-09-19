@@ -1,0 +1,18 @@
+#!/bin/bash
+SSID=$1
+PASSWORD=$2
+
+if [ -z ${PASSWORD} ]; then
+    echo "Please set a password"
+    exit
+fi
+if [ -z ${SSID} ]; then
+    echo "Please set an SSID"
+    exit
+fi
+
+sudo nmcli con down hotspot
+sleep 3
+sudo nmcli dev wifi connect ${SSID} password "${PASSWORD}"
+sleep 3
+sudo nmcli con up hotspot

@@ -1,0 +1,4 @@
+wifi_interface: wlan0
+hotspot_name: hotspot
+waiting_period: 15.0
+main_service: bwbots.service

@@ -1,0 +1,13 @@
+[Unit]
+After=basic.target
+Description=bwbots hotspot
+
+[Service]
+Type=oneshot
+User=nvidia
+Group=nvidia
+RemainAfterExit=no
+ExecStart=/home/nvidia/bwbots-beer-caddy/hotspot/control_hotspot
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,6 @@
+#!/bin/bash
+sudo nmcli con down hotspot
+sleep 3
+nmcli dev wifi list
+sleep 3
+sudo nmcli con up hotspot
