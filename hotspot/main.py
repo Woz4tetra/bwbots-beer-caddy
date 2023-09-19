@@ -68,6 +68,9 @@ def main():
         if manager.get_state() == ConnectionStates.WIFI_ACTIVE:
             logger.info("Wifi is connected, exiting")
             return
+        elif manager.get_state() == ConnectionStates.HOTSPOT_ACTIVE:
+            logger.info("Hotspot is active. Stopping and waiting for wifi.")
+            manager.set_hotspot(False)
     if manager.get_state() == ConnectionStates.NOT_CONNECTED:
         manager.set_hotspot(True)
     time.sleep(1.0)
