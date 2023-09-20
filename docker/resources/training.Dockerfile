@@ -26,21 +26,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
     SHELL=/bin/bash
 SHELL ["/bin/bash", "-c"] 
 
-# ---
-# Basic tools
-# ---
-
-COPY --chown=1000:1000 ./install/install_basic_tools.sh /opt/${ORGANIZATION}/install/
-RUN bash /opt/${ORGANIZATION}/install/install_basic_tools.sh
-
-# ---
-# Multistage copy
-# ---
-
-COPY --from=base_image /tmp/multistage_copy /tmp/multistage_copy
-COPY --chown=1000:1000 ./install/training/copy_over_multistage.sh /opt/${ORGANIZATION}/install/
-RUN bash /opt/${ORGANIZATION}/install/copy_over_multistage.sh
-
 
 # ---
 # Workstation steps
@@ -62,6 +47,21 @@ COPY --chown=1000:1000 ./install/download /usr/bin
 RUN chown -R 1000:1000 /usr/local/zed/
 
 USER ${USER}
+
+# ---
+# Basic tools
+# ---
+
+COPY --chown=1000:1000 ./install/install_basic_tools.sh /opt/${ORGANIZATION}/install/
+RUN bash /opt/${ORGANIZATION}/install/install_basic_tools.sh
+
+# ---
+# Multistage copy
+# ---
+
+COPY --from=base_image /tmp/multistage_copy /tmp/multistage_copy
+COPY --chown=1000:1000 ./install/training/copy_over_multistage.sh /opt/${ORGANIZATION}/install/
+RUN bash /opt/${ORGANIZATION}/install/copy_over_multistage.sh
 
 # ---
 # PyTorch CMake
