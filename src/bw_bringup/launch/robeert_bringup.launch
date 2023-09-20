@@ -36,7 +36,7 @@
     </group>
 
     <include file="$(find bw_move_base)/launch/bw_move_base.launch"/>
-    <!-- <include file="$(find bw_behaviors)/launch/bw_behaviors.launch"/> -->
+    <include file="$(find bw_behaviors)/launch/bw_behaviors.launch"/>
     <include file="$(find bw_zed)/launch/zed2.launch"/>
 
     <include file="$(find bw_waypoints)/launch/bw_waypoints.launch">
@@ -44,7 +44,7 @@
     </include>
 
     <include file="$(find bw_yolo)/launch/label_publisher.launch"/>
-    <include file="$(find bw_dispensers)/launch/bw_dispensers.launch"/>
+    <!-- <include file="$(find bw_dispensers)/launch/bw_dispensers.launch"/> -->
 
     <include file="$(find bw_laser_slam)/launch/bw_laser_slam.launch">
         <arg name="mode" value="localize"/>
