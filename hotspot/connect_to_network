@@ -14,3 +14,6 @@ fi
 sudo nmcli con down hotspot
 sleep 3
 sudo nmcli dev wifi connect ${SSID} password "${PASSWORD}"
+sleep 3
+ifconfig wlan0
+sudo nmcli con up hotspot

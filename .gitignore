@@ -11,6 +11,9 @@ torch/pretrained
 docker-compose.gpu.yaml
 scripts/tags/cache.pkl
 
+# ZED
+.neural_depth*
+
 # images
 *.jpg
 *.png
