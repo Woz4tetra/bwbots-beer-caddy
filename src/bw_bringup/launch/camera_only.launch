@@ -4,10 +4,10 @@
     <arg name="robot_name" default="$(env ROBOT)"/>
 
     <include file="$(find bw_description)/launch/bw_description.launch">
-        <arg name="model" value="$(find bw_description)/urdf/$(arg robot_name).urdf.xml"/>
-        <arg name="joint_names" value="$(find bw_bringup)/config/$(arg robot_name)/joints.yaml"/>
+        <arg name="model" value="$(find bw_description)/urdf/robeert.urdf.xml"/>
+        <arg name="joint_names" value="$(find bw_bringup)/config/robeert/joints.yaml"/>
     </include>
-    <include file="$(find bw_bringup)/config/$(arg robot_name)/static_transforms_$(arg robot_name).launch"/>
+    <include file="$(find bw_bringup)/config/robeert/static_transforms_robeert.launch"/>
     <include file="$(find bw_description)/launch/imu_joint.launch">
         <arg name="combine_with_odom" value="true"/>
     </include>
@@ -15,9 +15,11 @@
     <include file="$(find bw_tunnel)/launch/bw_tunnel.launch">
         <arg name="publish_odom_tf" value="false"/>
         <arg name="robot_address" value="/dev/serial/by-id/usb-Teensyduino_USB_Serial_12396120-if00"/>
-        <arg name="joint_names" value="$(find bw_bringup)/config/$(arg robot_name)/joints.yaml"/>
+        <arg name="joint_names" value="$(find bw_bringup)/config/robeert/joints.yaml"/>
     </include>
 
     <include file="$(find bw_lights_music)/launch/bw_lights_music.launch"/>
-    <include file="$(find bw_zed)/launch/zed2.launch"/>
+    <include file="$(find bw_zed)/launch/zed2.launch">
+        <arg name="config_path" value="$(find bw_bringup)/config/$(arg robot_name)/zed.yaml" />
+    </include>
 </launch>

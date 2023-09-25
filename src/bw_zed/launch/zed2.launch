@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <arg name="camera_name"           default="zed2" />
+    <arg name="config_path"           default="$(find bw_zed)/config/zed2.yaml" />
     <!-- ROS URDF description of the ZED -->
     <group>
         <param name="$(arg camera_name)_description"
@@ -22,11 +23,9 @@
         </node>
     </group>
     <node name="zed" pkg="zed_wrapper" type="zed_wrapper_node" output="screen" required="false" respawn="true">
-        <rosparam file="$(find bw_zed)/config/zed2.yaml" command="load" />
+        <rosparam file="$(arg config_path)" command="load" />
 
         <param name="general/camera_name"               value="$(arg camera_name)" />
         <param name="general/base_frame"                value="camera_link" />
-        <param name="yolo_object_detection/model_path"        value="$(find bw_yolo)/models/person_2022-12-20.torchscript" />
-        <param name="yolo_object_detection/class_names_path"  value="$(find bw_yolo)/models/person.names" />
     </node>
 </launch>
