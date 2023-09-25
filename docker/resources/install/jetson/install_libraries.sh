@@ -68,6 +68,16 @@ export LANG=en_US.utf-8
 python get-platformio.py
 sudo ln -s $HOME/.platformio/penv/bin/platformio /usr/local/bin
 
+# nlopt
+cd /tmp
+git clone https://github.com/stevengj/nlopt.git
+cd nlopt
+mkdir build
+cd build
+cmake ..
+make
+sudo make install
+
 # clean up
 sudo ldconfig
 rm -r /tmp/* || true

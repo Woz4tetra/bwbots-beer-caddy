@@ -36,7 +36,7 @@
     </group>
 
     <include file="$(find bw_move_base)/launch/bw_move_base.launch"/>
-    <include file="$(find bw_behaviors)/launch/bw_behaviors.launch"/>
+    <include file="$(find bw_lights_music)/launch/bw_lights_music.launch"/>
     <include file="$(find bw_zed)/launch/zed2.launch"/>
 
     <include file="$(find bw_waypoints)/launch/bw_waypoints.launch">

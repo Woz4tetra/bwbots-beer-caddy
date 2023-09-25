@@ -119,7 +119,8 @@ COPY --chown=1000:1000 \
     ./launch/launch.sh \
     ./launch/roscore.sh \
     /opt/${ORGANIZATION}/
-RUN ln -s /opt/${ORGANIZATION}/${PROJECT_NAME} ${HOME}/${PROJECT_NAME}
+COPY --chown=1000:1000 ./install/jetson/make_symlinks.sh /opt/${ORGANIZATION}/install
+RUN bash /opt/${ORGANIZATION}/install/make_symlinks.sh
 
 RUN chown 1000:1000 ${HOME}
 

@@ -21,8 +21,6 @@ services:
       - ${PROJECT_NAME}_build:/home/${ORGANIZATION}/ros_ws:rw
       - ${PROJECT_DIR}:/opt/${ORGANIZATION}/${PROJECT_NAME}:rw
       - ${PROJECT_DIR}/scripts:/opt/${ORGANIZATION}/scripts:rw
-      - ${PROJECT_DIR}/docker/resources/configs/zed:/usr/local/zed/settings/:rw
-      - /home/${USER}/zed-resources:/usr/local/zed/resources/:rw
       - /home/${USER}/.robot:/opt/${ORGANIZATION}/robot:rw
       - /media/storage:/media/storage:rw
       - /run/systemd:/run/systemd:rw

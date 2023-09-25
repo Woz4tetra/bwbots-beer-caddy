@@ -2,4 +2,5 @@
 <launch>
     <include if="$(eval env('ROBOT') == 'robeert')" file="$(find bw_bringup)/launch/robeert_bringup.launch"/>
     <include if="$(eval env('ROBOT') == 'simulated')" file="$(find bw_bringup)/launch/simulated.launch"/>
+    <include if="$(eval env('ROBOT') == 'camera_only')" file="$(find bw_bringup)/launch/camera_only.launch"/>
 </launch>
