@@ -34,11 +34,14 @@ void TagRequestServer::image_callback(const sensor_msgs::ImageConstPtr& color_im
 
 void TagRequestServer::camera_info_callback(const sensor_msgs::CameraInfoConstPtr& camera_info)
 {
-    _stored_info = boost::const_pointer_cast<sensor_msgs::CameraInfo>(camera_info);
-    if (!_first_sent && _stored_info->header.stamp - _stored_image->header.stamp < _in_sync_threshold) {
-        _first_sent = true;
-        _image_out_pub.publish(*_stored_image);
-        _info_out_pub.publish(*_stored_info);
+    if (camera_info->header.stamp - _stored_image->header.stamp < _in_sync_threshold)
+    {
+        _stored_info = boost::const_pointer_cast<sensor_msgs::CameraInfo>(camera_info);
+        if (!_first_sent) {
+            _first_sent = true;
+            _image_out_pub.publish(*_stored_image);
+            _info_out_pub.publish(*_stored_info);
+        }
     }
 }
 
