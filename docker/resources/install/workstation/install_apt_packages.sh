@@ -38,6 +38,17 @@ sudo apt-get install -y --ignore-missing \
     ros-${ROS_DISTRO}-image-common \
     ros-${ROS_DISTRO}-marker-msgs \
     ros-${ROS_DISTRO}-usb-cam \
+    ros-${ROS_DISTRO}-usb-cam \
+    ros-${ROS_DISTRO}-rqt \
+    ros-${ROS_DISTRO}-rqt-common-plugins \
+    ros-${ROS_DISTRO}-rqt-console \
+    ros-${ROS_DISTRO}-rqt-graph \
+    ros-${ROS_DISTRO}-rqt-gui \
+    ros-${ROS_DISTRO}-rqt-image-view \
+    ros-${ROS_DISTRO}-rqt-multiplot \
+    ros-${ROS_DISTRO}-rqt-nav-view \
+    ros-${ROS_DISTRO}-rqt-reconfigure \
+    ros-${ROS_DISTRO}-rqt-tf-tree \
     libsdl-image1.2-dev \
     libsdl-dev \
     python3-pip \

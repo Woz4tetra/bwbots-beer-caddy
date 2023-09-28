@@ -1,6 +1,0 @@
-<launch>
-    <include file="$(find bw_tags)/launch/apriltag.launch">
-        <arg name="image_topic" value="/zed/rgb/image_rect_color"/>
-        <arg name="info_topic" value="/zed/rgb/camera_info"/>
-    </include>
-</launch>

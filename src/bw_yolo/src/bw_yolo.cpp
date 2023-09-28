@@ -181,6 +181,7 @@ void BwYolo::rgbd_callback(const sensor_msgs::ImageConstPtr& color_image, const 
     }
     _detection_pub.publish(_detection_result);
 }
+
 bool BwYolo::frame_request_callback(bw_yolo::RequestFrame::Request &req, bw_yolo::RequestFrame::Response &resp) {
     if (_mode == REQUEST_MODE) {
         _detection_result = detection_pipeline(_color_header, _depth_header, _depth_encoding, _color_cv_image, _depth_cv_image);

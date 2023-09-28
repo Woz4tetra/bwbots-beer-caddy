@@ -57,14 +57,11 @@
         <arg name="amcl_config" value="$(find bw_bringup)/config/$(arg robot_name)/amcl.yaml"/>
     </include>
 
-    <group ns="bw">
-        <node pkg="apriltag_ros" type="apriltag_ros_continuous_node" name="apriltags" required="false" output="screen">
-            <rosparam command="load" file="$(find bw_bringup)/config/$(arg robot_name)/tags.yaml"/>
-            <param name="publish_tag_detections_image" type="bool" value="false"/>
-            <remap from="camera_info" to="/zed/rgb/camera_info"/>
-            <remap from="image_rect" to="/zed/rgb/image_rect_color"/>
-        </node>
-    </group>
+    <!-- <include file="$(find bw_filter)/launch/bw_filter.launch"/> -->
 
-    <include file="$(find bw_filter)/launch/bw_filter.launch"/>
+    <include file="$(find bw_tags)/launch/tag_requests.launch">
+        <arg name="config_path" value="$(find bw_bringup)/config/$(arg robot_name)/tags.yaml" />
+        <arg name="image_topic" value="/zed/rgb/image_rect_color" />
+        <arg name="info_topic" value="/zed/rgb/camera_info" />
+    </include>
 </launch>
