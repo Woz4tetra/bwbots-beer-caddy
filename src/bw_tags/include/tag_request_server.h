@@ -15,9 +15,8 @@ private:
     ros::NodeHandle nh;
 
     ros::Duration _timeout;
+    ros::Duration _in_sync_threshold;
 
-    bool _got_tag;
-    bool _got_image;
     bool _first_sent;
 
     ros::Publisher _info_out_pub;

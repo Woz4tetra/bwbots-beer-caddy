@@ -7,6 +7,10 @@ TagRequestServer::TagRequestServer(ros::NodeHandle* nodehandle) : nh(*nodehandle
     ros::param::param<double>("~timeout", timeout_s, 1.0);
     _timeout = ros::Duration(timeout_s);
 
+    double in_sync_threshold_s;
+    ros::param::param<double>("~in_sync_threshold", in_sync_threshold_s, 0.01);
+    _in_sync_threshold = ros::Duration(in_sync_threshold_s);
+
     _image_out_pub = nh.advertise<sensor_msgs::Image>("out/image_raw", 1);
     _info_out_pub = nh.advertise<sensor_msgs::CameraInfo>("out/camera_info", 1);
 
@@ -20,20 +24,18 @@ TagRequestServer::TagRequestServer(ros::NodeHandle* nodehandle) : nh(*nodehandle
     _stored_info.reset(new sensor_msgs::CameraInfo);
     _stored_tags.reset(new apriltag_ros::AprilTagDetectionArray);
 
-    _got_image = false;
     _first_sent = false;
 }
 
 void TagRequestServer::image_callback(const sensor_msgs::ImageConstPtr& color_image)
 {
     _stored_image = boost::const_pointer_cast<sensor_msgs::Image>(color_image);
-    _got_image = true;
 }
 
 void TagRequestServer::camera_info_callback(const sensor_msgs::CameraInfoConstPtr& camera_info)
 {
     _stored_info = boost::const_pointer_cast<sensor_msgs::CameraInfo>(camera_info);
-    if (_got_image && !_first_sent) {
+    if (!_first_sent && _stored_info->header.stamp - _stored_image->header.stamp < _in_sync_threshold) {
         _first_sent = true;
         _image_out_pub.publish(*_stored_image);
         _info_out_pub.publish(*_stored_info);
@@ -43,7 +45,6 @@ void TagRequestServer::camera_info_callback(const sensor_msgs::CameraInfoConstPt
 void TagRequestServer::tag_callback(const apriltag_ros::AprilTagDetectionArrayConstPtr& tags)
 {
     _stored_tags = boost::const_pointer_cast<apriltag_ros::AprilTagDetectionArray>(tags);
-    ROS_INFO("Got tag: %f", _stored_tags->header.stamp.toSec());
 }
 
 bool TagRequestServer::tag_request_callback(bw_tags::RequestTags::Request &req, bw_tags::RequestTags::Response &resp)
@@ -56,24 +57,25 @@ bool TagRequestServer::tag_request_callback(bw_tags::RequestTags::Request &req, 
     
     if (!wait_for_image()) {
         ROS_ERROR("Timed out waiting for image");
-        return false;
     }
-
-    ros::Time prev_stamp = _stored_tags->header.stamp;
-    _image_out_pub.publish(*_stored_image);
-    _info_out_pub.publish(*_stored_info);
-    bool success = false;
-    while (ros::Time::now() - start_time < _timeout) {
-        ros::spinOnce();
-        if (prev_stamp < _stored_tags->header.stamp) {
-            resp.tags = *_stored_tags;
-            success = true;
-            break;
+    else 
+    {
+        ros::Time prev_stamp = _stored_tags->header.stamp;
+        _image_out_pub.publish(*_stored_image);
+        _info_out_pub.publish(*_stored_info);
+        bool success = false;
+        while (ros::Time::now() - start_time < _timeout) {
+            ros::spinOnce();
+            if (prev_stamp < _stored_tags->header.stamp) {
+                resp.tags = *_stored_tags;
+                success = true;
+                break;
+            }
         }
-    }
-    if (!success) {
-        resp.tags = apriltag_ros::AprilTagDetectionArray();
-        ROS_ERROR("Failed to get tag detections within the allotted time!");
+        if (!success) {
+            resp.tags = apriltag_ros::AprilTagDetectionArray();
+            ROS_ERROR("Failed to get tag detections within the allotted time!");
+        }
     }
     return true;
 }
