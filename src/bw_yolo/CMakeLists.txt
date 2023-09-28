@@ -100,16 +100,21 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-# )
+add_message_files(
+  FILES
+  DetectionObject.msg
+  DetectionObjectsStamped.msg
+  UVBoundingBox.msg
+  UVKeypoint.msg
+  XYZBoundingBox.msg
+  XYZKeypoint.msg
+)
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  FILES
+  RequestFrame.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -119,10 +124,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs  # Or other packages containing msgs
+  vision_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##

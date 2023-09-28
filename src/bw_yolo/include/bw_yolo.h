@@ -42,6 +42,9 @@
 
 #include <dynamic_reconfigure/server.h>
 #include <bw_yolo/YoloDetectionConfig.h>
+#include <bw_yolo/RequestFrame.h>
+#include <bw_yolo/DetectionObjectsStamped.h>
+#include <bw_yolo/DetectionObject.h>
 
 #include "detector.h"
 
@@ -53,6 +56,10 @@ geometry_msgs::Point make_point(double x, double y, double z) {
     pt.z = z;
     return pt;
 }
+
+#define APPROX_CONTINUOUS_MODE  0
+#define EXACT_CONTINUOUS_MODE   1
+#define REQUEST_MODE            2
 
 
 class BwYolo
@@ -76,34 +83,46 @@ private:
     bool _publish_overlay;
     bool _report_loop_times;
     std::string _target_frame;
-    double _marker_persistance_s;
+    ros::Duration _marker_persistance;
     double _message_delay_warning_ms, _long_loop_warning_ms;
     std::map<std::string, double> _z_depth_estimations;
     int _relative_threshold;
     double _depth_num_std_devs, _empty_mask_num_std_devs;
     double _cube_opacity, _visuals_line_width;
     int _erosion_size;
+    int _mode;
+    int _queue_size;
+    ros::Duration _image_sync_threshold;
 
     // Members
     Detector* _detector;
     std::vector<std::string> _class_names;
     image_geometry::PinholeCameraModel _camera_model;
     std::vector<int> _obj_count;
-    ros::Duration _marker_persistance;
     sensor_msgs::CameraInfo _camera_info;
     cv::Mat erode_element;
+    cv::Mat _color_cv_image, _depth_cv_image;
+    std::string _color_encoding, _depth_encoding;
+    std_msgs::Header _color_header, _depth_header;
+    bw_yolo::DetectionObjectsStamped _detection_result;
+    std::vector<std::vector<double>> _box_point_permutations;
 
     // Subscribers
+    ros::Subscriber _color_sub;
+    ros::Subscriber _depth_sub;
     ros::Subscriber _color_info_sub;
-    message_filters::Subscriber<sensor_msgs::Image> _color_sub;
-    message_filters::Subscriber<sensor_msgs::Image> _depth_sub;
+    message_filters::Subscriber<sensor_msgs::Image> _color_sync_sub;
+    message_filters::Subscriber<sensor_msgs::Image> _depth_sync_sub;
 
-    // typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> ApproxSyncPolicy;
+    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> ApproxSyncPolicy;
     typedef message_filters::sync_policies::ExactTime<sensor_msgs::Image, sensor_msgs::Image> ExactSyncPolicy;
 
-    // typedef message_filters::Synchronizer<ApproxSyncPolicy> Sync;
-    typedef message_filters::Synchronizer<ExactSyncPolicy> Sync;
-    boost::shared_ptr<Sync> _sync;
+    typedef message_filters::Synchronizer<ApproxSyncPolicy> ApproxSync;
+    typedef message_filters::Synchronizer<ExactSyncPolicy> ExactSync;
+    boost::shared_ptr<ApproxSync> _approx_sync;
+    boost::shared_ptr<ExactSync> _exact_sync;
+
+    ros::ServiceServer _frame_request_srv;
 
     // Publishers
     image_transport::ImageTransport _image_transport;
@@ -124,8 +143,20 @@ private:
     // Callbacks
     void camera_info_callback(const sensor_msgs::CameraInfoConstPtr& camera_info);
     void rgbd_callback(const sensor_msgs::ImageConstPtr& color_image, const sensor_msgs::ImageConstPtr& depth_image);
+    void rgb_callback(const sensor_msgs::ImageConstPtr& color_image);
+    void depth_callback(const sensor_msgs::ImageConstPtr& depth_image);
+    bool frame_request_callback(bw_yolo::RequestFrame::Request &req, bw_yolo::RequestFrame::Response &resp);
 
     // Helpers
+    bool set_color_image(const sensor_msgs::ImageConstPtr& color_image);
+    bool set_depth_image(const sensor_msgs::ImageConstPtr& depth_image);
+    bw_yolo::DetectionObjectsStamped detection_pipeline(
+        std_msgs::Header color_header,
+        std_msgs::Header depth_header,
+        std::string depth_encoding,
+        cv::Mat color_cv_image,
+        cv::Mat depth_cv_image
+    );
     std_msgs::ColorRGBA get_detection_color(cv::Mat color_cv_image, cv::Mat mask);
     void get_depth_from_detection(cv::Mat depth_cv_image, vision_msgs::Detection2D detection_2d_msg, cv::Mat& out_mask, double& z_min, double& z_max);
     vision_msgs::Detection3D detection_2d_to_3d(vision_msgs::Detection2D detection_2d_msg, double z_min, double z_max);
@@ -138,6 +169,13 @@ private:
     void add_detection_to_marker_array(visualization_msgs::MarkerArray& marker_array, vision_msgs::Detection3D detection_3d_msg, std_msgs::ColorRGBA color);
     visualization_msgs::Marker make_marker(vision_msgs::Detection3D detection_3d_msg, std_msgs::ColorRGBA color);
     double get_depth_conversion(std::string encoding);
+    bool set_mode(int mode);
 
+    bw_yolo::DetectionObjectsStamped convert_to_objects(
+        unsigned int width,
+        unsigned int height,
+        vision_msgs::Detection2DArray detection_2d_arr_msg,
+        vision_msgs::Detection3DArray detection_3d_arr_msg
+    );
 };
 

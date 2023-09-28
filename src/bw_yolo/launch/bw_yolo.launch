@@ -3,7 +3,6 @@
         <node name="bw_yolo" pkg="bw_yolo" type="bw_yolo" output="screen" required="false">
             <param name="model_path" value="$(find bw_yolo)/models/person_2022-12-20.torchscript"/>
             <param name="classes_path" value="$(find bw_yolo)/models/person.names"/>
-            <rosparam param="yolo_z_depth_estimations" file="$(find bw_yolo)/config/power_cell_depth_estimations.yaml" command="load"/>
 
             <param name="confidence_threshold" value="0.5"/>
             <param name="nms_iou_threshold" value="0.4"/>
@@ -13,6 +12,8 @@
             <param name="marker_persistance" value="0.1"/>
             <param name="circle_mask_border_offset_px" value="0"/>
             <param name="camera_z_unit_conversion" value="1.0"/>
+
+            <param name="starting_mode" value="2"/> <!-- 0 = APPROX_CONTINUOUS_MODE, 1 = EXACT_CONTINUOUS_MODE, 2 = REQUEST_MODE -->
 
             <remap from="color/image_raw" to="/zed/rgb/image_rect_color"/>
             <remap from="depth/image_raw" to="/zed/depth/depth_registered"/>

@@ -19,17 +19,34 @@ BwYolo::BwYolo(ros::NodeHandle* nodehandle) :
     ros::param::param<double>("~min_depth", _min_depth, 0.1);
     ros::param::param<double>("~max_depth", _max_depth, 10.0);
     ros::param::param<double>("~depth_num_std_devs", _depth_num_std_devs, 1.0);
-    ros::param::param<double>("~message_delay_warning_ms", _message_delay_warning_ms, 500.0);
-    ros::param::param<double>("~long_loop_warning_ms", _long_loop_warning_ms, 75.0);
+    
+    double message_delay_warning;
+    ros::param::param<double>("~message_delay_warning", message_delay_warning, 0.5);
+    _message_delay_warning_ms = message_delay_warning * 1000.0;
+
+    double long_loop_warning;
+    ros::param::param<double>("~long_loop_warning_ms", long_loop_warning, 0.075);
+    _long_loop_warning_ms = long_loop_warning * 1000.0;
+
     ros::param::param<double>("~visuals_cube_opacity", _cube_opacity, 0.75);
     ros::param::param<double>("~visuals_line_width", _visuals_line_width, 0.01);
     ros::param::param<int>("~erosion_size", _erosion_size, 3);
 
     ros::param::param<bool>("~publish_overlay", _publish_overlay, false);
     ros::param::param<bool>("~report_loop_times", _report_loop_times, true);
-    ros::param::param<std::string>("~target_frame", _target_frame, "base_link");
-    ros::param::param<double>("~marker_persistance_s", _marker_persistance_s, 0.5);
-    _marker_persistance = ros::Duration(_marker_persistance_s);
+    ros::param::param<std::string>("~target_frame", _target_frame, "");
+
+    double marker_persistance_s;
+    ros::param::param<double>("~marker_persistance", marker_persistance_s, 0.0);
+    _marker_persistance = ros::Duration(marker_persistance_s);
+
+    double image_sync_threshold_s;
+    ros::param::param<double>("~image_sync_threshold", image_sync_threshold_s, 0.01);
+    _image_sync_threshold = ros::Duration(image_sync_threshold_s);
+
+    int starting_mode;
+    ros::param::param<int>("~starting_mode", starting_mode, APPROX_CONTINUOUS_MODE);
+    ros::param::param<int>("~queue_size", _queue_size, 1);
 
     torch::DeviceType device_type;
     if (torch::cuda::is_available()) {
@@ -47,6 +64,17 @@ BwYolo::BwYolo(ros::NodeHandle* nodehandle) :
 
     erode_element = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(2 * _erosion_size + 1, 2 * _erosion_size + 1));
 
+    _box_point_permutations = {
+        {-1, -1,  1},
+        { 1,  1,  1},
+        { 1, -1,  1},
+        {-1, -1,  1},
+        {-1, -1, -1},
+        { 1,  1, -1},
+        { 1, -1, -1},
+        {-1, -1, -1},
+    };
+
     _detector = new Detector(_model_path, device_type, _report_loop_times);
     // run twice to warm up
     ROS_INFO("Warming up detector with (%dx%d)", _image_width, _image_height);
@@ -55,27 +83,49 @@ BwYolo::BwYolo(ros::NodeHandle* nodehandle) :
     for (size_t count = 0; count < 2; count++) {
         _detector->Run(warmup_img, _conf_threshold, _iou_threshold);        
     }
-
-    // Subscribers
-    _color_sub.subscribe(nh, "color/image_raw", 1);
-    _depth_sub.subscribe(nh, "depth/image_raw", 1);
-
-    // _sync.reset(new Sync(ApproxSyncPolicy(10), _color_sub, _depth_sub));
-    _sync.reset(new Sync(ExactSyncPolicy(10), _color_sub, _depth_sub));
-    _sync->registerCallback(boost::bind(&BwYolo::rgbd_callback, this, _1, _2));
-
     _color_info_sub = nh.subscribe<sensor_msgs::CameraInfo>("color/camera_info", 1, &BwYolo::camera_info_callback, this);
 
-    _detection_pub = nh.advertise<vision_msgs::Detection3DArray>("detections", 25);
+    _detection_pub = nh.advertise<bw_yolo::DetectionObjectsStamped>("detections", 25);
     _marker_pub = nh.advertise<visualization_msgs::MarkerArray>("detections/markers", 25);
 
     _overlay_pub = _image_transport.advertise("overlay/image_raw", 2);
     _overlay_info_pub = nh.advertise<sensor_msgs::CameraInfo>("overlay/camera_info", 2);
+    _frame_request_srv = nh.advertiseService("detection_request", &BwYolo::frame_request_callback, this);
+
+    set_mode(starting_mode);
 
     _dyn_cfg_wrapped_callback = boost::bind(&BwYolo::dynamic_callback, this, _1, _2);
     _dyn_cfg.setCallback(_dyn_cfg_wrapped_callback);
 
     ROS_INFO("bw_yolo is ready");
+}
+
+bool BwYolo::set_mode(int mode) {
+    ROS_INFO("Setting mode to %d", mode);
+    _mode = mode;
+
+    switch (mode)
+    {
+    case APPROX_CONTINUOUS_MODE:
+        _color_sync_sub.subscribe(nh, "color/image_raw", _queue_size);
+        _depth_sync_sub.subscribe(nh, "depth/image_raw", _queue_size);
+        _approx_sync.reset(new ApproxSync(ApproxSyncPolicy(_queue_size), _color_sync_sub, _depth_sync_sub));
+        _approx_sync->registerCallback(boost::bind(&BwYolo::rgbd_callback, this, _1, _2));
+        break;
+    case EXACT_CONTINUOUS_MODE:
+        _color_sync_sub.subscribe(nh, "color/image_raw", _queue_size);
+        _depth_sync_sub.subscribe(nh, "depth/image_raw", _queue_size);
+        _exact_sync.reset(new ExactSync(ExactSyncPolicy(_queue_size), _color_sync_sub, _depth_sync_sub));
+        _exact_sync->registerCallback(boost::bind(&BwYolo::rgbd_callback, this, _1, _2));
+        break;
+    case REQUEST_MODE:
+        _color_sub = nh.subscribe<sensor_msgs::Image>("color/image_raw", _queue_size, &BwYolo::rgb_callback, this);
+        _depth_sub = nh.subscribe<sensor_msgs::Image>("depth/image_raw", _queue_size, &BwYolo::depth_callback, this);
+        break;
+    default:
+        return false;
+    }
+    return true;
 }
 
 void BwYolo::dynamic_callback(bw_yolo::YoloDetectionConfig &config, uint32_t level)
@@ -114,18 +164,38 @@ double BwYolo::get_depth_conversion(std::string encoding)
   };
 }
 
+void BwYolo::rgb_callback(const sensor_msgs::ImageConstPtr& color_image)
+{
+    set_color_image(color_image);
+}
+
+void BwYolo::depth_callback(const sensor_msgs::ImageConstPtr& depth_image)
+{
+    set_depth_image(depth_image);
+}
+
 void BwYolo::rgbd_callback(const sensor_msgs::ImageConstPtr& color_image, const sensor_msgs::ImageConstPtr& depth_image)
+{
+    if (set_color_image(color_image) && set_depth_image(depth_image)) {
+        _detection_result = detection_pipeline(_color_header, _depth_header, _depth_encoding, _color_cv_image, _depth_cv_image);
+    }
+    _detection_pub.publish(_detection_result);
+}
+bool BwYolo::frame_request_callback(bw_yolo::RequestFrame::Request &req, bw_yolo::RequestFrame::Response &resp) {
+    if (_mode == REQUEST_MODE) {
+        _detection_result = detection_pipeline(_color_header, _depth_header, _depth_encoding, _color_cv_image, _depth_cv_image);
+    }
+    resp.detections = _detection_result;
+    return true;
+}
+
+bool BwYolo::set_color_image(const sensor_msgs::ImageConstPtr& color_image)
 {
     ros::Time now = ros::Time::now();
     ros::Duration color_transport_delay = now - color_image->header.stamp;
     double color_transport_delay_ms = color_transport_delay.toSec() * 1000.0;
-    ros::Duration depth_transport_delay = now - depth_image->header.stamp;
-    double depth_transport_delay_ms = depth_transport_delay.toSec() * 1000.0;
     if (color_transport_delay_ms >= _message_delay_warning_ms) {
         ROS_WARN_THROTTLE(0.5, "Color image has a large delay: %0.4f ms", color_transport_delay_ms);
-    }
-    if (depth_transport_delay_ms >= _message_delay_warning_ms) {
-        ROS_WARN_THROTTLE(0.5, "Depth image has a large delay: %0.4f ms", depth_transport_delay_ms);
     }
 
     cv_bridge::CvImagePtr color_ptr;
@@ -135,9 +205,23 @@ void BwYolo::rgbd_callback(const sensor_msgs::ImageConstPtr& color_image, const 
     catch (cv_bridge::Exception& e)
     {
         ROS_ERROR("Failed to convert color image: %s", e.what());
-        return;
+        return false;
     }
+    _color_cv_image = color_ptr->image;
+    _color_header = color_image->header;
+    _color_encoding = color_ptr->encoding;
+    return true;
 
+}
+
+bool BwYolo::set_depth_image(const sensor_msgs::ImageConstPtr& depth_image)
+{
+    ros::Time now = ros::Time::now();
+    ros::Duration depth_transport_delay = now - depth_image->header.stamp;
+    double depth_transport_delay_ms = depth_transport_delay.toSec() * 1000.0;
+    if (depth_transport_delay_ms >= _message_delay_warning_ms) {
+        ROS_WARN_THROTTLE(0.5, "Depth image has a large delay: %0.4f ms", depth_transport_delay_ms);
+    }
     cv_bridge::CvImagePtr depth_ptr;
     try {
         depth_ptr = cv_bridge::toCvCopy(depth_image);  // encoding: passthrough
@@ -145,60 +229,74 @@ void BwYolo::rgbd_callback(const sensor_msgs::ImageConstPtr& color_image, const 
     catch (cv_bridge::Exception& e)
     {
         ROS_ERROR("Failed to convert depth image: %s", e.what());
-        return;
+        return false;
     }
+    _depth_cv_image = depth_ptr->image;
+    _depth_header = depth_ptr->header;
+    _depth_encoding = depth_ptr->encoding;
+    return true;
+}
 
-    cv::Mat color_cv_image = color_ptr->image;
-    cv::Mat depth_cv_image = depth_ptr->image;
+bw_yolo::DetectionObjectsStamped BwYolo::detection_pipeline(
+    std_msgs::Header color_header,
+    std_msgs::Header depth_header,
+    std::string depth_encoding,
+    cv::Mat color_cv_image,
+    cv::Mat depth_cv_image)
+{
+    bw_yolo::DetectionObjectsStamped objects;
+
+    if (color_header.stamp - depth_header.stamp > _image_sync_threshold) {
+        double delay = (color_header.stamp - depth_header.stamp).toSec();
+        ROS_ERROR("Color and depth images are out of sync: %f s", delay);
+        return objects;
+    }
 
     if (color_cv_image.cols == 0 || color_cv_image.rows == 0) {
         ROS_ERROR("Color image has a zero width dimension!");
-        return;
+        return objects;
     }
     if (depth_cv_image.cols == 0 || depth_cv_image.rows == 0) {
         ROS_ERROR("Depth image has a zero width dimension!");
-        return;
+        return objects;
     }
 
     auto t_start = std::chrono::high_resolution_clock::now();
     auto result = _detector->Run(color_cv_image, _conf_threshold, _iou_threshold);
     if (_report_loop_times) {
-        ROS_INFO_THROTTLE(0.5, "----- %lu detections -----\nColor delay: %0.4f ms\nDepth delay: %0.4f ms\n%s", 
+        ROS_INFO("----- %lu detections -----\n%s", 
             result.size(),
-            color_transport_delay_ms,
-            depth_transport_delay_ms,
             _detector->GetTimingReport().c_str()
         );
     }
     vision_msgs::Detection3DArray detection_3d_arr_msg;
-    detection_3d_arr_msg.header = color_image->header;
+    detection_3d_arr_msg.header = color_header;
 
     if (result.empty()) {
-        _detection_pub.publish(detection_3d_arr_msg);
-        return;
+        return objects;
     }
     auto t0 = std::chrono::high_resolution_clock::now();
     auto detection_time_s = std::chrono::duration<double>(t0 - t_start);
     if (detection_time_s.count() > 1.0) {
         ROS_INFO("Detector is warming up");
-        return;
+        return objects;
     }
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
     vision_msgs::Detection2DArray detection_2d_arr_msg = detections_to_msg(result);
-    detection_2d_arr_msg.header = color_image->header;
+    detection_2d_arr_msg.header = color_header;
 
     visualization_msgs::MarkerArray marker_array;
 
     cv::patchNaNs(depth_cv_image, 0.0);
-    double conversion = get_depth_conversion(depth_ptr->encoding);
+    double conversion = get_depth_conversion(depth_encoding);
     depth_cv_image *= conversion;
 
     cv::Mat debug_mask = cv::Mat::zeros(depth_cv_image.rows, depth_cv_image.cols, CV_8UC1);
     for (size_t index = 0; index < detection_2d_arr_msg.detections.size(); index++) {
         vision_msgs::Detection2D detection_2d_msg = detection_2d_arr_msg.detections[index];
-        detection_2d_msg.header = color_image->header;
+        detection_2d_msg.header = color_header;
         
         double z_min, z_max;
         cv::Mat detection_mask = cv::Mat::zeros(depth_cv_image.rows, depth_cv_image.cols, CV_8UC1);
@@ -210,22 +308,22 @@ void BwYolo::rgbd_callback(const sensor_msgs::ImageConstPtr& color_image, const 
         add_detection_to_marker_array(marker_array, detection_3d_msg, obj_color);
 
         tf_detection_pose_to_robot(detection_3d_msg);
+        detection_3d_arr_msg.header.frame_id = detection_3d_msg.header.frame_id;
         detection_3d_arr_msg.detections.push_back(detection_3d_msg);
     }
-    _detection_pub.publish(detection_3d_arr_msg);
     _marker_pub.publish(marker_array);
     auto t_end = std::chrono::high_resolution_clock::now();
 
     auto total_time = std::chrono::duration_cast<std::chrono::milliseconds>(t_end - t_start);
     if ((double)total_time.count() >= _long_loop_warning_ms) {
-        ROS_WARN_THROTTLE(0.5, "Detection loop took a long time: %ld ms", total_time.count());
+        ROS_WARN("Detection loop took a long time: %ld ms", total_time.count());
     }
 
     if (_publish_overlay && _overlay_pub.getNumSubscribers() > 0)
     {
         cv::Mat overlay = color_cv_image.clone();
         draw_overlay(overlay, result, debug_mask);
-        sensor_msgs::ImagePtr overlay_msg = cv_bridge::CvImage(color_image->header, sensor_msgs::image_encodings::BGR8, overlay).toImageMsg();
+        sensor_msgs::ImagePtr overlay_msg = cv_bridge::CvImage(color_header, sensor_msgs::image_encodings::BGR8, overlay).toImageMsg();
 
         _overlay_pub.publish(overlay_msg);
         _overlay_info_pub.publish(_camera_info);
@@ -239,8 +337,12 @@ void BwYolo::rgbd_callback(const sensor_msgs::ImageConstPtr& color_image, const 
             overlay_time.count() %
             message_prep_time.count() %
             total_time.count();
-        ROS_INFO_THROTTLE(0.5, "Loop report:\n%s", fmt.str().c_str());
+        ROS_INFO("Loop report:\n%s", fmt.str().c_str());
     }
+
+    objects = convert_to_objects(color_cv_image.cols, color_cv_image.rows, detection_2d_arr_msg, detection_3d_arr_msg);
+
+    return objects;
 }
 
 std_msgs::ColorRGBA BwYolo::get_detection_color(cv::Mat color_cv_image, cv::Mat mask)
@@ -411,6 +513,9 @@ vision_msgs::Detection3D BwYolo::detection_2d_to_3d(vision_msgs::Detection2D det
 
 void BwYolo::tf_detection_pose_to_robot(vision_msgs::Detection3D& detection_3d_msg)
 {
+    if (_target_frame.length() == 0) {
+        return;
+    }
     geometry_msgs::TransformStamped transform_camera_to_target;
 
     try {
@@ -487,6 +592,59 @@ vision_msgs::Detection2DArray BwYolo::detections_to_msg(const std::vector<std::v
         detection_2d_arr_msg.detections.push_back(detection_2d_msg);
     }
     return detection_2d_arr_msg;
+}
+
+bw_yolo::DetectionObjectsStamped BwYolo::convert_to_objects(
+    unsigned int width,
+    unsigned int height,
+    vision_msgs::Detection2DArray detection_2d_arr_msg,
+    vision_msgs::Detection3DArray detection_3d_arr_msg)
+{
+    bw_yolo::DetectionObjectsStamped objects;
+    objects.header = detection_3d_arr_msg.header;
+    objects.width = width;
+    objects.height = height;
+
+    for (size_t index = 0; index < detection_2d_arr_msg.detections.size(); index++) {
+        vision_msgs::Detection2D detection_2d_msg = detection_2d_arr_msg.detections[index];
+        vision_msgs::Detection3D detection_3d_msg = detection_3d_arr_msg.detections[index];
+
+        bw_yolo::DetectionObject obj;
+        obj.label = get_class_name(detection_2d_msg.results[0].id);
+        obj.object_index = get_class_count(detection_2d_msg.results[0].id);
+        obj.class_index = get_class_index(detection_2d_msg.results[0].id);
+        obj.confidence = detection_2d_msg.results[0].score;
+        obj.pose = detection_3d_msg.results[0].pose.pose;
+
+        int x_left = (int)(detection_2d_msg.bbox.center.x - detection_2d_msg.bbox.size_x / 2.0);
+        int x_right = (int)(detection_2d_msg.bbox.center.x + detection_2d_msg.bbox.size_x / 2.0);
+        int y_top = (int)(detection_2d_msg.bbox.center.y - detection_2d_msg.bbox.size_y / 2.0);
+        int y_bottom = (int)(detection_2d_msg.bbox.center.y + detection_2d_msg.bbox.size_y / 2.0);
+
+        obj.bounding_box_2d.points[0].x = x_left;
+        obj.bounding_box_2d.points[0].y = y_top;
+        obj.bounding_box_2d.points[1].x = x_right;
+        obj.bounding_box_2d.points[1].y = y_top;
+        obj.bounding_box_2d.points[2].x = x_right;
+        obj.bounding_box_2d.points[2].y = y_bottom;
+        obj.bounding_box_2d.points[3].x = x_left;
+        obj.bounding_box_2d.points[3].y = y_bottom;
+
+        double half_x = detection_3d_msg.bbox.size.x / 2.0;
+        double half_y = detection_3d_msg.bbox.size.y / 2.0;
+        double half_z = detection_3d_msg.bbox.size.z / 2.0;
+        for (int index = 0; index < obj.bounding_box_3d.points.size(); index++) {
+            obj.bounding_box_3d.points[index].x = _box_point_permutations[index][0] * half_x;
+            obj.bounding_box_3d.points[index].y = _box_point_permutations[index][1] * half_y;
+            obj.bounding_box_3d.points[index].z = _box_point_permutations[index][2] * half_z;
+        }
+        obj.bounding_box_3d.dimensions.x = detection_3d_msg.bbox.size.x;
+        obj.bounding_box_3d.dimensions.y = detection_3d_msg.bbox.size.y;
+        obj.bounding_box_3d.dimensions.z = detection_3d_msg.bbox.size.z;
+
+        objects.objects.push_back(obj);
+    }
+    return objects;
 }
 
 void BwYolo::draw_overlay(cv::Mat img, const std::vector<std::vector<Detection>>& detections, cv::Mat debug_mask, bool label)
@@ -582,6 +740,7 @@ visualization_msgs::Marker BwYolo::make_marker(vision_msgs::Detection3D detectio
 
     marker.scale = detection_3d_msg.bbox.size;
     marker.color = color;
+    marker.frame_locked = false;
 
     return marker;
 }
