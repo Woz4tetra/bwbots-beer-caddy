@@ -39,7 +39,7 @@ const int BUILTIN_LED = 13;
 
 const int BUTTON_IN = 15;
 bool button_state = false;
-bool prev_button_read_state = false;
+bool prev_switch_read_state = false;
 uint32_t last_debounce_time = 0;
 uint32_t DEBOUNCE_DELAY = 50;
 uint32_t button_press_counter = 0;
@@ -300,12 +300,12 @@ void write_button_state() {
 
 int update_button_state() {
     bool state = read_button();
-    if (state != prev_button_read_state) {
+    if (state != prev_switch_read_state) {
         DEBUG_SERIAL.print("Button state: ");
         DEBUG_SERIAL.println(state);
         last_debounce_time = current_time;
     }
-    prev_button_read_state = state;
+    prev_switch_read_state = state;
 
     if (current_time - last_debounce_time > DEBOUNCE_DELAY) {
         if (state != button_state) {

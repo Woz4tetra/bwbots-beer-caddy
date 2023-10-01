@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <PubSubClient.h>
 #include <ESP8266WiFi.h>
+#include <Adafruit_MotorShield.h>
 
 #ifndef WIFI_SSID
 #error WIFI_SSID is not defined
@@ -37,10 +38,11 @@ unsigned long prev_publish_time = 0;
 char msg[MSG_BUFFER_SIZE];
 int value = 0;
 
-const int BREAK_BEAM_PIN = 15;
-const int BUTTON_PIN = 14;
-const int LIMIT_SWITCH_PIN = 21;
-const int RELAY_PIN = 12;
+const int LIMIT_SWITCH_PIN = 12;
+
+const int DISPENSE_SPEED = 255;
+Adafruit_MotorShield AFMS = Adafruit_MotorShield();
+Adafruit_DCMotor *dispense_motor = AFMS.getMotor(1);
 
 
 void setup_wifi();
@@ -48,12 +50,11 @@ void callback(char* topic, byte* payload, unsigned int length);
 void start_dispense();
 void stop_dispense();
 void check_dispense();
-bool has_drink();
-bool read_button();
-bool get_button_state();
+bool read_limit_switch();
+bool get_limit_switch_state();
+bool get_switch_falling_edge();
 void publish_dispense_status(bool is_dispensing);
 void publish_dispense_done(bool success);
-void publish_drink_status(bool has_drink);
 void reconnect();
 
 
@@ -109,15 +110,31 @@ const uint32_t min_dispense_time = 100;
 const uint32_t max_dispense_time = 5000;
 
 
+void set_dispense_motor_speed(int speed) {
+    Serial.print("Set motor speed to ");
+    Serial.println(speed);
+    if (speed > 0) {
+        dispense_motor->run(FORWARD);
+    }
+    else {
+        dispense_motor->run(BACKWARD);
+    }
+    dispense_motor->setSpeed(abs(speed));
+}
+
 void start_dispense() {
+    Serial.println("Starting dispense");
     is_dispensing = true;
-    digitalWrite(RELAY_PIN, HIGH);
+    set_dispense_motor_speed(DISPENSE_SPEED);
     dispense_start_time = millis();
 }
 
 void stop_dispense() {
+    Serial.println("Stopping dispense");
     is_dispensing = false;
-    digitalWrite(RELAY_PIN, LOW);
+    set_dispense_motor_speed(0);
+    delay(250);
+    dispense_motor->run(RELEASE);
 }
 
 void check_dispense() {
@@ -125,7 +142,7 @@ void check_dispense() {
         return;
     }
     uint32_t current_time = millis();
-    if (current_time - dispense_start_time > min_dispense_time && digitalRead(LIMIT_SWITCH_PIN)) {
+    if (current_time - dispense_start_time > min_dispense_time && get_switch_falling_edge()) {
         stop_dispense();
         publish_dispense_done(true);
     }
@@ -135,31 +152,38 @@ void check_dispense() {
     }
 }
 
-bool has_drink() {
-    return !digitalRead(BREAK_BEAM_PIN);
-}
-
-bool button_state = false;
-bool prev_button_read_state = false;
+bool switch_state = false;
+bool prev_switch_read_state = false;
 uint32_t last_debounce_time = 0;
 uint32_t DEBOUNCE_DELAY = 50;
 
-bool read_button() {
-    return !digitalRead(BUTTON_PIN);
+bool read_limit_switch() {
+    return !digitalRead(LIMIT_SWITCH_PIN);
 }
 
-bool get_button_state() {
+bool get_limit_switch_state() {
     uint32_t current_time = millis();
-    bool state = read_button();
-    if (state != prev_button_read_state) {
+    bool state = read_limit_switch();
+    if (state != prev_switch_read_state) {
         last_debounce_time = current_time;
     }
-    prev_button_read_state = state;
+    prev_switch_read_state = state;
 
     if (current_time - last_debounce_time > DEBOUNCE_DELAY) {
-        button_state = state;
+        switch_state = state;
     }
-    return button_state;
+    return switch_state;
+}
+
+bool prev_switch_falling_edge_state = false;
+bool get_switch_falling_edge() {
+    bool state = get_limit_switch_state();
+    bool did_fall = false;
+    if (!state && prev_switch_falling_edge_state) {
+        did_fall = true;
+    }
+    prev_switch_falling_edge_state = state;
+    return did_fall;
 }
 
 
@@ -175,13 +199,6 @@ void publish_dispense_done(bool success) {
     Serial.print("Publish dispense done: ");
     Serial.println(msg);
     client.publish("dispense_done", msg);
-}
-
-void publish_drink_status(bool has_drink) {
-    snprintf(msg, MSG_BUFFER_SIZE, "%s\t%d", device_name, has_drink);
-    Serial.print("Publish drink status: ");
-    Serial.println(msg);
-    client.publish("has_drink", msg);
 }
 
 void reconnect() {
@@ -216,13 +233,17 @@ void reconnect() {
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);     // Initialize the LED_BUILTIN pin as an output
-    pinMode(RELAY_PIN, OUTPUT);
-    pinMode(BREAK_BEAM_PIN, INPUT_PULLUP);
-    pinMode(BUTTON_PIN, INPUT);
-    pinMode(LIMIT_SWITCH_PIN, INPUT);
+    pinMode(LIMIT_SWITCH_PIN, INPUT_PULLUP);
 
     Serial.begin(115200);
     delay(100);
+
+    if (!AFMS.begin()) {         // create with the default frequency 1.6KHz
+        while (true) {
+            Serial.println("Could not find Motor Shield. Check wiring.");
+            delay(1000);
+        }
+    }
 
     setup_wifi();
     client.setServer(mqtt_server, 1883);
@@ -241,9 +262,6 @@ void loop() {
             break;
         }
     }
-    if (get_button_state()) {
-        start_dispense();
-    }
     check_dispense();
 
     if (!client.connected() && !is_dispensing) {
@@ -255,6 +273,5 @@ void loop() {
     if (now - prev_publish_time > 1000) {
         prev_publish_time = now;
         publish_dispense_status(is_dispensing);
-        publish_drink_status(has_drink());
     }
 }

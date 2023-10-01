@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-from typing import Optional
-import rospy
-import actionlib
 from collections import namedtuple
+from typing import Optional
+
+import actionlib
 import paho.mqtt.client as mqtt
+import rospy
 from std_msgs.msg import String
-from bw_interfaces.msg import DispenseAction, DispenseGoal, DispenseFeedback, DispenseResult
+
+from bw_interfaces.msg import DispenseAction, DispenseFeedback, DispenseGoal, DispenseResult
 
 
 class BwDispensers:
@@ -20,25 +22,22 @@ class BwDispensers:
         self.timeout = rospy.Duration(rospy.get_param("~timeout", 5.0))
         self.simulated = rospy.get_param("~simulated", False)
         self.mqtt_server = rospy.get_param("~mqtt_server", "0.0.0.0")
-        
+
         if self.simulated:
             self.dispense_client = SimulatedDispense()
         else:
             self.dispense_client = MqttDispense(self.mqtt_server)
 
         self.action_server = actionlib.SimpleActionServer(
-            "dispense",
-            DispenseAction,
-            execute_cb=self.action_callback, 
-            auto_start=False
+            "dispense", DispenseAction, execute_cb=self.action_callback, auto_start=False
         )
         self.action_server.start()
         rospy.loginfo(f"{node_name} is ready")
-    
+
     def action_callback(self, goal: DispenseGoal):
         dispenser_name = goal.dispenser_name
         timeout = goal.timeout
-        
+
         result = DispenseResult()
 
         start_time = rospy.Time.now()
@@ -100,10 +99,10 @@ BooleanState = namedtuple("BooleanState", ["timestamp", "state"])
 class DispenseClientBase:
     def __init__(self) -> None:
         pass
-    
+
     def has_drink(self) -> Optional[bool]:
         return None
-    
+
     def start_dispense(self, dispenser_name) -> bool:
         return False
 
@@ -138,19 +137,19 @@ class SimulatedDispense(DispenseClientBase):
 class MqttDispense(DispenseClientBase):
     def __init__(self, mqtt_server) -> None:
         # Give a name to this MQTT client
-        self.client = mqtt.Client("dispenserA0")
+        self.client = mqtt.Client("drum_dispenser")
         self.client.message_callback_add("is_dispensing", self.on_is_dispensing)
         self.client.message_callback_add("dispense_done", self.on_dispense_done)
         self.client.message_callback_add("has_drink", self.on_has_drink)
 
-        # IP address of your MQTT broker, using ipconfig to look up it  
+        # IP address of your MQTT broker, using ipconfig to look up it
         self.client.connect(mqtt_server, 1883)
 
         self.client.loop_start()
         self.client.subscribe("is_dispensing/#")
         self.client.subscribe("dispense_done/#")
         self.client.subscribe("has_drink/#")
-        
+
         self.state = {
             "is_dispensing": BooleanState(rospy.Time.now(), False),
             "dispense_done": BooleanState(rospy.Time.now(), False),

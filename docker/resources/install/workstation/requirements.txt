@@ -4,3 +4,4 @@ ezdxf
 filterpy
 mypy
 pynput
+paho-mqtt==1.6.1
