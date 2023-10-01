@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <node name="zed_compressed" pkg="image_transport" type="republish" output="screen" required="false" args="
+            compressed
+            in:=/zed/rgb/image_rect_color
+            raw
+            out:=/zed_local_image
+        "/>
+    <node pkg="rosbag" type="record" name="rosbag_camera" output="screen" 
+       args="record -o /media/storage/bags/camera_only
+        /zed_local_image
+        --duration=300
+        " />
+</launch>

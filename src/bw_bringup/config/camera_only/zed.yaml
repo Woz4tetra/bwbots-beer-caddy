@@ -5,7 +5,7 @@ pub_frame_rate:             30.0
 general:
     camera_model:               'zed2'
     camera_name:                'zed2'
-    resolution:                 2   # 0 - 2.2K, 1 - 1080p, 2 - 720p, 3 - WVGA
+    resolution:                 1   # 0 - 2.2K, 1 - 1080p, 2 - 720p, 3 - WVGA
     grab_frame_rate:            30
 
 depth:
