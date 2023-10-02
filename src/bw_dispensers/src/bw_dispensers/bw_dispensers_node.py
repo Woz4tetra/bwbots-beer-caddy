@@ -5,7 +5,7 @@ import rospy
 from bw_dispensers.dispenser.mqtt_dispenser import MqttDispense
 from bw_dispensers.dispenser.simulated_dispenser import SimulatedDispense
 from bw_interfaces.msg import DispenseAction, DispenseGoal, DispenseResult
-from bw_tools.typing.basic import get_param
+from bw_tools.typing.basic import get_param, seconds_to_duration
 
 
 class BwDispensers:
@@ -14,7 +14,7 @@ class BwDispensers:
         rospy.init_node(node_name)
         rospy.on_shutdown(self.shutdown_hook)
 
-        self.timeout = rospy.Duration(get_param("~timeout", 5.0))
+        self.timeout = seconds_to_duration(get_param("~timeout", 5.0))
         self.simulated = get_param("~simulated", False)
         self.mqtt_server = get_param("~mqtt_server", "0.0.0.0")
 

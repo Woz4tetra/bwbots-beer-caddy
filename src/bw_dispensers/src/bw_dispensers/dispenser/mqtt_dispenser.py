@@ -53,10 +53,11 @@ class MqttDispense(DispenseClientBase):
         payload = str(msg.payload.decode("utf-8"))
         device_name, state = payload.split("\t")
         is_dispensing_state = state == "1"
+        if self.is_dispensing.state != is_dispensing_state:
+            rospy.loginfo(f"{device_name} is {'' if is_dispensing_state else 'not '}dispensing")
         if self.is_dispensing.state and not is_dispensing_state:
             self.is_done = BoolStamped(rospy.Time.now(), True)
         self.is_dispensing = BoolStamped(rospy.Time.now(), is_dispensing_state)
-        rospy.loginfo(f"{device_name} is {'' if is_dispensing_state else 'not '}dispensing")
 
     def publish_start_dispense(self, device_name: str):
         self.client.publish("start_dispense", device_name.encode("utf-8"), qos=0)
