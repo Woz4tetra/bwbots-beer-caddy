@@ -10,8 +10,9 @@ class ModeManager:
         self.mode = Mode.IDLE
 
     def set_mode(self, mode: Mode) -> None:
+        if mode != self.mode:
+            rospy.loginfo(f"Setting mode to {mode}")
         self.mode = mode
-        rospy.loginfo(f"Setting mode to {self.mode}")
 
     def mode_callback(self, msg: BehaviorMode) -> None:
         self.set_mode(Mode(msg.mode))

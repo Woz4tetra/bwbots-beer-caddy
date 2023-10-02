@@ -5,6 +5,7 @@ from py_trees.composites import Selector, Sequence
 
 from bw_behaviors.behaviors import make_deliver, make_dock, make_idle, make_undock
 from bw_behaviors.behaviors.is_mode import IsMode
+from bw_behaviors.behaviors.set_mode import SetMode
 from bw_behaviors.container import Container
 from bw_behaviors.modes import Mode
 
@@ -25,6 +26,7 @@ def make_mode_tree(container: Container) -> Behaviour:
             children=[
                 IsMode(mode, container),
                 make_fn(container),
+                SetMode(Mode.IDLE, container),
             ],
         )
         sequences.append(sequence)

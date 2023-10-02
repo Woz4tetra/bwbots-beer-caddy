@@ -1,8 +1,11 @@
 import math
 from typing import List, cast
+
 import numpy as np
 import tf_conversions
-from geometry_msgs.msg import Quaternion, Pose, Twist
+from geometry_msgs.msg import Pose, PoseStamped, Quaternion, Twist
+
+from bw_tools.dataclasses.header import Header
 
 
 class State:
@@ -52,15 +55,11 @@ class State:
         return quat_msg
 
     def get_theta_as_quat_as_list(self) -> List[float]:
-        return tf_conversions.transformations.quaternion_from_euler(
-            0.0, 0.0, self.theta
-        ).tolist()
+        return tf_conversions.transformations.quaternion_from_euler(0.0, 0.0, self.theta).tolist()
 
     def transform_by(self, other):
         if not isinstance(other, self.__class__):
-            raise ValueError(
-                "Can't transform %s to %s" % (self.__class__, other.__class__)
-            )
+            raise ValueError("Can't transform %s to %s" % (self.__class__, other.__class__))
         state = self.__class__.from_state(self)
         state = state.rotate_by(other.theta)
         state.x += other.x
@@ -92,9 +91,7 @@ class State:
 
     def delta(self, other, states="xy"):
         if not isinstance(other, self.__class__):
-            raise ValueError(
-                "Can't subtract %s and %s" % (self.__class__, other.__class__)
-            )
+            raise ValueError("Can't subtract %s and %s" % (self.__class__, other.__class__))
 
         state = self.__class__.from_state(self)
         for key in states:
@@ -109,9 +106,7 @@ class State:
 
     def add(self, other, states="xy"):
         if not isinstance(other, self.__class__):
-            raise ValueError(
-                "Can't subtract %s and %s" % (self.__class__, other.__class__)
-            )
+            raise ValueError("Can't subtract %s and %s" % (self.__class__, other.__class__))
 
         state = self.__class__.from_state(self)
         for key in states:
@@ -152,14 +147,10 @@ class State:
         return math.sqrt(self.x * self.x + self.y * self.y)
 
     def distance(self, other=None):
-        if (
-            other is None
-        ):  # if other is None, assume you're getting distance from the origin
+        if other is None:  # if other is None, assume you're getting distance from the origin
             other = self.__class__()
         if not isinstance(other, self.__class__):
-            raise ValueError(
-                "Can't get distance from %s to %s" % (self.__class__, other.__class__)
-            )
+            raise ValueError("Can't get distance from %s to %s" % (self.__class__, other.__class__))
         dx = self.x - other.x
         dy = self.y - other.y
         return math.sqrt(dx * dx + dy * dy)
@@ -169,10 +160,7 @@ class State:
             return math.atan2(self.y, self.x)
         else:
             if not isinstance(other, self.__class__):
-                raise ValueError(
-                    "Can't get heading from %s to %s"
-                    % (self.__class__, other.__class__)
-                )
+                raise ValueError("Can't get heading from %s to %s" % (self.__class__, other.__class__))
             dx = self.x - other.x
             dy = self.y - other.y
             return math.atan2(dy, dx)
@@ -268,9 +256,7 @@ class State:
 
     def __sub__(self, other):
         if not isinstance(other, self.__class__):
-            raise ValueError(
-                "Can't subtract %s and %s" % (self.__class__, other.__class__)
-            )
+            raise ValueError("Can't subtract %s and %s" % (self.__class__, other.__class__))
 
         state = self.__class__()
         state.x = self.x - other.x
@@ -289,9 +275,7 @@ class State:
             state.y = self.y * other
             state.theta = self.theta * other
         else:
-            raise ValueError(
-                "Can't multiply %s and %s" % (self.__class__, other.__class__)
-            )
+            raise ValueError("Can't multiply %s and %s" % (self.__class__, other.__class__))
         return state
 
     def __truediv__(self, other):
@@ -305,9 +289,7 @@ class State:
             state.y = self.y / other
             state.theta = self.theta / other
         else:
-            raise ValueError(
-                "Can't divide %s and %s" % (self.__class__, other.__class__)
-            )
+            raise ValueError("Can't divide %s and %s" % (self.__class__, other.__class__))
         return state
 
     def __abs__(self):
@@ -358,9 +340,7 @@ class Velocity(State):
         return cls.from_state(velocity_pose)
 
     @classmethod
-    def from_global_relative_speeds(
-        cls, vx: float, vy: float, vt: float, angle_ref: float
-    ) -> "Velocity":
+    def from_global_relative_speeds(cls, vx: float, vy: float, vt: float, angle_ref: float) -> "Velocity":
         self = cls(vx, vy, 0.0)
         self.rotate_by(-angle_ref)
         self.theta = vt
@@ -380,3 +360,16 @@ class Velocity(State):
         ros_twist.linear.y = self.y
         ros_twist.angular.z = self.theta
         return ros_twist
+
+
+class Pose2dStamped:
+    def __init__(self, header: Header, pose: Pose2d = Pose2d()) -> None:
+        self.header = header
+        self.pose = pose
+
+    @classmethod
+    def from_msg(cls, msg: PoseStamped) -> "Pose2dStamped":
+        return cls(Header.from_msg(msg.header), Pose2d.from_ros_pose(msg.pose))
+
+    def to_msg(self) -> PoseStamped:
+        return PoseStamped(header=self.header.to_msg(), pose=self.pose.to_ros_pose())
