@@ -1,3 +1,4 @@
+import time
 import paho.mqtt.client as mqtt
 
 was_dispensing = False
@@ -17,8 +18,10 @@ def on_is_dispensing(client, userdata, msg):
     was_dispensing = is_dispensing
 
 
-def set_speed(speed: int):
-    info = client.publish("dispense_speed", str(speed).encode("utf-8"), qos=0)
+def set_speed(speed: int, post_delay: int):
+    data = speed, post_delay
+    packet = ",".join([str(x) for x in data])
+    info = client.publish("dispense_speed", str(packet).encode("utf-8"), qos=0)
     info.wait_for_publish()
     if not info.is_published():
         print("Speed message failed to publish!")
@@ -44,7 +47,8 @@ client.subscribe("is_dispensing/#")
 try:
     while True:
         input("Press enter to dispense> ")
-        set_speed(100)
+        set_speed(255, 100)
+        time.sleep(0.25)
         start_dispense("drum_dispenser")
 finally:
     client.loop_stop()

@@ -40,6 +40,7 @@ int value = 0;
 
 const int LIMIT_SWITCH_PIN = 12;
 int dispense_speed = 255;
+int post_dispense_delay = 0;
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 Adafruit_DCMotor *dispense_motor = AFMS.getMotor(1);
 
@@ -96,6 +97,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
     memcpy(msg, payload, length + 1);
     msg[length] = 0;
 
+    Serial.print("Got message ");
+    Serial.println(msg);
+
     if (strcmp(topic, "start_dispense") == 0) {
         if (strcmp(msg, device_name) == 0) {
             Serial.println("Starting dispense");
@@ -103,8 +107,22 @@ void callback(char* topic, byte* payload, unsigned int length) {
         }
     }
     else if (strcmp(topic, "dispense_speed") == 0) {
-        int speed = atoi(msg);
+        char *token = strtok(msg, ",");
+        int speed, post_delay;
+        if (token != NULL) {
+            speed = atoi(token);
+            token = strtok(NULL, ",");
+        }
+        if (token != NULL) {
+            post_delay = atoi(token);
+            token = strtok(NULL, ",");
+        }
+        Serial.print("Set speed to ");
+        Serial.println(dispense_speed);
+        Serial.print("Post dispense delay to ");
+        Serial.println(post_dispense_delay);
         dispense_speed = max(min(speed, 255), -255);
+        post_dispense_delay = max(min(post_delay, 3000), 0);
     }
 }
 
@@ -136,6 +154,7 @@ void start_dispense() {
 void stop_dispense() {
     Serial.println("Stopping dispense");
     is_dispensing = false;
+    delay(post_dispense_delay);
     set_dispense_motor_speed(0);
     delay(250);
     dispense_motor->run(RELEASE);
@@ -217,6 +236,7 @@ void reconnect() {
         // Attempt to connect
         if (client.connect(clientId.c_str())) {
             Serial.println("connected");
+            client.subscribe("dispense_speed");
             client.subscribe("start_dispense");
             digitalWrite(LED_BUILTIN, LOW);
         }
