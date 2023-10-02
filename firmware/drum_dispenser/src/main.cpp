@@ -39,8 +39,7 @@ char msg[MSG_BUFFER_SIZE];
 int value = 0;
 
 const int LIMIT_SWITCH_PIN = 12;
-
-const int DISPENSE_SPEED = 255;
+int dispense_speed = 255;
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 Adafruit_DCMotor *dispense_motor = AFMS.getMotor(1);
 
@@ -94,13 +93,18 @@ void callback(char* topic, byte* payload, unsigned int length) {
     }
     Serial.println();
 
+    memcpy(msg, payload, length + 1);
+    msg[length] = 0;
+
     if (strcmp(topic, "start_dispense") == 0) {
-        memcpy(msg, payload, length + 1);
-        msg[length] = 0;
         if (strcmp(msg, device_name) == 0) {
             Serial.println("Starting dispense");
             start_dispense();
         }
+    }
+    else if (strcmp(topic, "dispense_speed") == 0) {
+        int speed = atoi(msg);
+        dispense_speed = max(min(speed, 255), -255);
     }
 }
 
@@ -125,7 +129,7 @@ void set_dispense_motor_speed(int speed) {
 void start_dispense() {
     Serial.println("Starting dispense");
     is_dispensing = true;
-    set_dispense_motor_speed(DISPENSE_SPEED);
+    set_dispense_motor_speed(dispense_speed);
     dispense_start_time = millis();
 }
 
