@@ -21,7 +21,7 @@
   "omnisharp.dotnetPath": "/usr/bin/dotnet",
   "editor.formatOnSave": true,
   "python.analysis.typeCheckingMode": "basic",
-  "python.formatting.provider": "black",
+  "python.formatting.provider": "none",
   "python.linting.flake8CategorySeverity.E": "Hint",
   "python.linting.flake8CategorySeverity.F": "Hint",
   "python.linting.flake8CategorySeverity.W": "Hint",

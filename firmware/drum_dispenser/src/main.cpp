@@ -149,6 +149,7 @@ void start_dispense() {
     is_dispensing = true;
     set_dispense_motor_speed(dispense_speed);
     dispense_start_time = millis();
+    publish_dispense_status(is_dispensing);
 }
 
 void stop_dispense() {
@@ -158,6 +159,7 @@ void stop_dispense() {
     set_dispense_motor_speed(0);
     delay(250);
     dispense_motor->run(RELEASE);
+    publish_dispense_status(is_dispensing);
 }
 
 void check_dispense() {
