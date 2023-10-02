@@ -29,35 +29,34 @@ class MqttDispense(DispenseClientBase):
         self.client.loop_start()
         self.client.subscribe("is_dispensing/#")
 
-        self.state = {
-            "is_dispensing": BoolStamped(rospy.Time.now(), False),
-        }
+        self.is_dispensing = BoolStamped(rospy.Time.now(), False)
+        self.is_done = BoolStamped(rospy.Time.now(), False)
         self.start_dispense_time = rospy.Time.now()
 
     def close(self) -> None:
         self.client.loop_stop()
 
     def start_dispense(self, dispenser_name):
+        self.is_done = BoolStamped(rospy.Time.now(), False)
         self.start_dispense_time = rospy.Time.now()
         self.publish_set_speed(self.dispense_speed, self.post_delay)
         time.sleep(0.25)
         self.publish_start_dispense(dispenser_name)
 
     def is_done_dispensing(self) -> Optional[bool]:
-        is_done_state = self.state["is_dispensing"]
-        if is_done_state.stamp > self.start_dispense_time:
-            return is_done_state.state
+        if self.is_done.stamp > self.start_dispense_time:
+            return self.is_done.state
         else:
             return None
 
     def on_is_dispensing(self, client, userdata, msg):
         payload = str(msg.payload.decode("utf-8"))
         device_name, state = payload.split("\t")
-        is_dispensing = state == "1"
-        is_dispensing_msg = BoolStamped(rospy.Time.now(), is_dispensing)
-        # if is_dispensing_msg.state != self.state["is_dispensing"].state:
-        rospy.loginfo(f"{device_name} is {'' if is_dispensing else 'not '}dispensing")
-        self.state["is_dispensing"] = is_dispensing_msg
+        is_dispensing_state = state == "1"
+        if self.is_dispensing.state and not is_dispensing_state:
+            self.is_done = BoolStamped(rospy.Time.now(), True)
+        self.is_dispensing = BoolStamped(rospy.Time.now(), is_dispensing_state)
+        rospy.loginfo(f"{device_name} is {'' if is_dispensing_state else 'not '}dispensing")
 
     def publish_start_dispense(self, device_name: str):
         self.client.publish("start_dispense", device_name.encode("utf-8"), qos=0)

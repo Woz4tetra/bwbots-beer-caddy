@@ -54,7 +54,6 @@ bool read_limit_switch();
 bool get_limit_switch_state();
 bool get_switch_falling_edge();
 void publish_dispense_status(bool is_dispensing);
-void publish_dispense_done(bool success);
 void reconnect();
 
 
@@ -149,7 +148,6 @@ void start_dispense() {
     is_dispensing = true;
     set_dispense_motor_speed(dispense_speed);
     dispense_start_time = millis();
-    publish_dispense_status(is_dispensing);
 }
 
 void stop_dispense() {
@@ -159,7 +157,6 @@ void stop_dispense() {
     set_dispense_motor_speed(0);
     delay(250);
     dispense_motor->run(RELEASE);
-    publish_dispense_status(is_dispensing);
 }
 
 void check_dispense() {
@@ -169,11 +166,9 @@ void check_dispense() {
     uint32_t current_time = millis();
     if (current_time - dispense_start_time > min_dispense_time && get_switch_falling_edge()) {
         stop_dispense();
-        publish_dispense_done(true);
     }
     if (current_time - dispense_start_time > max_dispense_time) {
         stop_dispense();
-        publish_dispense_done(false);
     }
 }
 
@@ -217,13 +212,6 @@ void publish_dispense_status(bool is_dispensing) {
     Serial.print("Publish dispense status: ");
     Serial.println(msg);
     client.publish("is_dispensing", msg);
-}
-
-void publish_dispense_done(bool success) {
-    snprintf(msg, MSG_BUFFER_SIZE, "%s\t%d", device_name, success);
-    Serial.print("Publish dispense done: ");
-    Serial.println(msg);
-    client.publish("dispense_done", msg);
 }
 
 void reconnect() {
@@ -276,6 +264,8 @@ void setup() {
     client.setCallback(callback);
 }
 
+bool prev_is_dispensing = false;
+
 void loop() {
     if (Serial.available()) {
         char c = Serial.read();
@@ -295,6 +285,10 @@ void loop() {
     }
     client.loop();
 
+    if (prev_is_dispensing != is_dispensing) {
+        publish_dispense_status(is_dispensing);
+        prev_is_dispensing = is_dispensing;
+    }
     unsigned long now = millis();
     if (now - prev_publish_time > 1000) {
         prev_publish_time = now;
