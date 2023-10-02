@@ -12,7 +12,7 @@ class BoolStamped:
     @classmethod
     def auto(cls, state: bool, stamp: float = float("nan")):
         if stamp != stamp:
-            stamp = rospy.Time.now()
+            stamp = rospy.Time.now().to_sec()
         return cls(stamp, state)
 
     def to_msg(self) -> Bool:
