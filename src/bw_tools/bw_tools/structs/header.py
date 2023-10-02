@@ -4,7 +4,7 @@ from typing import Optional
 import rospy
 from std_msgs.msg import Header as RosHeader
 
-from bw_tools.dataclasses.context_sequence_counter import ContextSequenceCounter
+from bw_tools.structs.context_sequence_counter import ContextSequenceCounter
 from bw_tools.typing.basic import seconds_to_duration
 
 

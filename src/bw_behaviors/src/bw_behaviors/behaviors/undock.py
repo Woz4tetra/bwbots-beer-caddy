@@ -4,7 +4,7 @@ from py_trees.composites import Sequence
 from bw_behaviors.behaviors.set_motors_enabled import SetMotorsEnabled
 from bw_behaviors.behaviors.simple_go_to_pose import SimpleGoToPose
 from bw_behaviors.container import Container
-from bw_tools.dataclasses.go_to_goal import GoToPoseGoal
+from bw_tools.structs.go_to_goal import GoToPoseGoal
 
 
 def make_undock(container: Container) -> Behaviour:

@@ -5,7 +5,7 @@ import numpy as np
 import tf_conversions
 from geometry_msgs.msg import Pose, PoseStamped, Quaternion, Twist
 
-from bw_tools.dataclasses.header import Header
+from bw_tools.structs.header import Header
 
 
 class State:

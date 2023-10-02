@@ -3,7 +3,7 @@ from typing import Optional
 import rospy
 from std_msgs.msg import Bool
 
-from bw_tools.dataclasses.bool_stamped import BoolStamped
+from bw_tools.structs.bool_stamped import BoolStamped
 
 
 class MotorsEnabledManager:

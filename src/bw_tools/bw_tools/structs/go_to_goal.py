@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
 from bw_interfaces.msg import GoToPoseGoal as RosGoToPoseGoal
-from bw_tools.dataclasses.header import Header
 from bw_tools.robot_state.robot_state import Pose2d, Pose2dStamped
+from bw_tools.structs.header import Header
 from bw_tools.typing.basic import seconds_to_duration
 
 

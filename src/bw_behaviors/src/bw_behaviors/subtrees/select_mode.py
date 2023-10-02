@@ -7,7 +7,7 @@ from bw_behaviors.behaviors import make_deliver, make_dock, make_idle, make_undo
 from bw_behaviors.behaviors.is_mode import IsMode
 from bw_behaviors.behaviors.set_mode import SetMode
 from bw_behaviors.container import Container
-from bw_behaviors.modes import Mode
+from bw_tools.structs.modes import Mode
 
 
 def make_mode_tree(container: Container) -> Behaviour:
