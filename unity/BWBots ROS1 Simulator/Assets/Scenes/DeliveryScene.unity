@@ -2583,7 +2583,7 @@ MonoBehaviour:
   followObject: {fileID: 1613416634}
   defaultCameraPositionOffset: {x: 0, y: 0.35, z: -0.7}
   defaultCameraRotationOffset: {x: 0, y: 0, z: 0, w: 1}
-  smoothSpeed: 0.1
+  smoothSpeed: 3
   wheelController: {fileID: 1613416636}
   forwardSpeed: 1
   lateralSpeed: 0.4

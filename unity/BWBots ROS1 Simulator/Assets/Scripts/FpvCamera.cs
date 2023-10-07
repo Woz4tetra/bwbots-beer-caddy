@@ -72,12 +72,12 @@ public class FpvCamera : MonoBehaviour
     public Quaternion defaultCameraRotationOffset = Quaternion.Euler(0.0f, 0.0f, 0.0f);
     private Vector3 cameraPositionOffset;
     private Quaternion cameraRotationOffset;
-    public float smoothSpeed = 1.0f;
+    [SerializeField] private float smoothSpeed = 1.0f;
 
-    public BwbotsSimulatedChassis wheelController;
-    public float forwardSpeed = 1.0f;
-    public float lateralSpeed = 0.4f;
-    public float angularSpeed = 3.14f;
+    [SerializeField] private BwbotsSimulatedChassis wheelController;
+    [SerializeField] private float forwardSpeed = 1.0f;
+    [SerializeField] private float lateralSpeed = 0.4f;
+    [SerializeField] private float angularSpeed = 3.14f;
     private float targetLinearSpeed = 0.0f;
     private float targetLateralSpeed = 0.0f;
     private float targetAngularSpeed = 0.0f;
@@ -86,9 +86,9 @@ public class FpvCamera : MonoBehaviour
 
     private Vector3 prevMovementVector = Vector3.zero;
 
-    public ViewMode startingMode = ViewMode.FOLLOW_ROBOT;
-    public bool useDefaultOffsetsOnFollow = true;
-    public bool useDefaultOffsetsOnStartup = true;
+    [SerializeField] private ViewMode startingMode = ViewMode.FOLLOW_ROBOT;
+    [SerializeField] private bool useDefaultOffsetsOnFollow = true;
+    [SerializeField] private bool useDefaultOffsetsOnStartup = true;
     private ViewMode viewMode = ViewMode.FOLLOW_ROBOT;
     private Vector3 lookingRotation = Vector3.zero;
     private bool mouseWasLocked = false;
@@ -227,11 +227,11 @@ public class FpvCamera : MonoBehaviour
     void FollowRobotUpdate()
     {
         Vector3 desiredPosition = followObject.transform.position + followObject.transform.rotation * cameraPositionOffset;
-        Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed);
+        Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed * Time.deltaTime);
         transform.position = smoothedPosition;
 
         Quaternion desiredRotation = followObject.transform.rotation * cameraRotationOffset;
-        Quaternion smoothedRotation = Quaternion.Lerp(transform.rotation, desiredRotation, smoothSpeed);
+        Quaternion smoothedRotation = Quaternion.Lerp(transform.rotation, desiredRotation, smoothSpeed * Time.deltaTime);
         transform.rotation = smoothedRotation;
 
         float inputAngularSpeed = 0.0f;
