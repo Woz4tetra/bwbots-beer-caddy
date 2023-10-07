@@ -22,7 +22,7 @@ def make_mode_tree(container: Container) -> Behaviour:
     for mode, make_fn in subtrees.items():
         sequence = Sequence(
             f"{mode.value}_sequence",
-            memory=True,
+            memory=False,
             children=[
                 IsMode(mode, container),
                 make_fn(container),

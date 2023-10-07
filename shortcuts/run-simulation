@@ -1,0 +1,6 @@
+#!/bin/bash
+BASE_DIR=$(realpath "$(dirname $0)")
+
+${BASE_DIR}/../docker/workstation/run_containers
+${BASE_DIR}/../docker/workstation/tail_container_logs
+${BASE_DIR}/../docker/workstation/stop_container

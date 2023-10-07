@@ -1,0 +1,22 @@
+#!/bin/bash
+BASE_DIR=$(realpath "$(dirname $0)")
+DESTINATION_NAME=$1
+REMOTE_KEY=$2
+REMOTE_USER_NAME=$3
+RM_PATTERN="$4"
+
+PROJECT_NAME=$(${BASE_DIR}/../get_project_name)
+
+if [ -z ${DESTINATION_NAME} ]; then
+    echo "Please set a destination IP or hostname"
+    exit
+fi
+
+if [ -z ${REMOTE_KEY} ]; then
+    echo "Please set an SSH key file"
+    exit
+fi
+
+SSH_COMMAND="ssh -i ${REMOTE_KEY} ${REMOTE_USER_NAME}@${DESTINATION_NAME}"
+
+${SSH_COMMAND} -t "~/${PROJECT_NAME}/docker/jetson/delete_data_jetson \"${RM_PATTERN}\""

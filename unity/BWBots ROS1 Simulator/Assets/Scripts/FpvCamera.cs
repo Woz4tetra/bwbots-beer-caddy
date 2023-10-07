@@ -4,7 +4,8 @@ using System.Collections.Generic;
 using RosMessageTypes.Geometry;
 using UnityEngine;
 
-public enum ViewMode {
+public enum ViewMode
+{
     FOLLOW_ROBOT,
     FREE_CAM
 }
@@ -59,7 +60,13 @@ public class FpvCamera : MonoBehaviour
     /// </summary>
     [SerializeField]
     float movementDeceleration = -10f;
-    
+
+    /// <summary>
+    ///     Movement damping
+    /// </summary>
+    [SerializeField]
+    float movementDampingConstant = 0.5f;
+
     public Component followObject;
     public Vector3 defaultCameraPositionOffset = new Vector3(0.0f, 0.35f, -0.7f);
     public Quaternion defaultCameraRotationOffset = Quaternion.Euler(0.0f, 0.0f, 0.0f);
@@ -71,9 +78,9 @@ public class FpvCamera : MonoBehaviour
     public float forwardSpeed = 1.0f;
     public float lateralSpeed = 0.4f;
     public float angularSpeed = 3.14f;
-    private float targetLinearSpeed;
-    private float targetLateralSpeed;
-    private float targetAngularSpeed;
+    private float targetLinearSpeed = 0.0f;
+    private float targetLateralSpeed = 0.0f;
+    private float targetAngularSpeed = 0.0f;
 
     private SlewLimiter movementLimiter;
 
@@ -107,34 +114,42 @@ public class FpvCamera : MonoBehaviour
 
         resetLookingRotation();
         setMode(startingMode);
-        if (useDefaultOffsetsOnStartup) {
+        if (useDefaultOffsetsOnStartup)
+        {
             resetCameraRelativeOffsetToDefault();
         }
     }
 
-    void resetCameraRelativeOffset() {
-        if (useDefaultOffsetsOnFollow) {
+    void resetCameraRelativeOffset()
+    {
+        if (useDefaultOffsetsOnFollow)
+        {
             resetCameraRelativeOffsetToDefault();
         }
-        else {
+        else
+        {
             Quaternion inverseRotation = Quaternion.Inverse(followObject.transform.rotation);
             cameraPositionOffset = inverseRotation * (this.transform.position - followObject.transform.position);
             cameraRotationOffset = inverseRotation * this.transform.rotation;
         }
     }
 
-    void resetCameraRelativeOffsetToDefault() {
+    void resetCameraRelativeOffsetToDefault()
+    {
         cameraPositionOffset = defaultCameraPositionOffset;
         cameraRotationOffset = defaultCameraRotationOffset;
     }
 
-    void resetLookingRotation() {
+    void resetLookingRotation()
+    {
         lookingRotation.x = transform.localEulerAngles.x;
         lookingRotation.y = transform.localEulerAngles.y;
     }
 
-    private void setMode(ViewMode mode) {
-        if (mode == ViewMode.FOLLOW_ROBOT) {
+    private void setMode(ViewMode mode)
+    {
+        if (mode == ViewMode.FOLLOW_ROBOT)
+        {
             resetCameraRelativeOffset();
             StopLooking();
         }
@@ -144,34 +159,43 @@ public class FpvCamera : MonoBehaviour
 
     void Update()
     {
-        if (initialRobotPose.Equals(Pose.identity) && Time.realtimeSinceStartup < 30.0) {
+        if (initialRobotPose.Equals(Pose.identity) && Time.realtimeSinceStartup < 30.0)
+        {
             initialRobotPose = wheelController.GetGlobalPose();
         }
-        if (Input.GetKeyDown(KeyCode.V)) {
+        if (Input.GetKeyDown(KeyCode.V))
+        {
             ViewMode mode;
-            if (viewMode == ViewMode.FREE_CAM) {
+            if (viewMode == ViewMode.FREE_CAM)
+            {
                 mode = ViewMode.FOLLOW_ROBOT;
             }
-            else {
+            else
+            {
                 mode = ViewMode.FREE_CAM;
             }
             setMode(mode);
         }
-        
-        if (viewMode == ViewMode.FREE_CAM) {
+
+        if (viewMode == ViewMode.FREE_CAM)
+        {
             FreeCamUpdate();
         }
-        else if (viewMode == ViewMode.FOLLOW_ROBOT) {
+        else if (viewMode == ViewMode.FOLLOW_ROBOT)
+        {
             FollowRobotUpdate();
         }
 
-        if (Input.GetKeyDown(KeyCode.C)) {
+        if (Input.GetKeyDown(KeyCode.C))
+        {
             wheelController.setMotorEnable(!wheelController.getMotorEnable());
         }
-        if (Input.GetKeyDown(KeyCode.B)) {
+        if (Input.GetKeyDown(KeyCode.B))
+        {
             wheelController.setUseGroundTruth(!wheelController.getUseGroundTruth());
         }
-        if (Input.GetKeyDown(KeyCode.R)) {
+        if (Input.GetKeyDown(KeyCode.R))
+        {
             initialRobotPose = wheelController.GetGlobalPose();
         }
     }
@@ -182,24 +206,26 @@ public class FpvCamera : MonoBehaviour
         Vector3 position = pose.position;
         Quaternion rotation = pose.rotation;
         float angle = 360.0f - rotation.eulerAngles.y;
-        if (angle > 180.0f) {
+        if (angle > 180.0f)
+        {
             angle -= 360.0f;
         }
         float angleRad = Mathf.Deg2Rad * angle;
-        string text = $"X = {position.z:n4}\n" + 
-            $"Y = {-position.x:n4}\n" + 
+        string text = $"X = {position.z:n4}\n" +
+            $"Y = {-position.x:n4}\n" +
             $"Angle = {angleRad:n4}\n" +
             "Robot is " + (wheelController.getMotorEnable() ? "enabled" : "disabled") +
             "\nGround truth is " + (wheelController.getUseGroundTruth() ? "enabled" : "disabled");
         Vector2 size = this.robotStatusLabelStyle.CalcSize(new GUIContent(text));
-        
+
         Rect boxRect = new Rect(Screen.width - size.x - 2 * labelBorderSize, 0, size.x + 2 * labelBorderSize, size.y + 2 * labelBorderSize);
         Rect labelRect = new Rect(boxRect.x + labelBorderSize, boxRect.y + labelBorderSize, size.x, size.y);
         GUI.Box(boxRect, GUIContent.none);
         GUI.Label(labelRect, text, this.robotStatusLabelStyle);
     }
 
-    void FollowRobotUpdate() {
+    void FollowRobotUpdate()
+    {
         Vector3 desiredPosition = followObject.transform.position + followObject.transform.rotation * cameraPositionOffset;
         Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed);
         transform.position = smoothedPosition;
@@ -208,47 +234,61 @@ public class FpvCamera : MonoBehaviour
         Quaternion smoothedRotation = Quaternion.Lerp(transform.rotation, desiredRotation, smoothSpeed);
         transform.rotation = smoothedRotation;
 
-        targetAngularSpeed = 0.0f;
-        targetLinearSpeed = 0.0f;
-        targetLateralSpeed = 0.0f;
-        if (Input.GetKey(KeyCode.A)) {
-            targetAngularSpeed += angularSpeed;
+        float inputAngularSpeed = 0.0f;
+        float inputLinearSpeed = 0.0f;
+        float inputLateralSpeed = 0.0f;
+        if (Input.GetKey(KeyCode.A))
+        {
+            inputAngularSpeed += angularSpeed;
         }
 
-        if (Input.GetKey(KeyCode.D)) {
-            targetAngularSpeed += -angularSpeed;
+        if (Input.GetKey(KeyCode.D))
+        {
+            inputAngularSpeed += -angularSpeed;
         }
 
-        if (Input.GetKey(KeyCode.W)) {
-            targetLinearSpeed += forwardSpeed;
+        if (Input.GetKey(KeyCode.W))
+        {
+            inputLinearSpeed += forwardSpeed;
         }
 
-        if (Input.GetKey(KeyCode.S)) {
-            targetLinearSpeed += -forwardSpeed;
+        if (Input.GetKey(KeyCode.S))
+        {
+            inputLinearSpeed += -forwardSpeed;
         }
 
-        if (Input.GetKey(KeyCode.Q)) {
-            targetLateralSpeed += lateralSpeed;
+        if (Input.GetKey(KeyCode.Q))
+        {
+            inputLateralSpeed += lateralSpeed;
         }
 
-        if (Input.GetKey(KeyCode.E)) {
-            targetLateralSpeed += -lateralSpeed;
+        if (Input.GetKey(KeyCode.E))
+        {
+            inputLateralSpeed += -lateralSpeed;
         }
 
-        if (Input.GetKeyDown(KeyCode.R)) {
+        targetAngularSpeed += movementDampingConstant * (inputAngularSpeed - targetAngularSpeed);
+        targetLinearSpeed += movementDampingConstant * (inputLinearSpeed - targetLinearSpeed);
+        targetLateralSpeed += movementDampingConstant * (inputLateralSpeed - targetLateralSpeed);
+
+        if (Input.GetKeyDown(KeyCode.R))
+        {
             resetCameraRelativeOffsetToDefault();
         }
     }
 
     void FixedUpdate()
     {
-        if (wheelController.getMotorEnable()) {
+        if (wheelController.getMotorEnable())
+        {
             sendRobotCommand(targetLinearSpeed, targetLateralSpeed, targetAngularSpeed);
         }
     }
 
-    private void sendRobotCommand(float vx, float vy, float vt) {
-        TwistMsg msg = new TwistMsg {
+    private void sendRobotCommand(float vx, float vy, float vt)
+    {
+        TwistMsg msg = new TwistMsg
+        {
             linear = {
                 x = vx,
                 y = vy
@@ -257,60 +297,73 @@ public class FpvCamera : MonoBehaviour
                 z = vt
             }
         };
-        if (msg.linear.x == 0.0 && msg.linear.y == 0.0 && msg.angular.z == 0.0) {
-            if (prevNonZeroRobotCommand == 0.0f) {
+        if (msg.linear.x == 0.0 && msg.linear.y == 0.0 && msg.angular.z == 0.0)
+        {
+            if (prevNonZeroRobotCommand == 0.0f)
+            {
                 prevNonZeroRobotCommand = Time.realtimeSinceStartup;
             }
-            if (Time.realtimeSinceStartup - prevNonZeroRobotCommand > robotCommandTimeout) {
+            if (Time.realtimeSinceStartup - prevNonZeroRobotCommand > robotCommandTimeout)
+            {
                 return;
             }
         }
-        else {
+        else
+        {
             prevNonZeroRobotCommand = 0.0f;
         }
         wheelController.setTwistCommand(msg, 0, 0.1f);
     }
 
-    void FreeCamUpdate() {
+    void FreeCamUpdate()
+    {
         var fastMode = Input.GetKey(KeyCode.LeftControl);
         float movementForward = 0.0f;
         float movementRight = 0.0f;
         float movementUp = 0.0f;
         float movementSpeed = fastMode ? m_FastMovementSpeed : m_MovementSpeed;
 
-        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) {
+        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
+        {
             movementRight -= movementSpeed;
         }
 
-        if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) {
+        if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
+        {
             movementRight += movementSpeed;
         }
 
-        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) {
+        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
+        {
             movementForward += movementSpeed;
         }
 
-        if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) {
+        if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
+        {
             movementForward -= movementSpeed;
         }
 
-        if (Input.GetKey(KeyCode.Q) || Input.GetKey(KeyCode.LeftShift)) {
+        if (Input.GetKey(KeyCode.Q) || Input.GetKey(KeyCode.LeftShift))
+        {
             movementUp -= movementSpeed;
         }
 
-        if (Input.GetKey(KeyCode.E) || Input.GetKey(KeyCode.Space)) {
+        if (Input.GetKey(KeyCode.E) || Input.GetKey(KeyCode.Space))
+        {
             movementUp += movementSpeed;
         }
-        
+
 
         Vector3 relativeMovementVector = new Vector3(movementRight, movementUp, movementForward);
         Quaternion cameraRotation = Quaternion.Euler(0.0f, transform.localEulerAngles.y, 0.0f);
         Vector3 absoluteMovementVector = cameraRotation * relativeMovementVector;
         float movementDeltaRaw = Vector3.Distance(Vector3.zero, absoluteMovementVector);
-        if (Math.Abs(movementDeltaRaw) < 1E-3) {
+        if (Math.Abs(movementDeltaRaw) < 1E-3)
+        {
             absoluteMovementVector = prevMovementVector;
         }
-        else {
+        else
+        {
             prevMovementVector = absoluteMovementVector / movementDeltaRaw;
         }
         movementDeltaRaw = SlewLimiter.clamp(movementDeltaRaw, -movementSpeed, movementSpeed);
@@ -321,19 +374,25 @@ public class FpvCamera : MonoBehaviour
         transform.position = transform.position + movementVector * Time.deltaTime;
 
         bool focusButtonPressed;
-        if (looking) {
+        if (looking)
+        {
             focusButtonPressed = Input.GetKeyDown(KeyCode.Escape);
         }
-        else {
+        else
+        {
             focusButtonPressed = Input.GetKeyDown(KeyCode.Mouse0) && IsMouseOverGameWindow(0.0f);
         }
-        if (focusButtonPressed != this.focusButtonPressed) {
+        if (focusButtonPressed != this.focusButtonPressed)
+        {
             this.focusButtonPressed = focusButtonPressed;
-            if (!this.focusButtonPressed) {
-                if (looking) {
+            if (!this.focusButtonPressed)
+            {
+                if (looking)
+                {
                     StopLooking();
                 }
-                else {
+                else
+                {
                     StartLooking();
                 }
             }
@@ -347,16 +406,20 @@ public class FpvCamera : MonoBehaviour
             // if (deltaX != 0.0f || deltaY != 0.0f) {
             //     Debug.Log($"deltaX: {deltaX}, deltaY: {deltaY}");
             // }
-            if (mouseWasLocked) {
-                if (mouseWasLockedCounter == 0 && deltaX == 0.0f && deltaY == 0.0f) {
+            if (mouseWasLocked)
+            {
+                if (mouseWasLockedCounter == 0 && deltaX == 0.0f && deltaY == 0.0f)
+                {
                     return;
                 }
                 mouseWasLockedCounter++;
-                if (mouseWasLockedCounter > 20 && deltaX == 0.0f && deltaY == 0.0f) {
+                if (mouseWasLockedCounter > 20 && deltaX == 0.0f && deltaY == 0.0f)
+                {
                     Debug.Log($"cursor is settled");
                     mouseWasLocked = false;
                 }
-                else {
+                else
+                {
                     return;
                 }
             }
@@ -375,17 +438,20 @@ public class FpvCamera : MonoBehaviour
         }
 
     }
-    bool IsMouseOverGameWindow(float tolerance) {
-        return !(tolerance > Input.mousePosition.x || 
-            tolerance > Input.mousePosition.y || 
-            (Screen.width - tolerance) < Input.mousePosition.x || 
+    bool IsMouseOverGameWindow(float tolerance)
+    {
+        return !(tolerance > Input.mousePosition.x ||
+            tolerance > Input.mousePosition.y ||
+            (Screen.width - tolerance) < Input.mousePosition.x ||
             (Screen.height - tolerance) < Input.mousePosition.y
         );
     }
-    private float getMouseDeltaX() {
+    private float getMouseDeltaX()
+    {
         return Input.GetAxisRaw("Mouse X");
     }
-    private float getMouseDeltaY() {
+    private float getMouseDeltaY()
+    {
         return Input.GetAxisRaw("Mouse Y");
     }
 

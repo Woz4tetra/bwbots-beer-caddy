@@ -1,0 +1,32 @@
+#!/bin/bash
+BASE_DIR=$(realpath "$(dirname $0)")
+
+RM_PATTERN="$1"
+
+if [ -z "${RM_PATTERN}" ]; then
+    echo "Removal pattern is empty! Exiting."
+    exit 1
+fi
+
+PROJECT_DIR=$(realpath "${BASE_DIR}/../../")
+
+rm -r ${PROJECT_DIR}/src/bw_data/data/"${RM_PATTERN}"
+
+IMAGE_VERSION=$(${BASE_DIR}/../get_image_tag)
+IMAGE_PREFIX=$(${BASE_DIR}/get_built_image)
+ORGANIZATION=$(${BASE_DIR}/../get_organization)
+PROJECT_NAME=$(${BASE_DIR}/../get_project_name)
+
+docker run -it \
+    --user ${ORGANIZATION} \
+    --name workstation_rm_data_${PROJECT_NAME} \
+    --restart="no" \
+    --net="host" \
+    --privileged \
+    --stop-signal=SIGINT \
+    -v=workstation_${PROJECT_NAME}_build:/home/${ORGANIZATION}/ros_ws:rw \
+    -v=${PROJECT_DIR}:/opt/${ORGANIZATION}/${PROJECT_NAME}:rw \
+    -v=${PROJECT_DIR}/scripts:/opt/${ORGANIZATION}/scripts:rw \
+    --rm \
+    ${IMAGE_PREFIX}_${IMAGE_VERSION} \
+    bash /opt/${ORGANIZATION}/scripts/delete_data.sh "${RM_PATTERN}"

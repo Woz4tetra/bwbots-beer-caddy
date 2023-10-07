@@ -1,0 +1,15 @@
+#!/bin/bash
+BASE_DIR=$(realpath "$(dirname $0)")
+
+DEVICE=$1
+RM_PATTERN="$2"
+
+if [ ${DEVICE} = "simulated" ]; then
+    ${BASE_DIR}/../docker/workstation/delete_data_workstation "${RM_PATTERN}"
+else
+    IP=`bash ${BASE_DIR}/lib/get-ip.sh ${DEVICE}`
+    if [ -z $IP ]; then
+        exit 1
+    fi
+    ${BASE_DIR}/../install/delete_data "${RM_PATTERN}"
+fi

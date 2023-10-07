@@ -48,9 +48,11 @@
     </group>
 
     <include file="$(find bw_laser_slam)/launch/bw_laser_slam.launch">
-        <arg name="mode" value="localize" />
-        <!-- <arg name="mode" value="mapping"/> -->
-        <!-- <arg name="mode" value="idle"/> -->
-        <arg name="map_name" value="$(arg map_name)" />
+        <arg name="mode" value="localize"/>
+        <arg name="map_name" value="$(arg map_name)"/>
+        <arg name="laser_scan_topic" value="/laser/scan"/>
+        <arg name="gmapping_config" value="$(find bw_bringup)/config/robeert/gmapping.yaml"/>
+        <arg name="amcl_config" value="$(find bw_bringup)/config/robeert/amcl.yaml"/>
     </include>
+
 </launch>
