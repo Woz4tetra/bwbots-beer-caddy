@@ -3181,10 +3181,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c6430c6205787ecb9853bd66043d73, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dispenserType: A0
+  dispenserType: drum_dispenser
   drink: {fileID: 115070769967449265, guid: 07d8029813730f69fa5aebc76a1002a2, type: 3}
   dispenseTopic: /bw/simulated_dispense
-  dispenserName: dispenser1
+  dispenserName: drum_dispenser
 --- !u!1 &1372091402
 GameObject:
   m_ObjectHideFlags: 0
@@ -4137,8 +4137,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a5b73fc9143e64abfb268cc1ac947e02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tagName: dock_tag
-  tagId: 11
+  tagName: dock
+  tagId: 251
 --- !u!23 &1710674043
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -4973,11 +4973,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: caede7ab0231f48c5acb47721c407c61, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  publishDelay: 0.1
-  tagTopic: /apriltag/tag_detections
+  publishDelay: 0
+  tagTopic: /bw/tag_detections
   detectTopic: /zed/obj_det/detections
   zedObjectsTopic: /zed/obj_det/yolo_objects
   zedCloudTopic: /zed/point_cloud/cloud_registered
+  tagRequestTopic: /bw/simulated_tag/request
+  tagResponseTopic: /bw/simulated_tag/response
   frameId: camera_link
   rayCastOffset: 0
   debugRayCast: 0
@@ -4994,6 +4996,8 @@ MonoBehaviour:
   - 0.75
   noiseMagnitude: 0
   RangeMetersMax: 10
+  locatorTag: locator_tag
+  personTag: person
 --- !u!33 &2106013654095891167
 MeshFilter:
   m_ObjectHideFlags: 0

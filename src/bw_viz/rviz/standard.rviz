@@ -8,6 +8,7 @@ Panels:
         - /TF1/Frames1
         - /Camera1/Visibility1
         - /mcl_particles1
+        - /Apriltag Markers1
         - /Ground Marker1
       Splitter Ratio: 0.3412107527256012
     Tree Height: 838
@@ -390,18 +391,18 @@ Visualization Manager:
       Marker Topic: /bw/waypoint_markers
       Name: Waypoints
       Namespaces:
-        posdesk: true
         posdispenser1: true
         posdispenser1_prep: true
         posdock_prep: true
         posdock_tag: true
-        poskitchen: true
-        textdesk: true
+        posroom1: true
+        posroom2: true
         textdispenser1: true
         textdispenser1_prep: true
         textdock_prep: true
         textdock_tag: true
-        textkitchen: true
+        textroom1: true
+        textroom2: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -567,10 +568,14 @@ Visualization Manager:
       Value: false
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /apriltag/tag_markers
+      Marker Topic: /bw/tag_markers
       Name: Apriltag Markers
       Namespaces:
-        {}
+        cube251: true
+        posx251: true
+        posy251: true
+        posz251: true
+        text251: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -602,7 +607,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: base_link
+    Fixed Frame: map
     Frame Rate: 30
   Name: root
   Tools:
@@ -626,7 +631,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 6.456088066101074
+      Distance: 5.245484352111816
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -634,17 +639,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -1.4943809509277344
-        Y: 1.9490211009979248
-        Z: 4.5655838221136946e-07
+        X: -0.27350175380706787
+        Y: -0.4560730457305908
+        Z: 1.8870698568207445e-06
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.3897967338562012
+      Pitch: 0.9597972631454468
       Target Frame: <Fixed Frame>
-      Yaw: 2.8667540550231934
+      Yaw: 3.9717557430267334
     Saved: ~
 Window Geometry:
   Camera:
@@ -664,5 +669,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 2524
-  X: 72
+  X: 2596
   Y: 35

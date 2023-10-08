@@ -1,8 +1,10 @@
 from typing import Optional
+
+import PyKDL
 import rospy
-import tf2_ros
 import tf2_geometry_msgs
-from geometry_msgs.msg import TransformStamped, PoseStamped
+import tf2_ros
+from geometry_msgs.msg import Pose, PoseStamped, TransformStamped
 
 
 def lookup_transform(
@@ -21,15 +23,18 @@ def lookup_transform(
 
     try:
         return tf_buffer.lookup_transform(parent_link, child_link, time_window, timeout)
-    except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException, tf2_ros.InvalidArgumentException) as e:  # type: ignore
+    except (
+        tf2_ros.LookupException,  # type: ignore
+        tf2_ros.ConnectivityException,  # type: ignore
+        tf2_ros.ExtrapolationException,  # type: ignore
+        tf2_ros.InvalidArgumentException,  # type: ignore
+    ) as e:
         if not silent:
-            rospy.logwarn(
-                "Failed to look up %s to %s. %s" % (parent_link, child_link, e)
-            )
+            rospy.logwarn("Failed to look up %s to %s. %s" % (parent_link, child_link, e))
         return None
 
 
-def transform_pose(
+def lookup_pose_in_frame(
     tf_buffer,
     pose_stamped: PoseStamped,
     destination_frame: str,
@@ -37,6 +42,9 @@ def transform_pose(
     timeout=None,
     silent=False,
 ) -> Optional[PoseStamped]:
+    """
+    Put pose_stamped into the destination frame. Return None if the look up fails.
+    """
     transform = lookup_transform(
         tf_buffer,
         destination_frame,
@@ -48,3 +56,50 @@ def transform_pose(
     if transform is None:
         return None
     return tf2_geometry_msgs.do_transform_pose(pose_stamped, transform)
+
+
+def transform_pose(relative_pose: Pose, root_pose: PoseStamped) -> PoseStamped:
+    """
+    Transform pose by pose_transform (puts pose relative to pose_transform)
+    """
+    root_frame = PyKDL.Frame(
+        PyKDL.Rotation.Quaternion(
+            root_pose.pose.orientation.x,
+            root_pose.pose.orientation.y,
+            root_pose.pose.orientation.z,
+            root_pose.pose.orientation.w,
+        ),
+        PyKDL.Vector(
+            root_pose.pose.position.x,
+            root_pose.pose.position.y,
+            root_pose.pose.position.z,
+        ),
+    )
+    offset_frame = PyKDL.Frame(
+        PyKDL.Rotation.Quaternion(
+            relative_pose.orientation.x,
+            relative_pose.orientation.y,
+            relative_pose.orientation.z,
+            relative_pose.orientation.w,
+        ),
+        PyKDL.Vector(
+            relative_pose.position.x,
+            relative_pose.position.y,
+            relative_pose.position.z,
+        ),
+    )
+    result_frame = root_frame * offset_frame
+    transformed_pose = Pose()
+    transformed_pose.position.x = result_frame[(0, 3)]
+    transformed_pose.position.y = result_frame[(1, 3)]
+    transformed_pose.position.z = result_frame[(2, 3)]
+    (
+        transformed_pose.orientation.x,
+        transformed_pose.orientation.y,
+        transformed_pose.orientation.z,
+        transformed_pose.orientation.w,
+    ) = result_frame.M.GetQuaternion()
+    result = PoseStamped()
+    result.header = root_pose.header
+    result.pose = transformed_pose
+    return result

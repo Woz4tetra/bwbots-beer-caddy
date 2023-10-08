@@ -25,7 +25,7 @@ class TagMarkerPublisher:
         )
         # rospy.on_shutdown(self.shutdown_hook)
         self.tag_pose_marker_size = get_param("~tag_pose_marker_size", 0.25)
-        self.marker_publish_rate = get_param("~marker_publish_rate", 5.0)
+        self.marker_publish_rate = get_param("~marker_publish_rate", 0.0)
         self.debug = get_param("~debug", False)
         self.base_frame = get_param("~base_frame", "base_link")
         self.stale_detection_seconds = seconds_to_duration(get_param("~stale_detection_seconds", 1.0))
@@ -61,6 +61,8 @@ class TagMarkerPublisher:
         self.rotated_tag_pub.publish(self.tag_msg)
         if self.debug:
             self.publish_debug_rotation(self.tag_msg)
+        if self.marker_publish_rate <= 0.0:
+            self.publish_marker(self.tag_msg)
 
     def publish_debug_rotation(self, msg: AprilTagDetectionArray):
         pose_array = PoseArray()
@@ -219,9 +221,13 @@ class TagMarkerPublisher:
         marker.action = Marker.ADD
         marker.pose = copy.deepcopy(pose.pose)
         marker.header = pose.header
-        marker.lifetime = seconds_to_duration(2.0 / self.marker_publish_rate)
+        if self.marker_publish_rate > 0.0:
+            marker.lifetime = seconds_to_duration(2.0 / self.marker_publish_rate)
+        else:
+            marker.lifetime = seconds_to_duration(0.0)
         marker.ns = name
         marker.id = 0  # all waypoint names should be unique
+        marker.frame_locked = False
 
         scale_vector = Vector3()
         scale_vector.x = self.tag_pose_marker_size
@@ -238,10 +244,13 @@ class TagMarkerPublisher:
         return marker
 
     def run(self):
-        rate = rospy.Rate(self.marker_publish_rate)
-        while not rospy.is_shutdown():
-            self.publish_marker(self.tag_msg)
-            rate.sleep()
+        if self.marker_publish_rate > 0.0:
+            rate = rospy.Rate(self.marker_publish_rate)
+            while not rospy.is_shutdown():
+                self.publish_marker(self.tag_msg)
+                rate.sleep()
+        else:
+            rospy.spin()
 
 
 if __name__ == "__main__":

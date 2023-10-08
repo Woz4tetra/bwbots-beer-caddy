@@ -1,0 +1,8 @@
+<launch>
+    <group ns="bw">
+        <node pkg="bw_tags" type="tag_marker_publisher.py" name="tag_marker_publisher" required="false" output="screen">
+            <param name="base_frame" value="base_link"/>
+        </node>
+        <node pkg="bw_tags" type="simulated_tag_request_server.py" name="tag_request_server" required="false" output="screen"/>
+    </group>
+</launch>

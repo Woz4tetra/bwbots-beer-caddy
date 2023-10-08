@@ -1,9 +1,10 @@
 from typing import Dict
+
 import rospy
 
-from ..robot_state import Pose2d
-
 from bw_interfaces.msg import Waypoint
+
+from ..robot_state import Pose2d
 
 
 class Waypoint2d(Pose2d):
@@ -24,31 +25,26 @@ class Waypoint2d(Pose2d):
         waypoint.header.stamp = rospy.Time.now()
         waypoint.name = self.name
         return waypoint
-    
+
     def to_dict(self) -> Dict:
-        return {
-            "name": self.name,
-            "parent_frame": self.parent_frame,
-            "x": self.x,
-            "y": self.y,
-            "theta": self.theta
-        }
-    
+        return {"name": self.name, "parent_frame": self.parent_frame, "x": self.x, "y": self.y, "theta": self.theta}
+
     @classmethod
     def from_ros_waypoint(cls, waypoint: Waypoint) -> "Waypoint2d":
         return cls(
-            waypoint.name, 
+            waypoint.name,
             waypoint.header.frame_id,
             waypoint.pose.position.x,
             waypoint.pose.position.y,
-            cls.theta_from_quat(waypoint.pose.orientation)
+            cls.theta_from_quat(waypoint.pose.orientation),
         )
 
     def __str__(self):
-        return f"{self.__class__.__name__}("\
-                f"{self.name}, "\
-                f"{self.parent_frame}, "\
-                f"x={self.x:0.4f}, "\
-                f"y={self.y:0.4f}, "\
-                f"theta={self.theta:0.4f})"
-
+        return (
+            f"{self.__class__.__name__}("
+            f"{self.name}, "
+            f"{self.parent_frame}, "
+            f"x={self.x:0.4f}, "
+            f"y={self.y:0.4f}, "
+            f"theta={self.theta:0.4f})"
+        )

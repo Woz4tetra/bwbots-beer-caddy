@@ -1,29 +1,31 @@
 #!/usr/bin/env python3
 import os
 from typing import Optional
-import yaml
 
 import rospy
 import tf2_ros
-
-from visualization_msgs.msg import Marker
-from visualization_msgs.msg import MarkerArray
-
-from geometry_msgs.msg import Vector3
-from geometry_msgs.msg import Point
-
+import yaml
+from geometry_msgs.msg import Point, Vector3
 from std_msgs.msg import ColorRGBA
-
-from bw_interfaces.srv import GetAllWaypoints, GetAllWaypointsResponse
-from bw_interfaces.srv import GetWaypoint, GetWaypointResponse
-from bw_interfaces.srv import GetWaypoints, GetWaypointsResponse
-from bw_interfaces.srv import DeleteWaypoint, DeleteWaypointResponse
-from bw_interfaces.srv import SaveWaypoint, SaveWaypointResponse
-from bw_interfaces.srv import SaveTF, SaveTFResponse
+from visualization_msgs.msg import Marker, MarkerArray
 
 from bw_interfaces.msg import Waypoint, WaypointArray
-
+from bw_interfaces.srv import (
+    DeleteWaypoint,
+    DeleteWaypointResponse,
+    GetAllWaypoints,
+    GetAllWaypointsResponse,
+    GetWaypoint,
+    GetWaypointResponse,
+    GetWaypoints,
+    GetWaypointsResponse,
+    SaveTF,
+    SaveTFResponse,
+    SaveWaypoint,
+    SaveWaypointResponse,
+)
 from bw_tools.waypoint import Waypoint2d, Waypoints2dArray
+
 
 class BwWaypoints:
     def __init__(self):
@@ -47,10 +49,12 @@ class BwWaypoints:
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
-        self.marker_pub = rospy.Publisher("waypoint_markers", MarkerArray, queue_size=25)
-        self.waypoints_pub = rospy.Publisher("waypoints", WaypointArray, queue_size=25)
+        self.marker_pub = rospy.Publisher("waypoint_markers", MarkerArray, queue_size=1, latch=True)
+        self.waypoints_pub = rospy.Publisher("waypoints", WaypointArray, queue_size=1, latch=True)
 
-        self.get_all_waypoints_srv = self.create_service("get_all_waypoints", GetAllWaypoints, self.get_all_waypoints_callback)
+        self.get_all_waypoints_srv = self.create_service(
+            "get_all_waypoints", GetAllWaypoints, self.get_all_waypoints_callback
+        )
         self.get_waypoint_srv = self.create_service("get_waypoint", GetWaypoint, self.get_waypoint_callback)
         self.get_waypoints_srv = self.create_service("get_waypoints", GetWaypoints, self.get_waypoints_callback)
         self.delete_waypoint_srv = self.create_service("delete_waypoint", DeleteWaypoint, self.delete_waypoint_callback)
@@ -96,7 +100,7 @@ class BwWaypoints:
                 waypoints_list.append(waypoint_dict)
             yaml.safe_dump(waypoints_list, file)
             rospy.loginfo(f"Saving {len(waypoints.waypoints)} waypoints to {waypoints_path}")
-    
+
     def process_path(self, waypoints_path):
         map_name = os.path.basename(waypoints_path)
         waypoints_dir = os.path.dirname(waypoints_path)
@@ -131,16 +135,23 @@ class BwWaypoints:
                 return waypoint
         return None
 
-    def delete_waypoint(self, name: str) -> bool:
+    def delete_waypoint(self, name: str, publish: bool = False) -> bool:
         new_waypoints = list(filter(lambda w: w.name != name, self.waypoints.waypoints))
         success = len(new_waypoints) < len(self.waypoints.waypoints)
         self.waypoints.waypoints = new_waypoints
+        if publish:
+            self.publish_waypoints()
         return success
-    
+
     def add_waypoint(self, waypoint: Waypoint) -> None:
         if self.get_waypoint(waypoint.name):
             self.delete_waypoint(waypoint.name)
+        waypoint = self.flatten_dimensions(waypoint)
         self.waypoints.waypoints.append(waypoint)
+        self.publish_waypoints()
+
+    def flatten_dimensions(self, waypoint: Waypoint) -> Waypoint:
+        return Waypoint2d.from_ros_waypoint(waypoint).to_ros_waypoint()
 
     # ---
     # Service callbacks
@@ -157,7 +168,7 @@ class BwWaypoints:
             return GetWaypointResponse(Waypoint(), False)
         else:
             return GetWaypointResponse(waypoint, True)
-    
+
     def get_waypoints_callback(self, req):
         self.waypoints = self.load_from_path(self.waypoints_path)
         success = True
@@ -172,7 +183,7 @@ class BwWaypoints:
 
     def delete_waypoint_callback(self, req):
         self.waypoints = self.load_from_path(self.waypoints_path)
-        success = self.delete_waypoint(req.name)
+        success = self.delete_waypoint(req.name, publish=True)
         self.save_to_path(self.waypoints_path, self.waypoints)
         return DeleteWaypointResponse(success)
 
@@ -183,11 +194,13 @@ class BwWaypoints:
 
     def save_tf_callback(self, req):
         try:
-            current_tf = self.tf_buffer.lookup_transform(req.parent_frame, req.child_frame, rospy.Time(0), rospy.Duration(1.0))
+            current_tf = self.tf_buffer.lookup_transform(
+                req.parent_frame, req.child_frame, rospy.Time(0), rospy.Duration(1.0)
+            )
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
             rospy.logwarn("Failed to look up %s to %s. %s" % (req.parent_frame, req.child_frame, e))
             return SaveTFResponse(False)
-        
+
         waypoint = Waypoint()
         waypoint.header.frame_id = req.parent_frame
         waypoint.name = req.name
@@ -204,9 +217,9 @@ class BwWaypoints:
         for waypoint in waypoints.waypoints:
             position_marker = self.make_marker(waypoint)
             text_marker = self.make_marker(waypoint)
-            
+
             self.prep_position_marker(position_marker)
-            
+
             text_marker.type = Marker.TEXT_VIEW_FACING
             text_marker.ns = "text" + text_marker.ns
             text_marker.text = waypoint.name
@@ -224,15 +237,15 @@ class BwWaypoints:
         position_marker.scale.x = self.marker_size / 4.0
         position_marker.scale.y = self.marker_size / 2.5
         position_marker.scale.z = self.marker_size / 2.0
-        
+
         p1 = Point()
         p2 = Point()
-        
+
         p2.x = self.marker_size
 
         position_marker.points.append(p1)
         position_marker.points.append(p2)
-    
+
     def make_marker(self, waypoint: Waypoint) -> Marker:
         marker = Marker()
         marker.action = Marker.ADD
@@ -241,6 +254,7 @@ class BwWaypoints:
         marker.lifetime = rospy.Duration(1.0)  # seconds
         marker.ns = waypoint.name
         marker.id = 0  # all waypoint names should be unique
+        marker.frame_locked = False
 
         scale_vector = Vector3()
         scale_vector.x = self.marker_size
@@ -256,12 +270,14 @@ class BwWaypoints:
 
         return marker
 
+    # Publish data
+    def publish_waypoints(self):
+        self.waypoints_pub.publish(self.waypoints)
+        self.marker_pub.publish(self.to_markers(self.waypoints))
+
     def run(self):
-        rate = rospy.Rate(3.0)
-        while not rospy.is_shutdown():
-            self.waypoints_pub.publish(self.waypoints)
-            self.marker_pub.publish(self.to_markers(self.waypoints))
-            rate.sleep()
+        self.publish_waypoints()
+        rospy.spin()
 
 
 def main():

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using RosMessageTypes.Std;
 using RosMessageTypes.ApriltagRos;
 using RosMessageTypes.Geometry;
 using RosMessageTypes.Sensor;
@@ -19,6 +20,8 @@ class CameraSensor : MonoBehaviour
     [SerializeField] private string detectTopic;
     [SerializeField] private string zedObjectsTopic;
     [SerializeField] private string zedCloudTopic;
+    [SerializeField] private string tagRequestTopic;
+    [SerializeField] private string tagResponseTopic;
     [SerializeField] private string frameId;
     [SerializeField] private float rayCastOffset = 0.01f;
     [SerializeField] private bool debugRayCast = false;
@@ -30,6 +33,8 @@ class CameraSensor : MonoBehaviour
     [SerializeField] private float[] pointCloudWindow;
     [SerializeField] private float noiseMagnitude = 0.05f;
     [SerializeField] private float RangeMetersMax = 1000;
+    [SerializeField] private string locatorTag = "locator_tag";
+    [SerializeField] private string personTag = "person";
     private double _prevPublishTime;
     private uint aprilTagMessageCount;
     private uint detectionMessageCount;
@@ -46,18 +51,21 @@ class CameraSensor : MonoBehaviour
         _ros.RegisterPublisher<AprilTagDetectionArrayMsg>(tagTopic);
         _ros.RegisterPublisher<Detection3DArrayMsg>(detectTopic);
         _ros.RegisterPublisher<ObjectsStampedMsg>(zedObjectsTopic);
-        if (enablePointCloud) {
+        if (enablePointCloud)
+        {
             _ros.RegisterPublisher<PointCloud2Msg>(zedCloudTopic);
             cloudMsg = makeEmptyCloudMsg(pointCloudNumHorizontalRays, pointCloudNumVerticalRays);
         }
+        _ros.Subscribe<StringMsg>(tagRequestTopic, tagRequestCallback);
+        _ros.RegisterPublisher<AprilTagDetectionArrayMsg>(tagResponseTopic);
     }
 
     void Update()
     {
         double now = Time.realtimeSinceStartup;
 
-        GameObject[] tags = GameObject.FindGameObjectsWithTag("locator_tag");
-        GameObject[] people = GameObject.FindGameObjectsWithTag("person");
+        GameObject[] tags = GameObject.FindGameObjectsWithTag(locatorTag);
+        GameObject[] people = GameObject.FindGameObjectsWithTag(personTag);
 
         AprilTagDetectionArrayMsg tagArrayMsg = GetAprilTagArrayMsg(tags);
         Detection3DArrayMsg detectArrayMsg = GetDetectionArrayMsg(people);
@@ -76,7 +84,8 @@ class CameraSensor : MonoBehaviour
             _ros.Publish(tagTopic, tagArrayMsg);
             _ros.Publish(detectTopic, detectArrayMsg);
             _ros.Publish(zedObjectsTopic, ConvertToZedObjects(detectArrayMsg));
-            if (enablePointCloud) {
+            if (enablePointCloud)
+            {
                 _ros.Publish(zedCloudTopic, cloud);
             }
         }
@@ -131,7 +140,8 @@ class CameraSensor : MonoBehaviour
                 bbox = new RosMessageTypes.Vision.BoundingBox3DMsg
                 {
                     center = pose,
-                    size = new Vector3Msg {
+                    size = new Vector3Msg
+                    {
                         x = Math.Abs(sizeMsg.x),
                         y = Math.Abs(sizeMsg.y),
                         z = Math.Abs(sizeMsg.z),
@@ -330,15 +340,18 @@ class CameraSensor : MonoBehaviour
         }
     }
 
-    void OnDrawGizmos () {
+    void OnDrawGizmos()
+    {
         // Gizmo Frustum
-        if (cameraView && debugRayCast) {
+        if (cameraView && debugRayCast)
+        {
             Gizmos.matrix = transform.localToWorldMatrix;           // For the rotation bug
             Gizmos.DrawFrustum(transform.position, cameraView.fieldOfView, cameraView.nearClipPlane, cameraView.farClipPlane, cameraView.aspect);
         }
     }
 
-    private PointCloud2Msg makeEmptyCloudMsg(uint numHorizontalRays, uint numVerticalRays) {
+    private PointCloud2Msg makeEmptyCloudMsg(uint numHorizontalRays, uint numVerticalRays)
+    {
         PointCloud2Msg cloud = new PointCloud2Msg();
         cloud.width = numHorizontalRays;
         cloud.height = numVerticalRays;
@@ -350,7 +363,7 @@ class CameraSensor : MonoBehaviour
         uint num_fields = 3;
         cloud.point_step = data_size_bytes * num_fields;
         cloud.row_step = numHorizontalRays * cloud.point_step;
-        
+
         cloud.fields = new PointFieldMsg[num_fields];
         uint field_index = 0;
         PointFieldMsg xfield = new PointFieldMsg();
@@ -381,19 +394,23 @@ class CameraSensor : MonoBehaviour
         return cloud;
     }
 
-    private PointCloud2Msg GeneratePointCloud() {
-        if (!enablePointCloud) {
+    private PointCloud2Msg GeneratePointCloud()
+    {
+        if (!enablePointCloud)
+        {
             return cloudMsg;
         }
         uint screenSize = (uint)(Screen.width * Screen.height);
-        if (screenSize != prevScreenSize) {
+        if (screenSize != prevScreenSize)
+        {
             prevScreenSize = screenSize;
             float x0, y0, x1, y1;
             x0 = 0.0f;
             y0 = Screen.width;
             x1 = 0.0f;
             y1 = Screen.height;
-            if (pointCloudWindow.Length == 4) {
+            if (pointCloudWindow.Length == 4)
+            {
                 x0 = Screen.width * pointCloudWindow[0];
                 x1 = Screen.width * pointCloudWindow[1];
                 y0 = Screen.height * pointCloudWindow[2];
@@ -402,36 +419,43 @@ class CameraSensor : MonoBehaviour
             pointCloudXIterator = LinearSpacedIndices(x0, x1, (int)pointCloudNumHorizontalRays);
             pointCloudYIterator = LinearSpacedIndices(y0, y1, (int)pointCloudNumVerticalRays);
         }
-            
+
         cloudMsg.header.stamp = RosUtil.GetTimeMsg();
         uint data_index = 0;
-        foreach (float xindex in pointCloudXIterator) {
-            foreach (float yindex in pointCloudYIterator) {
+        foreach (float xindex in pointCloudXIterator)
+        {
+            foreach (float yindex in pointCloudYIterator)
+            {
                 Ray ray = cameraView.ScreenPointToRay(new Vector3(xindex, yindex, 0.0f));
                 float x, y, z;
                 RaycastHit hit;
-                if (Physics.Raycast(ray, out hit) && hit.distance <= RangeMetersMax) {
+                if (Physics.Raycast(ray, out hit) && hit.distance <= RangeMetersMax)
+                {
 
-                    if (debugRayCast) {
+                    if (debugRayCast)
+                    {
                         Debug.DrawRay(ray.origin, ray.direction * hit.distance, Color.blue);
                     }
 
                     Vector3 relativePoint = cameraView.transform.InverseTransformPoint(hit.point);
 
                     Vector3Msg coord = relativePoint.To<FLU>();
-                    if (noiseMagnitude == 0.0f) {
+                    if (noiseMagnitude == 0.0f)
+                    {
                         x = (float)coord.x;
                         y = (float)coord.y;
                         z = (float)coord.z;
                     }
-                    else {
+                    else
+                    {
                         float magnitude = noiseMagnitude * hit.distance / RangeMetersMax;
                         x = (float)coord.x + UnityEngine.Random.Range(-magnitude, magnitude);
                         y = (float)coord.y + UnityEngine.Random.Range(-magnitude, magnitude);
                         z = (float)coord.z + UnityEngine.Random.Range(-magnitude, magnitude);
                     }
                 }
-                else {
+                else
+                {
                     x = float.PositiveInfinity;
                     y = float.PositiveInfinity;
                     z = float.PositiveInfinity;
@@ -440,24 +464,29 @@ class CameraSensor : MonoBehaviour
                 byte[] xbytes = floatToBytes(x);
                 byte[] ybytes = floatToBytes(y);
                 byte[] zbytes = floatToBytes(z);
-                for (uint byte_index = 0; byte_index < xbytes.Length; byte_index++) {
+                for (uint byte_index = 0; byte_index < xbytes.Length; byte_index++)
+                {
                     cloudMsg.data[data_index++] = xbytes[byte_index];
                 }
-                for (uint byte_index = 0; byte_index < ybytes.Length; byte_index++) {
+                for (uint byte_index = 0; byte_index < ybytes.Length; byte_index++)
+                {
                     cloudMsg.data[data_index++] = ybytes[byte_index];
                 }
-                for (uint byte_index = 0; byte_index < zbytes.Length; byte_index++) {
+                for (uint byte_index = 0; byte_index < zbytes.Length; byte_index++)
+                {
                     cloudMsg.data[data_index++] = zbytes[byte_index];
                 }
             }
         }
-        if (data_index != cloudMsg.data.Length) {
+        if (data_index != cloudMsg.data.Length)
+        {
             Debug.LogWarning($"Expected data length doesn't match calculated data length! {cloudMsg.data.Length} != {data_index}");
         }
         return cloudMsg;
     }
 
-    private static byte[] floatToBytes(float value) {
+    private static byte[] floatToBytes(float value)
+    {
         var byteArray = new byte[4];
         var floatArray = new float[1];
         floatArray[0] = value;
@@ -512,5 +541,13 @@ class CameraSensor : MonoBehaviour
         }
 
         return false;
+    }
+
+    private void tagRequestCallback(StringMsg msg)
+    {
+        GameObject[] tags = GameObject.FindGameObjectsWithTag(locatorTag);
+        AprilTagDetectionArrayMsg tagArrayMsg = GetAprilTagArrayMsg(tags);
+        _ros.Publish(tagTopic, tagArrayMsg);
+        _ros.Publish(tagResponseTopic, tagArrayMsg);
     }
 }

@@ -21,6 +21,7 @@
 
     <include file="$(find bw_load_cell)/launch/bw_load_cell.launch">
         <arg name="config_path" default="$(find bw_bringup)/config/$(arg robot_name)/load_cell.yaml"/>
+        <arg name="waypoint_offsets_path" value="$(find bw_bringup)/config/$(arg robot_name)/waypoint_offsets.yaml" />
     </include>
 
     <group ns="laser">
@@ -42,7 +43,7 @@
     </include>
 
     <include file="$(find bw_waypoints)/launch/bw_waypoints.launch">
-        <arg name="waypoints_path" value="$(find bw_data)/waypoints/$(env ROS_MAP_NAME)"/>
+        <arg name="waypoints_path" value="$(find bw_data)/data/waypoints/$(arg map_name)"/>
     </include>
 
     <include file="$(find bw_yolo)/launch/label_publisher.launch"/>
@@ -57,7 +58,10 @@
         <arg name="amcl_config" value="$(find bw_bringup)/config/$(arg robot_name)/amcl.yaml"/>
     </include>
 
-    <!-- <include file="$(find bw_filter)/launch/bw_filter.launch"/> -->
+    <include file="$(find bw_behaviors)/launch/bw_behaviors.launch">
+        <arg name="apriltag_config_path" value="$(find bw_bringup)/config/$(arg robot_name)/tags.yaml" />
+        <arg name="apriltag_config_path" value="$(find bw_bringup)/config/$(arg robot_name)/tags.yaml" />
+    </include>
 
     <include file="$(find bw_tags)/launch/tag_requests.launch">
         <arg name="config_path" value="$(find bw_bringup)/config/$(arg robot_name)/tags.yaml" />
