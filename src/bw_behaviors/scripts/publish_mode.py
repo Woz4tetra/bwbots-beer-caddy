@@ -10,6 +10,7 @@ from bw_tools.structs.modes import Mode
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("mode", default="", help="Name of mode")
+    parser.add_argument("--cli", action="store_true", help="Enter CLI mode")
     args = parser.parse_args()
 
     rospy.init_node("set_mode_script")
@@ -22,9 +23,12 @@ def main():
     if len(args.mode) > 0:
         publish_mode(args.mode)
 
-    while not rospy.is_shutdown():
-        mode_str = input("> ")
-        publish_mode(mode_str)
+    if args.cli:
+        while not rospy.is_shutdown():
+            mode_str = input("> ")
+            publish_mode(mode_str)
+    else:
+        rospy.sleep(0.5)
 
 
 if __name__ == "__main__":

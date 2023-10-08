@@ -4868,6 +4868,10 @@ MonoBehaviour:
   publishDelay: 0.1
   topic: /bw/charger
   robotPins: {fileID: 1960694219}
+  chargingVoltage: 12.3
+  noLoadVoltage: 11.6
+  chargingCurrent: 1
+  noLoadCurrent: 0.05
 --- !u!1 &2122170981
 GameObject:
   m_ObjectHideFlags: 0

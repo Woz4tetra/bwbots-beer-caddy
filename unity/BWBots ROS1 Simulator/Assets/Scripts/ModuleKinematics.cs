@@ -69,8 +69,8 @@ class ModuleKinematics
 
         ArticulationDrive moduleDrive = this.moduleBody.xDrive;
         moduleDrive.stiffness = 800.0f;
-        moduleDrive.damping = 0.0f;
-        moduleDrive.forceLimit = 10000.0f;
+        moduleDrive.damping = 10.0f;
+        moduleDrive.forceLimit = 1.0f;
         this.moduleBody.xDrive = moduleDrive;
 
         this.moduleBody.linearDamping = 1.0f;

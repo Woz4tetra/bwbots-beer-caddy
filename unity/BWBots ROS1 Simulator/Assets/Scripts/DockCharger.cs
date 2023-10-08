@@ -8,18 +8,23 @@ class DockCharger : MonoBehaviour
     [SerializeField] private double publishDelay;
     [SerializeField] private string topic;
     [SerializeField] private GameObject robotPins;
+    [SerializeField] private float chargingVoltage = 12.3f;
+    [SerializeField] private float noLoadVoltage = 11.6f;
+    [SerializeField] private float chargingCurrent = 1.0f;
+    [SerializeField] private float noLoadCurrent = 0.05f;
     private double _prevPublishTime;
     private Collider dock_collision;
     private Collider robot_collision;
 
     private ROSConnection _ros;
 
-    void Start() {
+    void Start()
+    {
         chargeState = new ChargeStateMsg();
-        chargeState.battery_voltage = 12.0f;
-        
+
         _ros = ROSConnection.GetOrCreateInstance();
-        if (topic.Length > 0) {
+        if (topic.Length > 0)
+        {
             _ros.RegisterPublisher<ChargeStateMsg>(topic);
             _prevPublishTime = Time.realtimeSinceStartup;
             Debug.Log($"Charge topic registered: {topic}");
@@ -28,20 +33,24 @@ class DockCharger : MonoBehaviour
         robot_collision = robotPins.GetComponent<Collider>();
     }
 
-    void FixedUpdate() {
-        if (publishDelay == 0.0) {
+    void FixedUpdate()
+    {
+        if (publishDelay == 0.0)
+        {
             return;
         }
         double now = Time.realtimeSinceStartup;
         if (now - _prevPublishTime > publishDelay)
         {
-            if (dock_collision.bounds.Intersects(robot_collision.bounds)) {
-                chargeState.battery_voltage = 11.6f;
-                chargeState.charge_current = 0.5f;
+            if (dock_collision.bounds.Intersects(robot_collision.bounds))
+            {
+                chargeState.battery_voltage = chargingVoltage;
+                chargeState.charge_current = chargingCurrent;
             }
-            else {
-                chargeState.battery_voltage = 11.6f;
-                chargeState.charge_current = 0.0f;
+            else
+            {
+                chargeState.battery_voltage = noLoadVoltage;
+                chargeState.charge_current = noLoadCurrent;
             }
             _ros.Publish(topic, chargeState);
             _prevPublishTime = now;

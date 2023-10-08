@@ -270,6 +270,18 @@ public class FpvCamera : MonoBehaviour
         targetAngularSpeed += movementDampingConstant * (inputAngularSpeed - targetAngularSpeed);
         targetLinearSpeed += movementDampingConstant * (inputLinearSpeed - targetLinearSpeed);
         targetLateralSpeed += movementDampingConstant * (inputLateralSpeed - targetLateralSpeed);
+        if (Mathf.Abs(targetAngularSpeed) < 1e-3)
+        {
+            targetAngularSpeed = 0.0f;
+        }
+        if (Mathf.Abs(targetLinearSpeed) < 1e-3)
+        {
+            targetLinearSpeed = 0.0f;
+        }
+        if (Mathf.Abs(targetLateralSpeed) < 1e-3)
+        {
+            targetLateralSpeed = 0.0f;
+        }
 
         if (Input.GetKeyDown(KeyCode.R))
         {

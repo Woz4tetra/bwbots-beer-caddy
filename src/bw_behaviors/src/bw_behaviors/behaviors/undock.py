@@ -1,9 +1,10 @@
 from py_trees.behaviour import Behaviour
 from py_trees.composites import Sequence
 
-from bw_behaviors.behaviors.set_motors_enabled import SetMotorsEnabled
-from bw_behaviors.behaviors.simple_go_to_pose import SimpleGoToPose
-from bw_behaviors.behaviors.teleport_to_waypoint import TeleportToWaypoint
+from bw_behaviors.behaviors.sub_behaviors.is_charging import IsCharging
+from bw_behaviors.behaviors.sub_behaviors.set_motors_enabled import SetMotorsEnabled
+from bw_behaviors.behaviors.sub_behaviors.simple_go_to_pose import SimpleGoToPose
+from bw_behaviors.behaviors.sub_behaviors.teleport_to_waypoint import TeleportToWaypoint
 from bw_behaviors.container import Container
 from bw_tools.structs.go_to_goal import GoToPoseGoal
 
@@ -25,6 +26,7 @@ def make_undock(container: Container) -> Behaviour:
         "undock_actions",
         memory=True,
         children=[
+            IsCharging(container, container.charging_voltage_threshold, container.charging_current_threshold),
             TeleportToWaypoint(container, container.dock_waypoint_name),
             SetMotorsEnabled(container, True),
             SimpleGoToPose(container, undock_goal.to_msg()),

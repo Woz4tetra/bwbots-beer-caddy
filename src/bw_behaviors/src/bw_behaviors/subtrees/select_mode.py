@@ -2,6 +2,7 @@ from typing import Callable, Dict, List
 
 from py_trees.behaviour import Behaviour
 from py_trees.composites import Selector, Sequence
+from py_trees.decorators import FailureIsSuccess
 
 from bw_behaviors.behaviors import make_deliver, make_dock, make_idle, make_undock
 from bw_behaviors.behaviors.is_mode import IsMode
@@ -25,7 +26,7 @@ def make_mode_tree(container: Container) -> Behaviour:
             memory=False,
             children=[
                 IsMode(mode, container),
-                make_fn(container),
+                FailureIsSuccess(f"{mode.value}_failure_is_success", make_fn(container)),
                 SetMode(Mode.IDLE, container),
             ],
         )
