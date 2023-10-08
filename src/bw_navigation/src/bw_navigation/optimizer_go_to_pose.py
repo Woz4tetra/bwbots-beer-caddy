@@ -9,7 +9,9 @@ from geometry_msgs.msg import PoseStamped
 from bw_interfaces.msg import BwDriveModule, GoToPoseAction, GoToPoseFeedback
 from bw_interfaces.msg import GoToPoseGoal as RosGoToPoseGoal
 from bw_interfaces.msg import GoToPoseResult
+from bw_navigation.base_optimizer import BaseOptimizer
 from bw_navigation.bw_drive_train_optimizer import BwDriveTrainOptimizer
+from bw_navigation.chassis_optimizer import ChassisOptimizer
 from bw_navigation.optimization_helpers import FullModulesCommand
 from bw_tools.robot_state import Pose2d, Pose2dStamped
 from bw_tools.structs.go_to_goal import GoToPoseGoal
@@ -31,11 +33,19 @@ class OptimizerGoToPose:
 
         self.global_frame = get_param("~global_frame", "map")
         self.robot_frame = get_param("~robot_frame", "base_link")
+        self.optimizer_type = get_param("~type", "ChassisOptimizer")
 
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
-        self.optimizer = BwDriveTrainOptimizer()
+        self.optimizer_type
+
+        optimizers = {
+            "BwDriveTrainOptimizer": BwDriveTrainOptimizer,
+            "ChassisOptimizer": ChassisOptimizer,
+        }
+
+        self.optimizer: BaseOptimizer = optimizers[self.optimizer_type]()
 
         self.action_server = actionlib.SimpleActionServer(
             "go_to_pose",
@@ -65,7 +75,7 @@ class OptimizerGoToPose:
         return Pose2dStamped.from_msg(goal)
 
     def publish_neutral(self):
-        self.publish_command(self.optimizer.neutral_commands)
+        self.publish_command(self.optimizer.neutral_command)
 
     def publish_command(self, command: FullModulesCommand):
         for index, subcommand in enumerate(command.commands):
@@ -136,7 +146,7 @@ class OptimizerGoToPose:
             if robot_state is None:
                 continue
 
-            velocity_command, is_done = self.optimizer.update(goal, robot_state)
+            velocity_command, is_done = self.optimizer.update(robot_state)
 
             heading = self.get_error(goal.goal.pose, robot_state.pose).heading()
             rospy.logdebug(

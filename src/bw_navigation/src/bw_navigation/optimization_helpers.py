@@ -198,7 +198,7 @@ def compute_module_commands(
 
 
 @njit(cache=True)
-def system_update(state_x: np.ndarray, input_u: np.ndarray) -> np.ndarray:
+def module_system_update(state_x: SystemStateX, input_u: SystemInputU) -> SystemStateXdot:
     state_theta = state_x[2]
     input_vx = input_u[0]
     input_vy = input_u[1]
@@ -216,7 +216,7 @@ def system_update(state_x: np.ndarray, input_u: np.ndarray) -> np.ndarray:
     )
 
 
-def system_output(
+def module_system_output(
     input_u: SystemInputU,
     module_locations: np.ndarray,
     armature_length: float,
@@ -257,4 +257,4 @@ def warmup():
     compute_next_module(module_locations, 0.0, module_states, (0.0, 0.0, 0.0))
     compute_single_module_command(0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.01, (0.0, 0.0, 0.0))
     compute_module_commands(module_locations, 0.0, 1.0, azimuth_limits, (0.0, 1.0), 0.01, (0.0, 0.0, 0.0))
-    system_update(np.array([0.0, 0.0, 0.0]), np.array([0.0, 0.0, 0.0]))
+    module_system_update(np.array([0.0, 0.0, 0.0]), np.array([0.0, 0.0, 0.0]))
