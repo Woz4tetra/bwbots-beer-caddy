@@ -3,8 +3,8 @@
 set -e
 
 sudo apt-get update
-sudo apt-get install -y llvm-7*
-sudo ln -s /usr/lib/llvm-7/bin/llvm-config /usr/bin
+sudo apt-get install -y llvm-10*
+sudo ln -s /usr/lib/llvm-10/bin/llvm-config /usr/bin
 
 sudo rm /usr/bin/python || true
 sudo ln -s /usr/bin/python3 /usr/bin/python
@@ -22,7 +22,7 @@ sudo python -m pip install --no-cache-dir \
     matplotlib==3.4.3
 
 sudo python -m pip install Cython --no-cache-dir
-sudo python -m pip install llvmlite==0.32.0 --no-cache-dir
-sudo python -m pip install numba==0.49.0 --no-cache-dir
+sudo python -m pip install llvmlite==0.39.1 --no-cache-dir
+sudo python -m pip install numba==0.56.4 --no-cache-dir
 
 echo "Installed python dependencies"

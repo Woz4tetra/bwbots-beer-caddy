@@ -5,3 +5,4 @@ filterpy
 mypy
 pynput
 paho-mqtt==1.6.1
+control==0.9.3.post2
