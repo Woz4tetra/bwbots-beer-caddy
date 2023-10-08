@@ -1,149 +1,195 @@
 #!/usr/bin/env python3
-import math
-from typing import Any, Optional, Tuple
+from typing import Optional, cast
 
-import control
-import control.optimal as opt  # type: ignore
-import numpy as np
+import actionlib
 import rospy
+import tf2_ros
+from geometry_msgs.msg import PoseStamped
 
-from bw_navigation.navigation_action import NavigationAction
-from bw_navigation.optimization_helpers import (
-    NUM_INPUTS,
-    NUM_STATES,
-    SystemConstraints,
-    SystemInputU,
-    SystemInputUArray,
-    SystemStateX,
-    SystemStateXArray,
-    SystemStateXdot,
-    compute_module_inputs,
-)
-from bw_tools.robot_state import Pose2dStamped, Velocity
+from bw_interfaces.msg import BwDriveModule, GoToPoseAction, GoToPoseFeedback
+from bw_interfaces.msg import GoToPoseGoal as RosGoToPoseGoal
+from bw_interfaces.msg import GoToPoseResult
+from bw_navigation.bw_drive_train_optimizer import BwDriveTrainOptimizer
+from bw_navigation.optimization_helpers import FullModulesCommand
+from bw_tools.robot_state import Pose2d, Pose2dStamped
 from bw_tools.structs.go_to_goal import GoToPoseGoal
+from bw_tools.transforms import lookup_pose, lookup_pose_in_frame
+from bw_tools.typing.basic import get_param
 
 
-class OptimizerGoToPose(NavigationAction):
+class OptimizerGoToPose:
     def __init__(self) -> None:
         rospy.init_node(
             "optimizer_go_to_pose",
             log_level=rospy.DEBUG,
         )
+        self.module_pub = rospy.Publisher("module_command", BwDriveModule, queue_size=100)
+        self.goal_pose_pub = rospy.Publisher("go_to_pose_goal", PoseStamped, queue_size=10)
 
-        self.width = 0.115  # meters
-        self.length = 0.160  # meters
-        self.armature = 0.037  # meters
+        self.loop_rate = get_param("~loop_rate", 50.0)
+        self.loop_period = 1.0 / self.loop_rate
 
-        self.update_delay = 1.0 / 50.0
-        self.locations = [
-            (-self.length / 2.0, self.width / 2.0),  # module 1, channel 0, back left
-            (-self.length / 2.0, -self.width / 2.0),  # module 2, channel 1, back right
-            (self.length / 2.0, self.width / 2.0),  # module 3, channel 2, front left
-            (self.length / 2.0, -self.width / 2.0),  # module 4, channel 3, front right
-        ]
-        ALCOVE_ANGLE = 0.5236  # 30 degrees
-        FRONT_ANGLE = -1.2967  # -74.293 degrees
-        self.min_module_angles = [
-            FRONT_ANGLE,  # -75 deg
-            math.pi - ALCOVE_ANGLE,  # 150 deg
-            FRONT_ANGLE + math.pi,  # 105 deg
-            -ALCOVE_ANGLE,  # -30 deg
-        ]
+        self.global_frame = get_param("~global_frame", "map")
+        self.robot_frame = get_param("~robot_frame", "base_link")
 
-        self.min_radius_of_curvature = 0.15
-        self.min_path_time = 1.0
-        self.enable_debug_logs = False
-        self.minimizer_tolerance = 1e-6
-        self.minimizer_max_iterations = 1000
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
-        self.trajectory_cost = []
-        for index in range(len(self.locations)):
-            self.trajectory_cost.append(10.0)  # wheel velocity cost
-            self.trajectory_cost.append(0.1)  # azimuth cost
-        self.termination_cost = (1.0, 1.0, 1.0)  # chassis velocity termination cost
+        self.optimizer = BwDriveTrainOptimizer()
 
-        state_names = []
-        for index in range(len(self.locations)):
-            state_names.append("module_%s_wheel" % index)
-            state_names.append("module_%s_azimuth" % index)
-        state_names = tuple(state_names)
-        input_names = ("vx", "vy", "vt")
-
-        self.system = control.NonlinearIOSystem(
-            self.system_update,
-            self.system_output,
-            name="go_to_pose",
-            states=len(state_names),
-            inputs=len(input_names),
-            outputs=state_names,
+        self.action_server = actionlib.SimpleActionServer(
+            "go_to_pose",
+            GoToPoseAction,
+            execute_cb=self.action_callback,
+            auto_start=False,
         )
+        self.action_server.start()
+        rospy.loginfo("go_to_pose is ready")
 
-        super().__init__()
+    def get_robot_state(self) -> Optional[Pose2dStamped]:
+        pose_stamped = lookup_pose(self.tf_buffer, self.robot_frame, self.global_frame, silent=True)
+        if pose_stamped is None:
+            return None
+        else:
+            return Pose2dStamped.from_msg(pose_stamped)
 
-    def system_update(
-        self, timestamp: float, state_x: SystemStateX, input_u: SystemInputU, params: Any
-    ) -> SystemStateXdot:
-        chassis_velocities = input_u[0], input_u[1], input_u[2]
-        assert len(state_x) == NUM_STATES
-        assert len(input_u) == NUM_INPUTS
-        module_states = compute_module_inputs(
-            self.locations,
-            self.armature,
-            state_x.tolist(),
-            chassis_velocities,
-        )
-        return np.array(module_states, dtype=np.float64)
+    def compute_goal(self, msg: Pose2dStamped) -> Optional[Pose2dStamped]:
+        robot_state = self.get_robot_state()
+        if robot_state is None:
+            rospy.logwarn("No robot pose received. Can't set goal.")
+            return None
+        goal = lookup_pose_in_frame(self.tf_buffer, msg.to_msg(), robot_state.header.frame_id)
+        if goal is None:
+            rospy.logwarn("Failed to look up goal in global frame. Can't set goal.")
+            return None
+        return Pose2dStamped.from_msg(goal)
 
-    def system_output(
-        self, timestamp: float, state_x: SystemStateX, input_u: SystemInputU, params: Any
-    ) -> SystemStateX:
-        return state_x
+    def publish_neutral(self):
+        self.publish_command(self.optimizer.neutral_commands)
 
-    def generate_guess(self, goal: GoToPoseGoal) -> Tuple[SystemStateXArray, SystemInputUArray]:
-        pass
+    def publish_command(self, command: FullModulesCommand):
+        for index, subcommand in enumerate(command.commands):
+            module = BwDriveModule()
+            module.module_index = str(index + 1)
+            module.wheel_velocity = subcommand.wheel_velocity
+            module.azimuth_position = subcommand.azimuth
+            self.module_pub.publish(module)
 
-    def find_time_window(self, guess: Tuple[SystemStateXArray, SystemInputUArray]) -> float:
-        pass
+    def publish_state_feedback(self, current_pose2d: Pose2dStamped, goal_pose2d: Pose2dStamped):
+        current_pose = current_pose2d.to_msg()
+        goal_pose = goal_pose2d.to_msg()
 
-    def make_constraints(self, x0: SystemStateX, xf: SystemStateX) -> SystemConstraints:
-        pass
+        feedback = GoToPoseFeedback()
+        feedback.current_pose.header = current_pose.header
+        feedback.current_pose.pose = current_pose.pose
+        feedback.goal_pose.header = goal_pose.header
+        feedback.goal_pose.pose = goal_pose.pose
+        self.action_server.publish_feedback(feedback)
+        self.goal_pose_pub.publish(goal_pose)
 
-    def controller_init(self, goal: GoToPoseGoal):
-        guess = self.generate_guess(goal)
-        num_samples = len(guess[0][0])
-        guess_time_window = self.find_time_window(guess)
-        guess_time_window += goal.timeout
-        time_window = max(self.min_path_time, guess_time_window)
-        time_horizon = np.linspace(0.0, time_window, num_samples)
+    def get_error(self, goal_pose: Pose2d, robot_state: Pose2d) -> Pose2d:
+        return cast(Pose2d, goal_pose.relative_to(robot_state))
 
-        traj_cost = opt.quadratic_cost(self.system, None, np.diag(self.trajectory_cost), u0=uf)
-        term_cost = opt.quadratic_cost(
-            self.system,
-            np.diag(self.termination_cost),
-            None,
-            x0=guess[0][:, -1],
-        )
-        self.constraints = self.make_constraints(x0, xf)
+    def action_callback(self, msg: RosGoToPoseGoal):
+        timeout: rospy.Duration = msg.timeout  # type: ignore
+        goal = GoToPoseGoal.from_msg(msg)
+        rospy.loginfo(f"Going to pose: {goal}")
 
-        solve_result = opt.solve_ocp(
-            self.system,
-            time_horizon,
-            x0,
-            traj_cost,
-            self.constraints,
-            terminal_cost=term_cost,
-            initial_guess=guess,
-            log=False,
-            print_summary=self.enable_debug_logs,
-            minimize_method='SLSQP',
-            minimize_options={
-                'ftol': self.minimizer_tolerance,
-                'maxiter': self.minimizer_max_iterations,
-            },
-        )
+        robot_state = self.get_robot_state()
+        xy_tolerance: float = goal.xy_tolerance
+        yaw_tolerance: float = goal.yaw_tolerance
 
-    def controller_update(self, goal: GoToPoseGoal, robot_state: Pose2dStamped) -> Tuple[Velocity, bool]:
-        return velocity_command, is_done
+        computed_goal_pose = self.compute_goal(goal.goal)
+        if computed_goal_pose is None:
+            rospy.logwarn("Failed to compute goal pose")
+            self.action_server.set_succeeded(GoToPoseResult(False), "Failed to compute goal pose")
+            return
+
+        robot_state = self.get_robot_state()
+        if robot_state is None:
+            rospy.logwarn("Failed get robot pose")
+            self.action_server.set_succeeded(GoToPoseResult(False), "Failed to get robot pose")
+            return
+
+        rospy.logdebug(f"Set goal pose to {goal.goal}")
+        rospy.logdebug(f"Robot is at {robot_state}")
+        if not self.optimizer.solve(goal, robot_state):
+            rospy.logwarn("Failed to initialize controller")
+            self.action_server.set_succeeded(GoToPoseResult(False), "Failed to initialize controller")
+            return
+
+        rate = rospy.Rate(self.loop_rate)
+        start_time = rospy.Time.now()
+        current_time = rospy.Time.now()
+        success = False
+        aborted = False
+        while current_time - start_time < timeout:
+            rate.sleep()
+            current_time = rospy.Time.now()
+
+            if self.action_server.is_preempt_requested():
+                rospy.loginfo("Cancelling go to pose")
+                aborted = True
+                break
+
+            robot_state = self.get_robot_state()
+            if robot_state is None:
+                continue
+
+            velocity_command, is_done = self.optimizer.update(goal, robot_state)
+
+            heading = self.get_error(goal.goal.pose, robot_state.pose).heading()
+            rospy.logdebug(
+                f"Error: {self.get_error(goal.goal.pose, robot_state.pose)}. "
+                f"Heading: {heading} Velocity: {velocity_command}. "
+                f"Goal: {goal.goal}. "
+                f"State: {robot_state}"
+            )
+            self.publish_command(velocity_command)
+            self.publish_state_feedback(robot_state, goal.goal)
+
+            if is_done:
+                rospy.loginfo(f"Controller finished. Pose error: {goal.goal.pose - robot_state.pose}")
+                success = True
+                break
+
+        self.publish_neutral()
+        if current_time - start_time > timeout:
+            rospy.loginfo("Go to pose timed out")
+
+        if robot_state is None:
+            distance = 0.0
+            angle_error = 0.0
+            rospy.loginfo("Never received robot's position")
+        else:
+            error = self.get_error(goal.goal.pose, robot_state.pose)
+            distance = error.magnitude()
+            angle_error = abs(error.theta)
+
+        if distance > xy_tolerance or angle_error > yaw_tolerance:
+            success = False
+
+        result = GoToPoseResult(success)
+        if distance > xy_tolerance:
+            rospy.loginfo(f"Distance tolerance not met: {distance} > {xy_tolerance}")
+        else:
+            rospy.loginfo(f"Distance tolerance met: {distance} <= {xy_tolerance}")
+        if angle_error > yaw_tolerance:
+            rospy.loginfo(f"Angle tolerance not met: {angle_error} > {yaw_tolerance}")
+        else:
+            rospy.loginfo(f"Angle tolerance met: {angle_error} <= {yaw_tolerance}")
+
+        if aborted:
+            self.action_server.set_aborted(result, "Interrupted while going to a pose")
+        else:
+            if result.success:
+                rospy.loginfo("Return success for go to pose")
+            else:
+                rospy.loginfo("Return failure for go to pose")
+            self.action_server.set_succeeded(result)
+
+    def run(self) -> None:
+        rospy.spin()
 
 
 def main():

@@ -15,7 +15,7 @@ class SimpleGoToWaypoint(Behaviour):
         super().__init__(self.__class__.__name__ + "-" + waypoint_name)
         self.relative_goal = relative_goal
         self.waypoint_name = waypoint_name
-        self.go_to_pose = container.simple_go_to_pose
+        self.go_to_pose = container.go_to_pose
         self.waypoint_manager = container.waypoint_manager
         self.global_frame = container.global_frame
         self.is_goal_sent = True

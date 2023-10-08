@@ -18,7 +18,7 @@ sudo python -m pip install --no-cache-dir \
     psutil \
     tqdm \
     v4l2-fix \
-    numpy==1.24.4 \
+    numpy==1.23.5 \
     matplotlib==3.4.3
 
 sudo python -m pip install Cython --no-cache-dir

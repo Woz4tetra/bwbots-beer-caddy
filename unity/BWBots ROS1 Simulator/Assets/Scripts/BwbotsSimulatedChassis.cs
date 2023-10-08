@@ -13,6 +13,12 @@ using RosMessageTypes.BwInterfaces;
 /// </summary>
 public class BwbotsSimulatedChassis : MonoBehaviour
 {
+    enum CommandType
+    {
+        Twist,
+        Module
+    }
+
     [SerializeField] private GameObject robot;
     [SerializeField] private GameObject wheelBackLeft;
     [SerializeField] private GameObject wheelBackRight;
@@ -63,7 +69,9 @@ public class BwbotsSimulatedChassis : MonoBehaviour
 
     private double[] prev_position;
     private TwistMsg twistCommand = new TwistMsg();
+    private BwDriveModuleMsg moduleCommand = new BwDriveModuleMsg();
     private int commandPriority = -1;
+    private CommandType commandType = CommandType.Twist;
     private float commandTimeoutStamp = 0.0f;
     private double velocityLimit = 1000.0;
     private double angularVelocityLimit = 1000.0;
@@ -72,7 +80,8 @@ public class BwbotsSimulatedChassis : MonoBehaviour
     private Pose initialRobotPose = Pose.identity;
 
 
-    public BwbotsSimulatedChassis() {
+    public BwbotsSimulatedChassis()
+    {
         modules = new List<ModuleKinematics>();
     }
 
@@ -169,22 +178,27 @@ public class BwbotsSimulatedChassis : MonoBehaviour
         chassis_vector = SimpleMatrix.MakeEmptyMatrix(CHASSIS_STATE_LEN, 1);
         module_vector = SimpleMatrix.MakeEmptyMatrix(kinematics_channels_len, 1);
 
-        for (int index = 0; index < kinematics_channels_len * CHASSIS_STATE_LEN; index++) {
+        for (int index = 0; index < kinematics_channels_len * CHASSIS_STATE_LEN; index++)
+        {
             inverse_kinematics[index] = 0.0;
             forward_kinematics[index] = 0.0;
             ik_transpose[index] = 0.0;
         }
-        for (int index = 0; index < CHASSIS_STATE_LEN * CHASSIS_STATE_LEN; index++) {
+        for (int index = 0; index < CHASSIS_STATE_LEN * CHASSIS_STATE_LEN; index++)
+        {
             kinematics_temp[index] = 0.0;
         }
-        for (int index = 0; index < CHASSIS_STATE_LEN; index++) {
+        for (int index = 0; index < CHASSIS_STATE_LEN; index++)
+        {
             chassis_vector[index] = 0.0;
         }
-        for (int index = 0; index < kinematics_channels_len; index++) {
+        for (int index = 0; index < kinematics_channels_len; index++)
+        {
             module_vector[index] = 0.0;
         }
 
-        for (int channel = 0; channel < modules.Count; channel++) {
+        for (int channel = 0; channel < modules.Count; channel++)
+        {
             int y_row = CHASSIS_STATE_LEN * (2 * channel);
             int x_row = CHASSIS_STATE_LEN * (2 * channel + 1);
             //  0  1  2 -- channel 0, -y0
@@ -205,7 +219,8 @@ public class BwbotsSimulatedChassis : MonoBehaviour
         }
 
         prev_position = new double[3];
-        for (int index = 0; index < prev_position.Length; index++) {
+        for (int index = 0; index < prev_position.Length; index++)
+        {
             prev_position[index] = 0.0;
         }
 
@@ -232,15 +247,18 @@ public class BwbotsSimulatedChassis : MonoBehaviour
         initialRobotPose = GetGlobalPose();
     }
 
-    public Pose GetGlobalPose() {
+    public Pose GetGlobalPose()
+    {
         return new Pose(GetGlobalPosition(), GetGlobalRotation());
     }
 
-    public Vector3 GetGlobalPosition() {
+    public Vector3 GetGlobalPosition()
+    {
         return bodyMain.transform.position;
     }
 
-    public Pose GetRelativePose(Pose poseReference) {
+    public Pose GetRelativePose(Pose poseReference)
+    {
         Matrix4x4 matReference = Matrix4x4.TRS(
             poseReference.position,
             poseReference.rotation,
@@ -255,12 +273,15 @@ public class BwbotsSimulatedChassis : MonoBehaviour
         return new Pose(matRelative.GetPosition(), matRelative.rotation);
     }
 
-    public Quaternion GetGlobalRotation() {
+    public Quaternion GetGlobalRotation()
+    {
         return bodyMain.transform.rotation;
     }
 
-    public PoseMsg GetGroundTruthPose() {
-        return new PoseMsg {
+    public PoseMsg GetGroundTruthPose()
+    {
+        return new PoseMsg
+        {
             position = GetGlobalPosition().To<FLU>(),
             orientation = GetGlobalRotation().To<FLU>()
         };
@@ -270,7 +291,8 @@ public class BwbotsSimulatedChassis : MonoBehaviour
     {
         double vx, vy, vt;
         double x, y, theta;
-        if (useGroundTruth) {
+        if (useGroundTruth)
+        {
             Pose pose = GetRelativePose(initialRobotPose);
             x = pose.position.z;
             y = -pose.position.x;
@@ -281,7 +303,7 @@ public class BwbotsSimulatedChassis : MonoBehaviour
             double dx = x - prevOdomX;
             double dy = y - prevOdomY;
             double dtheta = theta - prevOdomTheta;
-            
+
             double rotatedDx = dx * Math.Cos(-theta) - dy * Math.Sin(-theta);
             double rotatedDy = dx * Math.Sin(-theta) + dy * Math.Cos(-theta);
 
@@ -293,12 +315,15 @@ public class BwbotsSimulatedChassis : MonoBehaviour
             prevOdomY = y;
             prevOdomTheta = theta;
         }
-        else {
+        else
+        {
             double dt = (double)Time.fixedDeltaTime;
-            if (motorsEnabled) {
+            if (motorsEnabled)
+            {
                 (vx, vy, vt) = computeVelocity();
             }
-            else {
+            else
+            {
                 vx = 0.0;
                 vy = 0.0;
                 vt = 0.0;
@@ -307,78 +332,120 @@ public class BwbotsSimulatedChassis : MonoBehaviour
         }
         last_odom_msg = MakeOdometryMessage(x, y, theta, vx, vy, vt);
 
-        setRobotVelocity(twistCommand.linear.x, twistCommand.linear.y, twistCommand.angular.z);
+        switch (commandType)
+        {
+            case CommandType.Twist:
+                setRobotVelocity(twistCommand.linear.x, twistCommand.linear.y, twistCommand.angular.z);
+                break;
+            case CommandType.Module:
+                foreach (ModuleKinematics module in modules)
+                {
+                    module.setModuleAzimuth(moduleCommand.azimuth_position);
+                    module.setWheelVelocity(moduleCommand.wheel_velocity);
+                }
+                break;
+            default:
+                break;
+        }
 
         if (Math.Abs(vx) > velocityLimit || Math.Abs(vy) > velocityLimit || Math.Abs(vt) > angularVelocityLimit
-                || Math.Abs(x) > positionLimit || Math.Abs(y) > positionLimit) {
+                || Math.Abs(x) > positionLimit || Math.Abs(y) > positionLimit)
+        {
             bodyMain.TeleportRoot(Vector3.zero, Quaternion.identity);
             Debug.LogWarning($"Robot exceeds spatial constaints {last_odom_msg}! Teleporting to origin.");
         }
     }
 
-    public bool getUseGroundTruth() {
+    public bool getUseGroundTruth()
+    {
         return this.useGroundTruth;
     }
-    public void setUseGroundTruth(bool useGroundTruth) {
+    public void setUseGroundTruth(bool useGroundTruth)
+    {
         this.useGroundTruth = useGroundTruth;
-        foreach (ModuleKinematics module in modules) {
+        foreach (ModuleKinematics module in modules)
+        {
             module.setUseGroundTruth(useGroundTruth);
         }
-        if (this.useGroundTruth) {
+        if (this.useGroundTruth)
+        {
             initialTransform = bodyMain.transform;
         }
     }
 
-    public void setTwistCommand(TwistMsg twist, int priority, float priorityTimeout) {
+    public void setTwistCommand(TwistMsg twist, int priority, float priorityTimeout)
+    {
         float now = Time.realtimeSinceStartup;
-        if (commandPriority == -1 || priority <= commandPriority || now > commandTimeoutStamp) {
+        if (commandPriority == -1 || priority <= commandPriority || now > commandTimeoutStamp)
+        {
             twistCommand = twist;
             commandPriority = priority;
             commandTimeoutStamp = now + priorityTimeout;
+            commandType = CommandType.Twist;
         }
     }
 
-    public void setMotorEnable(bool enabled) {
+    public void setModuleCommand(BwDriveModuleMsg command, int priority, float priorityTimeout)
+    {
+        float now = Time.realtimeSinceStartup;
+        if (commandPriority == -1 || priority <= commandPriority || now > commandTimeoutStamp)
+        {
+            moduleCommand = command;
+            commandPriority = priority;
+            commandTimeoutStamp = now + priorityTimeout;
+            commandType = CommandType.Module;
+        }
+    }
+    public void setMotorEnable(bool enabled)
+    {
         motorsEnabled = enabled;
     }
 
-    public bool getMotorEnable() {
+    public bool getMotorEnable()
+    {
         return motorsEnabled;
     }
 
     private void setRobotVelocity(double vx, double vy, double vt)
     {
-        if (!motorsEnabled) {
+        if (!motorsEnabled)
+        {
             vx = 0.0;
             vy = 0.0;
             vt = 0.0;
         }
 
-        
+
         double v_theta = Math.Atan2(vy, vx);
         double dt = (double)Time.unscaledDeltaTime;
 
-        if ((v_theta > max_strafe_angle && v_theta < reverse_max_strafe_angle) || 
-                (v_theta < min_strafe_angle && v_theta > reverse_min_strafe_angle)) {
+        if ((v_theta > max_strafe_angle && v_theta < reverse_max_strafe_angle) ||
+                (v_theta < min_strafe_angle && v_theta > reverse_min_strafe_angle))
+        {
             double v_mag = Math.Sqrt(vx * vx + vy * vy);
-            if (0.0 <= v_theta && v_theta < Math.PI / 2.0) {
+            if (0.0 <= v_theta && v_theta < Math.PI / 2.0)
+            {
                 v_theta = max_strafe_angle;
             }
-            else if (Math.PI / 2.0 <= v_theta && v_theta <= Math.PI) {
+            else if (Math.PI / 2.0 <= v_theta && v_theta <= Math.PI)
+            {
                 v_theta = reverse_max_strafe_angle;
             }
-            else if (-Math.PI / 2.0 <= v_theta && v_theta < 0.0) {
+            else if (-Math.PI / 2.0 <= v_theta && v_theta < 0.0)
+            {
                 v_theta = min_strafe_angle;
             }
-            else if (-Math.PI <= v_theta && v_theta < -Math.PI / 2.0) {
+            else if (-Math.PI <= v_theta && v_theta < -Math.PI / 2.0)
+            {
                 v_theta = reverse_min_strafe_angle;
             }
-            
+
             vx = v_mag * Math.Cos(v_theta);
             vy = v_mag * Math.Sin(v_theta);
         }
 
-        if (useGroundTruth) {
+        if (useGroundTruth)
+        {
             // Debug.Log($"vx: {vx}, vy: {vy}, vt: {vt}");
             float unityDz = (float)vx * Time.fixedDeltaTime;
             float unityDx = -(float)vy * Time.fixedDeltaTime;
@@ -392,18 +459,22 @@ public class BwbotsSimulatedChassis : MonoBehaviour
                 newRotation
             );
         }
-        else {
-            foreach (ModuleKinematics module in modules) {
+        else
+        {
+            foreach (ModuleKinematics module in modules)
+            {
                 module.set(vx, vy, vt, dt);
             }
         }
     }
 
-    public OdometryMsg GetOdometryMessage(){
+    public OdometryMsg GetOdometryMessage()
+    {
         return last_odom_msg;
     }
 
-    private OdometryMsg MakeOdometryMessage(double x, double y, double theta, double vx, double vy, double vt) {
+    private OdometryMsg MakeOdometryMessage(double x, double y, double theta, double vx, double vy, double vt)
+    {
         OdometryMsg msg = new OdometryMsg();
         msg.header.frame_id = "odom";
         msg.header.stamp = RosUtil.GetTimeMsg();
@@ -425,15 +496,19 @@ public class BwbotsSimulatedChassis : MonoBehaviour
         return msg;
     }
 
-    private (double, double, double) computeVelocity() {
+    private (double, double, double) computeVelocity()
+    {
         int channel = 0;
-        foreach (ModuleKinematics module in modules) {
+        foreach (ModuleKinematics module in modules)
+        {
             double azimuth = module.getAzimuth();
             double geometric_azimuth = 0.0;
-            if (module.getYLocation() < 0.0) {
+            if (module.getYLocation() < 0.0)
+            {
                 geometric_azimuth = azimuth * Math.PI;
             }
-            else {
+            else
+            {
                 geometric_azimuth = azimuth;
             }
             double x = module.getXLocation() + ARMATURE * Math.Sin(geometric_azimuth);
@@ -451,7 +526,7 @@ public class BwbotsSimulatedChassis : MonoBehaviour
             int x_index = CHASSIS_STATE_LEN * (2 * channel + 1) + 2;
             inverse_kinematics[y_index] = -y;
             inverse_kinematics[x_index] = x;
-            
+
             double wheel_velocity = module.getWheelVelocity();
             double module_vx = wheel_velocity * Math.Cos(azimuth);
             double module_vy = wheel_velocity * Math.Sin(azimuth);
@@ -485,7 +560,8 @@ public class BwbotsSimulatedChassis : MonoBehaviour
         // SimpleMatrix.Print(kinematics_temp, CHASSIS_STATE_LEN, CHASSIS_STATE_LEN, "M' * M");
 
         // kinematics_temp = (M' * M)^-1
-        if (!SimpleMatrix.Invert(kinematics_temp, CHASSIS_STATE_LEN)) {
+        if (!SimpleMatrix.Invert(kinematics_temp, CHASSIS_STATE_LEN))
+        {
             Debug.LogWarning("Failed to invert matrix for velocity calculation!");
             return (Double.NaN, Double.NaN, Double.NaN);
         }
@@ -524,7 +600,8 @@ public class BwbotsSimulatedChassis : MonoBehaviour
         return (vx, vy, vt);
     }
 
-    private (double, double, double) computePosition(double vx, double vy, double vt, double dt) {
+    private (double, double, double) computePosition(double vx, double vy, double vt, double dt)
+    {
         double dx = vx * dt;
         double dy = vy * dt;
         double dtheta = vt * dt;
@@ -532,11 +609,13 @@ public class BwbotsSimulatedChassis : MonoBehaviour
         double cos_theta = Math.Cos(dtheta);
 
         double s, c;
-        if (Math.Abs(dtheta) < 1E-9) {  // if angle is too small, use taylor series linear approximation
+        if (Math.Abs(dtheta) < 1E-9)
+        {  // if angle is too small, use taylor series linear approximation
             s = 1.0 - 1.0 / 6.0 * dtheta * dtheta;
             c = 0.5 * dtheta;
         }
-        else {
+        else
+        {
             s = sin_theta / dtheta;
             c = (1.0 - cos_theta) / dtheta;
         }
@@ -555,11 +634,13 @@ public class BwbotsSimulatedChassis : MonoBehaviour
         return (prev_position[0], prev_position[1], prev_position[2]);
     }
 
-    public int getNumModules() {
+    public int getNumModules()
+    {
         return 4;
     }
 
-    public BwDriveModuleMsg getModuleMessage(int index) {
+    public BwDriveModuleMsg getModuleMessage(int index)
+    {
         return this.modules[index].getMessage();
     }
 }

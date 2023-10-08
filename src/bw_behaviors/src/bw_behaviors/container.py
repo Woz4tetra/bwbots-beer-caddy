@@ -4,9 +4,9 @@ from bw_behaviors.managers.motors_enabled_manager import MotorsEnabledManager
 from bw_behaviors.managers.move_base_manager import MoveBaseManager
 from bw_behaviors.managers.named_offsets_manager import NamedOffsetsManager
 from bw_behaviors.managers.reset_localization_manager import ResetLocalizationManager
-from bw_behaviors.managers.simple_go_to_manager import SimpleGoToManager
 from bw_behaviors.managers.teach_waypoint_manager import TeachWaypointManager
 from bw_behaviors.managers.waypoint_manager import WaypointManager
+from bw_behaviors.src.bw_behaviors.managers.go_to_manager import GoToManager
 from bw_tools.typing.basic import get_param
 
 
@@ -20,7 +20,7 @@ class Container:
         self.charging_current_threshold = get_param("~charging_current_threshold", 0.25)
 
         self.mode_manager = ModeManager()
-        self.simple_go_to_pose = SimpleGoToManager()
+        self.go_to_pose = GoToManager()
         self.motors_enabled_manager = MotorsEnabledManager()
         self.waypoint_manager = WaypointManager()
         self.reset_localization_manager = ResetLocalizationManager()

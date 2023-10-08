@@ -7,7 +7,7 @@ from py_trees.common import Status
 from bw_interfaces.msg import GoToPoseAction, GoToPoseFeedback, GoToPoseGoal, GoToPoseResult
 
 
-class SimpleGoToManager:
+class GoToManager:
     def __init__(self):
         self.action = actionlib.SimpleActionClient("go_to_pose", GoToPoseAction)
         self.action.wait_for_server()

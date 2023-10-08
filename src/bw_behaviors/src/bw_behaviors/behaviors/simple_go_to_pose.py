@@ -9,7 +9,7 @@ class SimpleGoToPose(Behaviour):
     def __init__(self, container: Container, goal: GoToPoseGoal):
         super().__init__(self.__class__.__name__)
         self.goal = goal
-        self.go_to_pose = container.simple_go_to_pose
+        self.go_to_pose = container.go_to_pose
 
     def initialise(self) -> None:
         self.go_to_pose.send_goal(self.goal.to_msg())

@@ -2,6 +2,7 @@ using RosMessageTypes.BwInterfaces;
 using RosMessageTypes.Geometry;
 using RosMessageTypes.Nav;
 using RosMessageTypes.Std;
+using RosMessageTypes.BwInterfaces;
 using Unity.Robotics.ROSTCPConnector;
 using UnityEngine;
 
@@ -13,22 +14,24 @@ public class ChassisRosInterface : MonoBehaviour
     [SerializeField] private string jointTopicFormat = "/bw/joint/base_link_to_module_{0}_joint";
     [SerializeField] private string moduleTopicFormat = "/bw/module/{0}";
     [SerializeField] private string cmdVelTopic = "/bw/cmd_vel";
+    [SerializeField] private string moduleCommandTopic = "/bw/module_command";
     [SerializeField] private string setMotorEnableTopic = "/bw/set_motors_enabled";
     [SerializeField] private string getMotorEnableTopic = "/bw/are_motors_enabled";
     [SerializeField] private string groundTruthTopic = "/bw/ground_truth";
     [SerializeField] private string groundTruthFrame = "map";
-    
+
     private ROSConnection _ros;
     private double _prevPublishTime;
     private uint groundTruthMessageCount = 0;
-    
+
     // Start is called before the first frame update
     public void Start()
     {
         _ros = ROSConnection.GetOrCreateInstance();
         _ros.RegisterPublisher<OdometryMsg>(odometryTopic);
         _prevPublishTime = Time.realtimeSinceStartup;
-        for (int index = 0; index < chassis.getNumModules(); index++) {
+        for (int index = 0; index < chassis.getNumModules(); index++)
+        {
             _ros.RegisterPublisher<Float64Msg>(getJointTopic(index));
             _ros.RegisterPublisher<BwDriveModuleMsg>(getModuleTopic(index));
         }
@@ -37,6 +40,7 @@ public class ChassisRosInterface : MonoBehaviour
         _ros.Subscribe<BoolMsg>(setMotorEnableTopic, setMotorEnableCallback);
 
         _ros.Subscribe<TwistMsg>(cmdVelTopic, cmdVelCallback);
+        _ros.Subscribe<BwDriveModuleMsg>(moduleCommandTopic, moduleCallback);
     }
 
     // Update is called once per frame
@@ -46,17 +50,20 @@ public class ChassisRosInterface : MonoBehaviour
         if (now - _prevPublishTime > publishDelay)
         {
             _ros.Publish(odometryTopic, chassis.GetOdometryMessage());
-            for (int index = 0; index < chassis.getNumModules(); index++) {
+            for (int index = 0; index < chassis.getNumModules(); index++)
+            {
                 BwDriveModuleMsg moduleMsg = chassis.getModuleMessage(index);
-                Float64Msg jointMsg = new Float64Msg {data=moduleMsg.azimuth_position};
+                Float64Msg jointMsg = new Float64Msg { data = moduleMsg.azimuth_position };
                 _ros.Publish(getJointTopic(index), jointMsg);
                 _ros.Publish(getModuleTopic(index), moduleMsg);
             }
-            _ros.Publish(getMotorEnableTopic, new BoolMsg {
+            _ros.Publish(getMotorEnableTopic, new BoolMsg
+            {
                 data = chassis.getMotorEnable()
             });
 
-            PoseStampedMsg groundTruthMsg = new PoseStampedMsg {
+            PoseStampedMsg groundTruthMsg = new PoseStampedMsg
+            {
                 header = {
                     seq = groundTruthMessageCount,
                     stamp = RosUtil.GetTimeMsg(),
@@ -71,19 +78,28 @@ public class ChassisRosInterface : MonoBehaviour
         }
     }
 
-    private void setMotorEnableCallback(BoolMsg msg) {
+    private void setMotorEnableCallback(BoolMsg msg)
+    {
         chassis.setMotorEnable(msg.data);
     }
 
-    private void cmdVelCallback(TwistMsg twist) {
+    private void cmdVelCallback(TwistMsg twist)
+    {
         chassis.setTwistCommand(twist, 100, 0.5f);
     }
 
-    private string getJointTopic(int index) {
+    private void moduleCallback(BwDriveModuleMsg command)
+    {
+        chassis.setModuleCommand(command, 50, 0.5f);
+    }
+
+    private string getJointTopic(int index)
+    {
         return string.Format(jointTopicFormat, index + 1);
     }
 
-    private string getModuleTopic(int index) {
+    private string getModuleTopic(int index)
+    {
         return string.Format(moduleTopicFormat, index + 1);
     }
 }

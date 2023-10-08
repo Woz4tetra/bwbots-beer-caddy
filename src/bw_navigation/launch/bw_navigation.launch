@@ -1,0 +1,6 @@
+<launch>
+    <group ns="bw">
+        <!-- <node name="go_to_pose" pkg="bw_navigation" type="simple_go_to_pose.py" output="screen" required="false"/> -->
+        <node name="go_to_pose" pkg="bw_navigation" type="optimizer_go_to_pose.py" output="screen" required="false"/>
+    </group>
+</launch>
