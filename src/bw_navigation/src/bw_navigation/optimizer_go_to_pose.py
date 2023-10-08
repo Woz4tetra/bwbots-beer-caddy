@@ -4,7 +4,7 @@ from typing import Optional, cast
 import actionlib
 import rospy
 import tf2_ros
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Twist
 
 from bw_interfaces.msg import BwDriveModule, GoToPoseAction, GoToPoseFeedback
 from bw_interfaces.msg import GoToPoseGoal as RosGoToPoseGoal
@@ -13,7 +13,7 @@ from bw_navigation.base_optimizer import BaseOptimizer
 from bw_navigation.bw_drive_train_optimizer import BwDriveTrainOptimizer
 from bw_navigation.chassis_optimizer import ChassisOptimizer
 from bw_navigation.optimization_helpers import FullModulesCommand
-from bw_tools.robot_state import Pose2d, Pose2dStamped
+from bw_tools.robot_state import Pose2d, Pose2dStamped, Velocity
 from bw_tools.structs.go_to_goal import GoToPoseGoal
 from bw_tools.transforms import lookup_pose, lookup_pose_in_frame
 from bw_tools.typing.basic import get_param
@@ -38,14 +38,20 @@ class OptimizerGoToPose:
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
-        self.optimizer_type
+        self.module_command_pub = rospy.Publisher("module_command", BwDriveModule, queue_size=100)
+        self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=10)
 
         optimizers = {
             "BwDriveTrainOptimizer": BwDriveTrainOptimizer,
             "ChassisOptimizer": ChassisOptimizer,
         }
+        publish_callbacks = {
+            "BwDriveTrainOptimizer": self.publish_module_command,
+            "ChassisOptimizer": self.publish_twist_command,
+        }
 
         self.optimizer: BaseOptimizer = optimizers[self.optimizer_type]()
+        self.publish_callback = publish_callbacks[self.optimizer_type]
 
         self.action_server = actionlib.SimpleActionServer(
             "go_to_pose",
@@ -75,15 +81,18 @@ class OptimizerGoToPose:
         return Pose2dStamped.from_msg(goal)
 
     def publish_neutral(self):
-        self.publish_command(self.optimizer.neutral_command)
+        self.publish_callback(self.optimizer.neutral_command)
 
-    def publish_command(self, command: FullModulesCommand):
+    def publish_module_command(self, command: FullModulesCommand):
         for index, subcommand in enumerate(command.commands):
             module = BwDriveModule()
             module.module_index = str(index + 1)
             module.wheel_velocity = subcommand.wheel_velocity
             module.azimuth_position = subcommand.azimuth
             self.module_pub.publish(module)
+
+    def publish_twist_command(self, command: Velocity):
+        self.cmd_vel_pub.publish(command.to_ros_twist())
 
     def publish_state_feedback(self, current_pose2d: Pose2dStamped, goal_pose2d: Pose2dStamped):
         current_pose = current_pose2d.to_msg()
@@ -155,7 +164,7 @@ class OptimizerGoToPose:
                 f"Goal: {goal.goal}. "
                 f"State: {robot_state}"
             )
-            self.publish_command(velocity_command)
+            self.publish_callback(velocity_command)
             self.publish_state_feedback(robot_state, goal.goal)
 
             if is_done:

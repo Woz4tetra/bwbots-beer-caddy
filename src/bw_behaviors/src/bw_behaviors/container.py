@@ -1,4 +1,5 @@
 from bw_behaviors.managers.charge_manager import ChargeManager
+from bw_behaviors.managers.go_to_manager import GoToManager
 from bw_behaviors.managers.mode_manager import ModeManager
 from bw_behaviors.managers.motors_enabled_manager import MotorsEnabledManager
 from bw_behaviors.managers.move_base_manager import MoveBaseManager
@@ -6,7 +7,6 @@ from bw_behaviors.managers.named_offsets_manager import NamedOffsetsManager
 from bw_behaviors.managers.reset_localization_manager import ResetLocalizationManager
 from bw_behaviors.managers.teach_waypoint_manager import TeachWaypointManager
 from bw_behaviors.managers.waypoint_manager import WaypointManager
-from bw_behaviors.src.bw_behaviors.managers.go_to_manager import GoToManager
 from bw_tools.typing.basic import get_param
 
 

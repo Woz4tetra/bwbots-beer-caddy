@@ -30,6 +30,8 @@ from bw_tools.structs.go_to_goal import GoToPoseGoal
 class SolveResult:
     success: bool
     times: np.ndarray
+    states: SystemStateXArray
+    inputs: SystemInputUArray
     outputs: SystemOutputYArray
 
 
@@ -45,18 +47,21 @@ class BaseOptimizer(ABC, Generic[CommandType]):
         self.interpolation_downsample_factor = 5.0
 
         self.min_path_time = 1.0
-        self.enable_debug_logs = False
-        self.minimizer_tolerance = 1e-6
-        self.minimizer_max_iterations = 1000
+        self.end_path_buffer_time = 1.0
+        self.enable_debug_logs = True
+        self.minimizer_tolerance = 1e-3
+        self.minimizer_max_iterations = 100
         self.num_samples = 10
 
-        self.trajectory_cost = (1.0, 1.0, 1.0)
-        self.termination_cost = (1.0, 1.0, 1.0)
+        self.trajectory_cost = (1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
+        self.termination_cost = (50.0, 50.0, 50.0, 0.01, 0.01, 0.01)
 
         self.system = system
 
         self.solve_result = SolveResult(
             False,
+            np.array([], dtype=np.float64),
+            np.array([], dtype=np.float64),
             np.array([], dtype=np.float64),
             np.array([], dtype=np.float64),
         )
@@ -88,9 +93,9 @@ class BaseOptimizer(ABC, Generic[CommandType]):
     ) -> Tuple[SystemStateXArray, SystemInputUArray]:
         states_guess = np.ascontiguousarray(np.linspace(x0, xf, num_samples).T)
         inputs_guess = np.ascontiguousarray(np.linspace(u0, uf, num_samples).T)
-        inputs_guess[0] += np.random.normal(0.0, 0.01, size=num_samples) + goal.reference_linear_speed
-        inputs_guess[1] += np.random.normal(0.0, 0.01, size=num_samples) + goal.reference_linear_speed
-        inputs_guess[2] += np.random.normal(0.0, 0.01, size=num_samples) + goal.reference_angular_speed
+        inputs_guess[0] += np.random.normal(0.0, 0.01, size=num_samples) + goal.reference_linear_speed / 2.0
+        inputs_guess[1] += np.random.normal(0.0, 0.01, size=num_samples) + goal.reference_linear_speed / 2.0
+        inputs_guess[2] += np.random.normal(0.0, 0.01, size=num_samples) + goal.reference_angular_speed / 2.0
         return states_guess, inputs_guess
 
     def find_time_window(self, guess: Tuple[SystemStateXArray, SystemInputUArray], goal: GoToPoseGoal) -> float:
@@ -101,11 +106,13 @@ class BaseOptimizer(ABC, Generic[CommandType]):
         total_time = float(path_distance / avg_speed)
         return total_time
 
-    def make_state_constraints(
+    def make_input_constraints(
         self, goal: GoToPoseGoal
     ) -> Tuple[Type[LinearConstraint], np.ndarray, Tuple[float, ...], Tuple[float, ...]]:
         max_speed = goal.reference_linear_speed
         max_angular = goal.reference_angular_speed
+        max_lin_accel = goal.linear_max_accel
+        max_ang_accel = goal.theta_max_accel
 
         return opt.input_range_constraint(
             self.system,
@@ -113,11 +120,17 @@ class BaseOptimizer(ABC, Generic[CommandType]):
                 -max_speed,
                 -max_speed,
                 -max_angular,
+                -max_lin_accel,
+                -max_lin_accel,
+                -max_ang_accel,
             ],
             [
                 max_speed,
                 max_speed,
                 max_angular,
+                max_lin_accel,
+                max_lin_accel,
+                max_ang_accel,
             ],
         )
 
@@ -128,7 +141,7 @@ class BaseOptimizer(ABC, Generic[CommandType]):
     def interpolate_results(
         self,
         solve_result: opt.OptimalControlResult,
-    ) -> Tuple[np.ndarray, SystemOutputYArray]:
+    ) -> Tuple[np.ndarray, SystemStateXArray, SystemInputUArray, SystemOutputYArray]:
         times = solve_result.time
         total_time = times[-1] - times[0]
         assert solve_result.states is not None
@@ -146,7 +159,7 @@ class BaseOptimizer(ABC, Generic[CommandType]):
             state_sample = states_samples[index, :]
             outputs_samples.append(self.system_output(timestamp, state_sample, input_sample, None))
         outputs_samples = np.ascontiguousarray(np.array(outputs_samples, dtype=np.float64).T)
-        return time_samples, outputs_samples
+        return time_samples, states_samples, inputs_samples, outputs_samples
 
     def get_nearest_index(self, time: float, times: np.ndarray) -> int:
         search_start = self.time_advancing_index
@@ -165,13 +178,13 @@ class BaseOptimizer(ABC, Generic[CommandType]):
         u0 = np.zeros(NUM_INPUTS, dtype=np.float64)
         uf = np.zeros(NUM_INPUTS, dtype=np.float64)
         x0 = np.zeros(NUM_STATES, dtype=np.float64)
-        xf = np.array(relative_goal.to_list(), dtype=np.float64)
+        xf = np.array(relative_goal.to_list() + [0.0, 0.0, 0.0], dtype=np.float64)
         assert len(xf) == NUM_STATES, xf
 
         guess = self.generate_guess(u0, uf, x0, xf, self.num_samples, goal)
         num_samples = len(guess[0][0])
         guess_time_window = self.find_time_window(guess, goal)
-        guess_time_window += goal.timeout
+        guess_time_window += self.end_path_buffer_time
         time_window = max(self.min_path_time, guess_time_window)
         time_horizon = np.linspace(0.0, time_window, num_samples)
 
@@ -197,7 +210,7 @@ class BaseOptimizer(ABC, Generic[CommandType]):
             self.constraints,
             terminal_cost=term_cost,
             initial_guess=guess,
-            log=False,
+            log=True,
             print_summary=self.enable_debug_logs,
             minimize_method='SLSQP',
             minimize_options={
@@ -209,10 +222,12 @@ class BaseOptimizer(ABC, Generic[CommandType]):
         if not solve_result.success:
             return False
 
-        interp_times, outputs = self.interpolate_results(solve_result)
+        interp_times, states, inputs, outputs = self.interpolate_results(solve_result)
         self.solve_result = SolveResult(
             solve_result.success,
             interp_times,
+            states,
+            inputs,
             outputs,
         )
 

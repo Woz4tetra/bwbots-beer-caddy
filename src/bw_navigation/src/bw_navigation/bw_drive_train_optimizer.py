@@ -77,8 +77,8 @@ class BwDriveTrainOptimizer(BaseOptimizer[FullModulesCommand]):
             neutral_values.append(ModuleCommand(0.0, self.neutral_azimuth_angles[index]))
         neutral_commands = FullModulesCommand(neutral_values)
 
-        input_names = ("vx", "vy", "vt")
-        state_names = ("x", "y", "t")
+        input_names = ("vx", "vy", "vt", "ax", "ay", "at")
+        state_names = ("x", "y", "t", "vx", "vy", "vt")
 
         output_names = []
         for index in range(len(self.locations)):
@@ -130,7 +130,7 @@ class BwDriveTrainOptimizer(BaseOptimizer[FullModulesCommand]):
 
     def make_constraints(self, x0: SystemStateX, xf: SystemStateX, goal: GoToPoseGoal) -> SystemConstraints:
         constraints = []
-        constraints.append(self.make_state_constraints(goal))
+        constraints.append(self.make_input_constraints(goal))
         constraints.append(self.make_output_limit_constraint())
         return constraints
 

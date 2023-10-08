@@ -16,8 +16,8 @@ SystemConstraints = List[Union[LinearConstraint, NonlinearConstraint]]
 SystemOutputY = npt.NDArray[np.float64]
 SystemOutputYArray = npt.NDArray[np.float64]
 
-NUM_STATES = 3
-NUM_INPUTS = 3
+NUM_STATES = 6
+NUM_INPUTS = 6
 
 
 @dataclass(frozen=True)
@@ -203,14 +203,22 @@ def module_system_update(state_x: SystemStateX, input_u: SystemInputU) -> System
     input_vx = input_u[0]
     input_vy = input_u[1]
 
-    rotated = vector_rotate_by(np.array([[input_vx], [input_vy]]), state_theta)
+    input_ax = input_u[3]
+    input_ay = input_u[4]
+    input_at = input_u[5]
+
+    rotated_vel = vector_rotate_by(np.array([[input_vx], [input_vy]]), state_theta)
+    rotated_accel = vector_rotate_by(np.array([[input_ax], [input_ay]]), state_theta)
 
     input_vt = input_u[2]
     return np.array(
         [
-            rotated[0, 0],
-            rotated[0, 1],
+            rotated_vel[0, 0],
+            rotated_vel[0, 1],
             input_vt,
+            rotated_accel[0, 0],
+            rotated_accel[0, 1],
+            input_at,
         ],
         dtype=np.float64,
     )
@@ -238,6 +246,15 @@ def module_system_output(
     return module_states
 
 
+@njit(cache=True)
+def strafe_constraint(state_x: SystemStateX, input_u: SystemInputU) -> float:
+    angle = math.atan2(input_u[1], input_u[0])
+    angle += math.pi
+    angle %= math.pi
+    angle -= math.pi
+    return angle
+
+
 def warmup():
     points = np.append([np.linspace(5.0, 0.0, 10)], [np.linspace(0.0, 5.0, 10)], axis=0).T
     module_locations = np.array(
@@ -251,6 +268,8 @@ def warmup():
     azimuths = np.array([0.0 for _ in range(4)])
     azimuth_limits = np.array([(-1.0, 1.0) for _ in range(4)])
     module_states = np.array([0.0 for _ in range(8)])
+    state = np.zeros(6, dtype=np.float64)
+    input = np.zeros(6, dtype=np.float64)
     vector_rotate_by(points.T, 0.0)
     compute_ik(module_locations, 0.0, azimuths)
     compute_chassis_velocities(module_locations, 0.0, module_states)
@@ -258,3 +277,4 @@ def warmup():
     compute_single_module_command(0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.01, (0.0, 0.0, 0.0))
     compute_module_commands(module_locations, 0.0, 1.0, azimuth_limits, (0.0, 1.0), 0.01, (0.0, 0.0, 0.0))
     module_system_update(np.array([0.0, 0.0, 0.0]), np.array([0.0, 0.0, 0.0]))
+    strafe_constraint(state, input)

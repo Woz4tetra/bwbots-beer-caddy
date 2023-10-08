@@ -15,4 +15,5 @@ class ModeManager:
         self.mode = mode
 
     def mode_callback(self, msg: BehaviorMode) -> None:
+        rospy.loginfo(f"Got mode switch message {msg}")
         self.set_mode(Mode(msg.mode))

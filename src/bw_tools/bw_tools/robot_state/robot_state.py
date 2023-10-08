@@ -1,5 +1,5 @@
 import math
-from typing import List, cast
+from typing import List, Optional, cast
 
 import numpy as np
 import tf_conversions
@@ -368,8 +368,25 @@ class Pose2dStamped:
         self.pose = pose
 
     @classmethod
+    def from_xyt(
+        cls,
+        x: float,
+        y: float,
+        theta: float,
+        frame_id: str = "",
+        stamp: float = float("nan"),
+        seq: Optional[int] = None,
+    ) -> "Pose2dStamped":
+        return cls(Header.auto(frame_id=frame_id, stamp=stamp, seq=seq), Pose2d.from_xyt(x, y, theta))
+
+    @classmethod
     def from_msg(cls, msg: PoseStamped) -> "Pose2dStamped":
         return cls(Header.from_msg(msg.header), Pose2d.from_ros_pose(msg.pose))
 
     def to_msg(self) -> PoseStamped:
         return PoseStamped(header=self.header.to_msg(), pose=self.pose.to_ros_pose())
+
+    def __str__(self):
+        return "%s(header=%s, pose=%s)" % (self.__class__.__name__, self.header, self.pose)
+
+    __repr__ = __str__

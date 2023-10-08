@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
+import math
 from typing import Any
 
 import control
 import numpy as np
+from scipy.optimize import NonlinearConstraint
 
 from bw_navigation.base_optimizer import BaseOptimizer
 from bw_navigation.optimization_helpers import (
@@ -11,6 +13,7 @@ from bw_navigation.optimization_helpers import (
     SystemOutputY,
     SystemStateX,
     module_system_update,
+    strafe_constraint,
 )
 from bw_tools.robot_state import Velocity
 from bw_tools.structs.go_to_goal import GoToPoseGoal
@@ -18,8 +21,11 @@ from bw_tools.structs.go_to_goal import GoToPoseGoal
 
 class ChassisOptimizer(BaseOptimizer[Velocity]):
     def __init__(self) -> None:
-        input_names = ("vx", "vy", "vt")
-        state_names = ("x", "y", "t")
+        input_names = ("vx", "vy", "vt", "ax", "ay", "at")
+        state_names = ("x", "y", "t", "vx", "vy", "vt")
+
+        self.lower_strafe_limit = -math.pi / 4
+        self.upper_strafe_limit = math.pi / 4
 
         system = control.NonlinearIOSystem(
             self.system_update,
@@ -42,11 +48,18 @@ class ChassisOptimizer(BaseOptimizer[Velocity]):
     ) -> SystemOutputY:
         return state_x
 
+    def make_output_limit_constraint(self) -> NonlinearConstraint:
+        return NonlinearConstraint(
+            strafe_constraint,
+            self.lower_strafe_limit,
+            self.upper_strafe_limit,
+        )
+
     def make_constraints(self, x0: SystemStateX, xf: SystemStateX, goal: GoToPoseGoal) -> SystemConstraints:
         constraints = []
-        constraints.append(self.make_state_constraints(goal))
-        # TODO limit state
+        constraints.append(self.make_input_constraints(goal))
+        constraints.append(self.make_output_limit_constraint())
         return constraints
 
     def convert_to_command(self, output_vector: np.ndarray) -> Velocity:
-        return Velocity(x=output_vector[0], y=output_vector[1], theta=output_vector[2])
+        return Velocity(x=output_vector[3], y=output_vector[4], theta=output_vector[5])  # type: ignore
