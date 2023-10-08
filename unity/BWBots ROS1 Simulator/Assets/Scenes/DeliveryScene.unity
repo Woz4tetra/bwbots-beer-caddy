@@ -2579,7 +2579,7 @@ MonoBehaviour:
   m_FastZoomSensitivity: 50
   movementAcceleration: 5
   movementDeceleration: -10
-  movementDampingConstant: 0.5
+  movementDampingConstant: 0
   followObject: {fileID: 1613416634}
   defaultCameraPositionOffset: {x: 0, y: 0.35, z: -0.7}
   defaultCameraRotationOffset: {x: 0, y: 0, z: 0, w: 1}

@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-from typing import Dict
 
 import rospy
 import tf2_ros
 from geometry_msgs.msg import Pose, PoseStamped
 
+from bw_behaviors.managers.named_offsets_manager import NamedOffsetsManager
 from bw_interfaces.msg import Waypoint
 from bw_interfaces.srv import SaveTF, SaveWaypoint, TeachWaypoint, TeachWaypointRequest, TeachWaypointResponse
 from bw_tags.srv import RequestTags
-from bw_tools.robot_state import Pose2d
 from bw_tools.tags.tag_manager import TagManager
 from bw_tools.transforms import lookup_pose_in_frame, transform_pose
 from bw_tools.typing.basic import get_param
@@ -21,17 +20,7 @@ class WaypointTeacher:
         self.map_frame = get_param("~map_frame", "map")
         self.base_frame = get_param("~base_frame", "base_link")
         self.apriltag_config_path = get_param("~apriltag_config_path", "tags.yaml")
-        named_offsets = get_param("~offsets", None)
-        if named_offsets is None:
-            named_offsets = {}
-        self.named_offsets: Dict[str, Pose2d] = {
-            name: Pose2d(
-                x=offset[0],
-                y=offset[1],
-                theta=offset[2],
-            )
-            for name, offset in named_offsets.items()
-        }
+        self.named_offsets = NamedOffsetsManager(get_param("~offsets", None))
 
         self.tag_manager = TagManager(self.apriltag_config_path)
 
@@ -45,7 +34,7 @@ class WaypointTeacher:
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
     def get_offset(self, name: str) -> Pose:
-        return self.named_offsets.get(name, Pose2d()).to_ros_pose()
+        return self.named_offsets.get(name).to_ros_pose()
 
     def teach_waypoint(self, req: TeachWaypointRequest) -> TeachWaypointResponse:
         response = TeachWaypointResponse()

@@ -251,7 +251,7 @@ class BwWaypoints:
         marker.action = Marker.ADD
         marker.pose = waypoint.pose
         marker.header.frame_id = waypoint.header.frame_id
-        marker.lifetime = rospy.Duration(1.0)  # seconds
+        marker.lifetime = rospy.Duration(0.0)  # seconds
         marker.ns = waypoint.name
         marker.id = 0  # all waypoint names should be unique
         marker.frame_locked = False

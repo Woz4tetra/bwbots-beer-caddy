@@ -58,6 +58,20 @@ def lookup_pose_in_frame(
     return tf2_geometry_msgs.do_transform_pose(pose_stamped, transform)
 
 
+def lookup_pose(
+    tf_buffer,
+    child_frame: str,
+    parent_frame: str,
+    time_window=None,
+    timeout=None,
+    silent=False,
+) -> Optional[PoseStamped]:
+    pose_stamped = PoseStamped()
+    pose_stamped.header.frame_id = child_frame
+    pose_stamped.pose.orientation.w = 1.0
+    return lookup_pose_in_frame(tf_buffer, pose_stamped, parent_frame, time_window, timeout, silent)
+
+
 def transform_pose(relative_pose: Pose, root_pose: PoseStamped) -> PoseStamped:
     """
     Transform pose by pose_transform (puts pose relative to pose_transform)

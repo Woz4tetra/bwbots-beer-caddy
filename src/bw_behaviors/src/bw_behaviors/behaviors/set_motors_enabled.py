@@ -24,6 +24,7 @@ class SetMotorsEnabled(Behaviour):
             return Status.FAILURE
         else:
             enabled_state = self.motors_enabled_manager.is_enabled()
+            print("enabled_state: ", enabled_state)
             if enabled_state is None or enabled_state != self.motors_enabled:
                 return Status.RUNNING
             else:

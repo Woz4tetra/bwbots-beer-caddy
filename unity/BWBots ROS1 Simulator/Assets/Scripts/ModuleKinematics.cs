@@ -75,8 +75,8 @@ class ModuleKinematics
 
         this.moduleBody.linearDamping = 1.0f;
         this.moduleBody.angularDamping = 1.0f;
-        this.moduleBody.jointFriction = 0.0f;
-        this.moduleBody.mass = 1.0f;
+        this.moduleBody.jointFriction = 1.0f;
+        this.moduleBody.mass = 0.25f;
         this.moduleBody.inertiaTensor = new Vector3(1.59E-03f, 1.86E-04f, 1.57E-03f);
 
         module_msg.module_index = (index + 1).ToString();

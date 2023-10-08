@@ -31,3 +31,6 @@ class SimpleGoToManager:
 
     def feedback_cb(self, feedback: GoToPoseFeedback) -> None:
         pass
+
+    def cancel(self) -> None:
+        self.action.cancel_all_goals()

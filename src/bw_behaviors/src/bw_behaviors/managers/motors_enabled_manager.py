@@ -14,7 +14,6 @@ class MotorsEnabledManager:
         )
         self.are_motors_enabled = BoolStamped.auto(False)
         self.motors_enabled_command = BoolStamped.auto(False)
-        self.wakeup_time = rospy.Time.now()
 
     def set_enable(self, motors_enabled: bool):
         self.motors_enabled_command = BoolStamped.auto(motors_enabled)
@@ -24,7 +23,7 @@ class MotorsEnabledManager:
         self.are_motors_enabled = BoolStamped.auto(msg.data)
 
     def is_enabled(self) -> Optional[bool]:
-        if self.are_motors_enabled.stamp > self.wakeup_time.to_sec():
+        if self.are_motors_enabled.stamp > self.motors_enabled_command.stamp:
             return self.are_motors_enabled.state
         else:
             return None

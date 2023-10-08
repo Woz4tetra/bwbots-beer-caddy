@@ -267,9 +267,18 @@ public class FpvCamera : MonoBehaviour
             inputLateralSpeed += -lateralSpeed;
         }
 
-        targetAngularSpeed += movementDampingConstant * (inputAngularSpeed - targetAngularSpeed);
-        targetLinearSpeed += movementDampingConstant * (inputLinearSpeed - targetLinearSpeed);
-        targetLateralSpeed += movementDampingConstant * (inputLateralSpeed - targetLateralSpeed);
+        if (movementDampingConstant <= 0.0f)
+        {
+            targetAngularSpeed = inputAngularSpeed;
+            targetLinearSpeed = inputLinearSpeed;
+            targetLateralSpeed = inputLateralSpeed;
+        }
+        else
+        {
+            targetAngularSpeed += movementDampingConstant * (inputAngularSpeed - targetAngularSpeed);
+            targetLinearSpeed += movementDampingConstant * (inputLinearSpeed - targetLinearSpeed);
+            targetLateralSpeed += movementDampingConstant * (inputLateralSpeed - targetLateralSpeed);
+        }
         if (Mathf.Abs(targetAngularSpeed) < 1e-3)
         {
             targetAngularSpeed = 0.0f;

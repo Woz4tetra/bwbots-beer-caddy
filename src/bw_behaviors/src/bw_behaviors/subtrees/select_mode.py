@@ -4,10 +4,13 @@ from py_trees.behaviour import Behaviour
 from py_trees.composites import Selector, Sequence
 from py_trees.decorators import FailureIsSuccess
 
-from bw_behaviors.behaviors import make_deliver, make_dock, make_idle, make_undock
-from bw_behaviors.behaviors.is_mode import IsMode
-from bw_behaviors.behaviors.set_mode import SetMode
 from bw_behaviors.container import Container
+from bw_behaviors.subtrees.deliver import make_deliver
+from bw_behaviors.subtrees.dock import make_dock
+from bw_behaviors.subtrees.idle import make_idle
+from bw_behaviors.subtrees.is_mode import IsMode
+from bw_behaviors.subtrees.set_mode import SetMode
+from bw_behaviors.subtrees.undock import make_undock
 from bw_tools.structs.modes import Mode
 
 

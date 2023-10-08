@@ -2,7 +2,9 @@
     <arg name="apriltag_config_path" default="$(find bw_tags)/config/tags.yaml" />
     <arg name="waypoint_offsets_path" default="$(find bw_tags)/config/waypoint_offsets.yaml" />
     <group ns="bw">
-        <node name="bw_behaviors" pkg="bw_behaviors" type="trees_node.py" output="screen" required="false"/>
+        <node name="bw_behaviors" pkg="bw_behaviors" type="trees_node.py" output="screen" required="false">
+            <rosparam ns="offsets" command="load" file="$(arg waypoint_offsets_path)" />
+        </node>
 
         <node name="simple_go_to_pose" pkg="bw_navigation" type="simple_go_to_pose.py" output="screen" required="false"/>
         <node name="waypoint_teacher" pkg="bw_behaviors" type="waypoint_teacher.py" output="screen" required="false">
