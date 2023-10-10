@@ -18,8 +18,8 @@ def make_undock(container: Container) -> Behaviour:
         dock_prep_offset.y,
         dock_prep_offset.theta,
     )
-    undock_goal.xy_tolerance = 0.3
-    undock_goal.yaw_tolerance = 0.3
+    undock_goal.linear_tolerance = 0.3
+    undock_goal.angle_tolerance = 0.3
     undock_goal.linear_min_vel = 0.4
     undock_goal.reference_linear_speed = 1.5
     undock_goal.reference_angular_speed = 3.0

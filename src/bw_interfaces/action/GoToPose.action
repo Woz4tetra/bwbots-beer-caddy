@@ -1,17 +1,13 @@
 geometry_msgs/PoseStamped goal
-float64 xy_tolerance
-float64 yaw_tolerance
+float64 linear_tolerance
+float64 angle_tolerance
 duration timeout
 float64 reference_linear_speed
 float64 reference_angular_speed
-bool allow_reverse
-bool rotate_in_place_start
-bool rotate_while_driving
-bool rotate_in_place_end
 float64 linear_max_accel
 float64 linear_min_vel
-float64 theta_max_accel
-float64 theta_min_vel
+float64 angle_max_accel
+float64 angle_min_vel
 ---
 bool success
 ---

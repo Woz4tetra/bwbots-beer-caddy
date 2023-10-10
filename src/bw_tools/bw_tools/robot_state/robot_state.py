@@ -380,6 +380,10 @@ class Pose2dStamped:
         return cls(Header.auto(frame_id=frame_id, stamp=stamp, seq=seq), Pose2d.from_xyt(x, y, theta))
 
     @classmethod
+    def from_other(cls, other: "Pose2dStamped") -> "Pose2dStamped":
+        return cls(Header(other.header.stamp, other.header.frame_id, other.header.seq), Pose2d.from_state(other.pose))
+
+    @classmethod
     def from_msg(cls, msg: PoseStamped) -> "Pose2dStamped":
         return cls(Header.from_msg(msg.header), Pose2d.from_ros_pose(msg.pose))
 
@@ -388,5 +392,10 @@ class Pose2dStamped:
 
     def __str__(self):
         return "%s(header=%s, pose=%s)" % (self.__class__.__name__, self.header, self.pose)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, self.__class__):
+            return False
+        return self.header == other.header and self.pose == other.pose
 
     __repr__ = __str__

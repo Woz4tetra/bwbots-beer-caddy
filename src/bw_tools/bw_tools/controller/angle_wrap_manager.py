@@ -10,7 +10,7 @@ class AngleWrapManager:
 
     def reset(self) -> None:
         self.angle_reference = None
-        self.prev_angle = None        
+        self.prev_angle = None
 
     def unwrap(self, angle) -> float:
         if self.prev_angle is None:
@@ -21,6 +21,6 @@ class AngleWrapManager:
             self.angle_reference = angle
         if abs(delta) > self.wraparound_threshold:
             self.num_rotations += -1 if delta > self.wraparound_threshold else 1
-        
+
         angle += self.num_rotations * 2.0 * math.pi
         return angle

@@ -9,7 +9,7 @@ from bw_tools.structs.context_sequence_counter import ContextSequenceCounter
 from bw_tools.typing.basic import seconds_to_duration
 
 
-@dataclass
+@dataclass(frozen=True, eq=True)
 class Header:
     stamp: float
     frame_id: str

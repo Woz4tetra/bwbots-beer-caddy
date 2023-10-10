@@ -15,7 +15,7 @@ def main():
     goal = GoToPoseGoal.from_xyt("map", 0.0, 1.0, 0.0)
     goal.reference_linear_speed = 0.1
     goal.linear_max_accel = 0.1
-    goal.theta_max_accel = 0.5
+    goal.angle_max_accel = 0.5
 
     robot_state = Pose2dStamped.from_xyt(0.0, 0.0, 0.0, frame_id="map")
 

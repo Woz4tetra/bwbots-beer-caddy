@@ -9,10 +9,6 @@ from geometry_msgs.msg import PoseStamped, Twist
 from bw_interfaces.msg import BwDriveModule, GoToPoseAction, GoToPoseFeedback
 from bw_interfaces.msg import GoToPoseGoal as RosGoToPoseGoal
 from bw_interfaces.msg import GoToPoseResult
-from bw_navigation.base_optimizer import BaseOptimizer
-from bw_navigation.bw_drive_train_optimizer import BwDriveTrainOptimizer
-from bw_navigation.chassis_optimizer import ChassisOptimizer
-from bw_navigation.optimization_helpers import FullModulesCommand
 from bw_tools.robot_state import Pose2d, Pose2dStamped, Velocity
 from bw_tools.structs.go_to_goal import GoToPoseGoal
 from bw_tools.transforms import lookup_pose, lookup_pose_in_frame
@@ -25,7 +21,6 @@ class OptimizerGoToPose:
             "optimizer_go_to_pose",
             log_level=rospy.DEBUG,
         )
-        self.module_pub = rospy.Publisher("module_command", BwDriveModule, queue_size=100)
         self.goal_pose_pub = rospy.Publisher("go_to_pose_goal", PoseStamped, queue_size=10)
 
         self.loop_rate = get_param("~loop_rate", 50.0)
@@ -33,7 +28,7 @@ class OptimizerGoToPose:
 
         self.global_frame = get_param("~global_frame", "map")
         self.robot_frame = get_param("~robot_frame", "base_link")
-        self.optimizer_type = get_param("~type", "ChassisOptimizer")
+        self.optimizer_type = get_param("~type", "SplineOptimizer")
 
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
@@ -42,11 +37,9 @@ class OptimizerGoToPose:
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=10)
 
         optimizers = {
-            "BwDriveTrainOptimizer": BwDriveTrainOptimizer,
-            "ChassisOptimizer": ChassisOptimizer,
+            "SplineOptimizer": SplineOptimizer,
         }
         publish_callbacks = {
-            "BwDriveTrainOptimizer": self.publish_module_command,
             "ChassisOptimizer": self.publish_twist_command,
         }
 
@@ -81,15 +74,7 @@ class OptimizerGoToPose:
         return Pose2dStamped.from_msg(goal)
 
     def publish_neutral(self):
-        self.publish_callback(self.optimizer.neutral_command)
-
-    def publish_module_command(self, command: FullModulesCommand):
-        for index, subcommand in enumerate(command.commands):
-            module = BwDriveModule()
-            module.module_index = str(index + 1)
-            module.wheel_velocity = subcommand.wheel_velocity
-            module.azimuth_position = subcommand.azimuth
-            self.module_pub.publish(module)
+        self.publish_callback(self.optimizer.get_neutral_command())
 
     def publish_twist_command(self, command: Velocity):
         self.cmd_vel_pub.publish(command.to_ros_twist())
@@ -115,8 +100,8 @@ class OptimizerGoToPose:
         rospy.loginfo(f"Going to pose: {goal}")
 
         robot_state = self.get_robot_state()
-        xy_tolerance: float = goal.xy_tolerance
-        yaw_tolerance: float = goal.yaw_tolerance
+        xy_tolerance: float = goal.linear_tolerance
+        yaw_tolerance: float = goal.angle_tolerance
 
         computed_goal_pose = self.compute_goal(goal.goal)
         if computed_goal_pose is None:
@@ -155,7 +140,7 @@ class OptimizerGoToPose:
             if robot_state is None:
                 continue
 
-            velocity_command, is_done = self.optimizer.update(robot_state)
+            velocity_command, is_done = self.optimizer.update(goal, robot_state)
 
             heading = self.get_error(goal.goal.pose, robot_state.pose).heading()
             rospy.logdebug(

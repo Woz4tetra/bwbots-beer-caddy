@@ -17,9 +17,9 @@ def get_dock_stage_1(container: Container) -> GoToPoseGoal:
     )
 
     undock_goal.linear_min_vel = 0.15
-    undock_goal.theta_min_vel = 0.1
-    undock_goal.xy_tolerance = 0.025
-    undock_goal.yaw_tolerance = 0.05
+    undock_goal.angle_min_vel = 0.1
+    undock_goal.linear_tolerance = 0.025
+    undock_goal.angle_tolerance = 0.05
     undock_goal.timeout = 30.0
     undock_goal.reference_linear_speed = 0.5
     undock_goal.linear_max_accel = 0.25
@@ -39,10 +39,10 @@ def get_dock_stage_2(container: Container) -> GoToPoseGoal:
         offset.y,
         offset.theta,
     )
-    undock_goal.xy_tolerance = 0.05
-    undock_goal.yaw_tolerance = 0.5
+    undock_goal.linear_tolerance = 0.05
+    undock_goal.angle_tolerance = 0.5
     undock_goal.linear_min_vel = 0.2
-    undock_goal.theta_min_vel = 0.0
+    undock_goal.angle_min_vel = 0.0
     undock_goal.reference_linear_speed = 10.0
     undock_goal.reference_angular_speed = 3.0
     undock_goal.linear_max_accel = 0.5
