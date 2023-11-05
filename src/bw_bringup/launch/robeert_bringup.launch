@@ -21,10 +21,9 @@
 
     <include file="$(find bw_load_cell)/launch/bw_load_cell.launch">
         <arg name="config_path" default="$(find bw_bringup)/config/$(arg robot_name)/load_cell.yaml"/>
-        <arg name="waypoint_offsets_path" value="$(find bw_bringup)/config/$(arg robot_name)/waypoint_offsets.yaml" />
     </include>
 
-    <group ns="laser">
+    <!-- <group ns="laser">
         <include file="$(find bw_rplidar)/launch/bw_rplidar_s1.launch">
             <arg name="serial_port" value="/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0"/>
             <arg name="lidar_node_name" value="$(arg robot_name)_rplidar"/>
@@ -34,38 +33,38 @@
         <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="laser_filter">
             <rosparam command="load" file="$(find bw_bringup)/config/$(arg robot_name)/laser_filter.yaml" />
         </node>
-    </group>
+    </group> -->
 
-    <include file="$(find bw_move_base)/launch/bw_move_base.launch"/>
+    <!-- <include file="$(find bw_move_base)/launch/bw_move_base.launch"/>
     <include file="$(find bw_lights_music)/launch/bw_lights_music.launch"/>
     <include file="$(find bw_zed)/launch/zed2.launch">
         <arg name="config_path" value="$(find bw_bringup)/config/$(arg robot_name)/zed.yaml" />
-    </include>
+    </include> -->
 
     <include file="$(find bw_waypoints)/launch/bw_waypoints.launch">
         <arg name="waypoints_path" value="$(find bw_data)/data/waypoints/$(arg map_name)"/>
     </include>
 
     <include file="$(find bw_yolo)/launch/label_publisher.launch"/>
-    <include file="$(find bw_yolo)/launch/bw_yolo.launch"/>
+    <!-- <include file="$(find bw_yolo)/launch/bw_yolo.launch"/> -->
     <include file="$(find bw_dispensers)/launch/bw_dispensers.launch"/>
 
-    <include file="$(find bw_laser_slam)/launch/bw_laser_slam.launch">
+    <!-- <include file="$(find bw_laser_slam)/launch/bw_laser_slam.launch">
         <arg name="mode" value="localize"/>
         <arg name="map_name" value="$(arg map_name)"/>
         <arg name="laser_scan_topic" value="/laser/scan"/>
         <arg name="gmapping_config" value="$(find bw_bringup)/config/$(arg robot_name)/gmapping.yaml"/>
         <arg name="amcl_config" value="$(find bw_bringup)/config/$(arg robot_name)/amcl.yaml"/>
-    </include>
+    </include> -->
 
-    <include file="$(find bw_behaviors)/launch/bw_behaviors.launch">
+    <!-- <include file="$(find bw_behaviors)/launch/bw_behaviors.launch">
+        <arg name="waypoint_offsets_path" value="$(find bw_bringup)/config/$(arg robot_name)/waypoint_offsets.yaml" />
         <arg name="apriltag_config_path" value="$(find bw_bringup)/config/$(arg robot_name)/tags.yaml" />
-        <arg name="apriltag_config_path" value="$(find bw_bringup)/config/$(arg robot_name)/tags.yaml" />
-    </include>
+    </include> -->
 
-    <include file="$(find bw_tags)/launch/tag_requests.launch">
+    <!-- <include file="$(find bw_tags)/launch/tag_requests.launch">
         <arg name="config_path" value="$(find bw_bringup)/config/$(arg robot_name)/tags.yaml" />
         <arg name="image_topic" value="/zed/rgb/image_rect_color" />
         <arg name="info_topic" value="/zed/rgb/camera_info" />
-    </include>
+    </include> -->
 </launch>

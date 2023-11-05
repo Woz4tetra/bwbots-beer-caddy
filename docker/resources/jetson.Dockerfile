@@ -76,6 +76,11 @@ COPY --chown=1000:1000 \
 RUN bash /opt/${ORGANIZATION}/install/basic/install_apt_packages.sh
 
 COPY --chown=1000:1000 \
+    ./install/jetson/build_python3.9.sh \
+    /opt/${ORGANIZATION}/install/basic/
+RUN bash /opt/${ORGANIZATION}/install/basic/build_python3.9.sh
+
+COPY --chown=1000:1000 \
     ./install/jetson/install_python_dependencies.sh \
     /opt/${ORGANIZATION}/install/basic/
 RUN bash /opt/${ORGANIZATION}/install/basic/install_python_dependencies.sh
@@ -101,11 +106,19 @@ RUN bash /opt/${ORGANIZATION}/install/ros/install_ros_packages.sh /opt/${ORGANIZ
 # Python extra packages
 # ---
 
+ENV PATH=${HOME}/.local/bin${PATH:+:${PATH}}
+
 COPY --chown=1000:1000 \
     ./install/jetson/torch-requirements.txt \
     ./install/jetson/install_python_torch.sh \
     /opt/${ORGANIZATION}/install/basic/
 RUN cd /opt/${ORGANIZATION}/install/basic/ && bash ./install_python_torch.sh
+
+COPY --chown=1000:1000 \
+    ./install/jetson/torch-requirements.txt \
+    ./install/jetson/install_python_detectron.sh \
+    /opt/${ORGANIZATION}/install/basic/
+RUN cd /opt/${ORGANIZATION}/install/basic/ && bash ./install_python_detectron.sh
 
 COPY --chown=1000:1000 \
     ./install/jetson/requirements.txt \
@@ -120,7 +133,7 @@ RUN cd /opt/${ORGANIZATION}/install/basic/ && bash ./install_python_extras.sh
 ENV ROS_WS_ROOT=${HOME}/ros_ws
 ENV ROS_WS_SRC=${ROS_WS_ROOT}/src
 ENV FLASK_ENV=development \
-    PATH=${HOME}/.local/bin:/opt/${ORGANIZATION}/scripts${PATH:+:${PATH}} \
+    PATH=/opt/${ORGANIZATION}/scripts${PATH:+:${PATH}} \
     PYTHONPATH=${ROS_WS_SRC}/${PROJECT_NAME}/bw_tools${PYTHONPATH:+:${PYTHONPATH}} \
     PYTHONIOENCODING=utf-8
 
