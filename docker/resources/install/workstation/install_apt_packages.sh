@@ -38,7 +38,6 @@ sudo apt-get install -y --ignore-missing \
     ros-${ROS_DISTRO}-image-common \
     ros-${ROS_DISTRO}-marker-msgs \
     ros-${ROS_DISTRO}-usb-cam \
-    ros-${ROS_DISTRO}-usb-cam \
     ros-${ROS_DISTRO}-rqt \
     ros-${ROS_DISTRO}-rqt-common-plugins \
     ros-${ROS_DISTRO}-rqt-console \

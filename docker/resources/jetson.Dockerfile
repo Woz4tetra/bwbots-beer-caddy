@@ -72,12 +72,18 @@ RUN bash /opt/${ORGANIZATION}/install/zed_jetson_install.sh
 
 COPY --chown=1000:1000 \
     ./install/jetson/install_apt_packages.sh \
+    /opt/${ORGANIZATION}/install/basic/
+RUN bash /opt/${ORGANIZATION}/install/basic/install_apt_packages.sh
+
+COPY --chown=1000:1000 \
     ./install/jetson/install_python_dependencies.sh \
+    /opt/${ORGANIZATION}/install/basic/
+RUN bash /opt/${ORGANIZATION}/install/basic/install_python_dependencies.sh
+
+COPY --chown=1000:1000 \
     ./install/jetson/install_libraries.sh \
     /opt/${ORGANIZATION}/install/basic/
-RUN bash /opt/${ORGANIZATION}/install/basic/install_apt_packages.sh && \
-    bash /opt/${ORGANIZATION}/install/basic/install_python_dependencies.sh && \
-    bash /opt/${ORGANIZATION}/install/basic/install_libraries.sh
+RUN bash /opt/${ORGANIZATION}/install/basic/install_libraries.sh
 
 # ---
 # ROS dependency workspace
@@ -94,6 +100,12 @@ RUN bash /opt/${ORGANIZATION}/install/ros/install_ros_packages.sh /opt/${ORGANIZ
 # ---
 # Python extra packages
 # ---
+
+COPY --chown=1000:1000 \
+    ./install/jetson/torch-requirements.txt \
+    ./install/jetson/install_python_torch.sh \
+    /opt/${ORGANIZATION}/install/basic/
+RUN cd /opt/${ORGANIZATION}/install/basic/ && bash ./install_python_torch.sh
 
 COPY --chown=1000:1000 \
     ./install/jetson/requirements.txt \
