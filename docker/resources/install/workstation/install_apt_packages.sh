@@ -2,7 +2,7 @@
 
 set -e
 
-sudo sh -c 'echo "deb http://packages.ros.org/ros-testing/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 sudo apt-get update
 
 sudo apt-get install -y --ignore-missing \
@@ -49,6 +49,8 @@ sudo apt-get install -y --ignore-missing \
     ros-${ROS_DISTRO}-rqt-nav-view \
     ros-${ROS_DISTRO}-rqt-reconfigure \
     ros-${ROS_DISTRO}-rqt-tf-tree \
+    ros-${ROS_DISTRO}-xacro \
+    ros-${ROS_DISTRO}-rosbridge-server \
     libsdl-image1.2-dev \
     libsdl-dev \
     python3-pip \

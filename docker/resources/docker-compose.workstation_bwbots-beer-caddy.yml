@@ -22,7 +22,7 @@ services:
     ipc: host
     volumes:
       - workstation_${PROJECT_NAME}_build:/home/${ORGANIZATION}/ros_ws:rw
-      - ${PROJECT_DIR}:/opt/${ORGANIZATION}/${PROJECT_NAME}:rw=
+      - ${PROJECT_DIR}:/opt/${ORGANIZATION}/${PROJECT_NAME}:rw
       - ${PROJECT_DIR}/scripts:/opt/${ORGANIZATION}/scripts:rw
       - /media/storage/bwbots-beer-caddy-media:/media/storage:rw
       - /home/${USER}/.robot:/opt/${ORGANIZATION}/robot:rw

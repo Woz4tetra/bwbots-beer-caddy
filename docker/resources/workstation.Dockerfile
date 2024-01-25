@@ -49,12 +49,16 @@ ENV LD_LIBRARY_PATH=/usr/local/lib/python3.6/dist-packages/torch/lib${LD_LIBRARY
 
 COPY --chown=1000:1000 \
     ./install/workstation/install_apt_packages.sh \
+    /opt/${ORGANIZATION}/install/workstation/
+RUN bash /opt/${ORGANIZATION}/install/workstation/install_apt_packages.sh
+COPY --chown=1000:1000 \
     ./install/workstation/install_python_dependencies.sh \
+    /opt/${ORGANIZATION}/install/workstation/
+RUN bash /opt/${ORGANIZATION}/install/workstation/install_python_dependencies.sh
+COPY --chown=1000:1000 \
     ./install/workstation/install_libraries.sh \
     /opt/${ORGANIZATION}/install/workstation/
-RUN bash /opt/${ORGANIZATION}/install/workstation/install_apt_packages.sh && \
-    bash /opt/${ORGANIZATION}/install/workstation/install_python_dependencies.sh && \
-    bash /opt/${ORGANIZATION}/install/workstation/install_libraries.sh
+RUN bash /opt/${ORGANIZATION}/install/workstation/install_libraries.sh
 
 # ---
 # ROS dependency workspace
